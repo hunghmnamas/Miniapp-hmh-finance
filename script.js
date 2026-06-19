@@ -9,9 +9,6 @@ const apiUrl = urlParams.get('api');
 const workerUrl = urlParams.get('workerUrl'); 
 const proxyUrl = '/api/proxy?url=';
 
-// KẾT NỐI TRỰC TIẾP FIREBASE
-const FIREBASE_URL = 'https://finance-hmh-new-default-rtdb.firebaseio.com';
-
 let chatId = null;
 let sheetId = null;
 
@@ -19,6 +16,39 @@ let sheetId = null;
 if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
     chatId = window.Telegram.WebApp.initDataUnsafe.user.id;
 }
+
+// ==========================================
+// HÀM BẢO MẬT: GIAO TIẾP VỚI CLOUDFLARE WORKER
+// ==========================================
+async function secureFetch(path, method = 'GET', data = null) {
+    if (!workerUrl) throw new Error("Lỗi: Không tìm thấy máy chủ bảo mật (workerUrl).");
+    
+    // Lấy vé thông hành (chữ ký mã hóa) từ Telegram
+    const tgInitData = window.Telegram?.WebApp?.initData;
+    if (!tgInitData) throw new Error("Từ chối truy cập: Không có chữ ký bảo mật của Telegram!");
+
+    const payload = { path: path, method: method };
+    if (data) payload.data = data;
+
+    // Luôn gửi bằng phương thức POST tới Trạm Kiểm Soát của Cloudflare
+    const res = await fetch(`${workerUrl}/api/secure_firebase`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': tgInitData // Dán tem bảo mật vào đây
+        },
+        body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Lỗi máy chủ: ${errText}`);
+    }
+    
+    const responseText = await res.text();
+    return responseText ? JSON.parse(responseText) : null;
+}
+// ==========================================
 
 // Quản lý trạng thái
 let cachedTransactions = null, cachedChartData = null; 
@@ -222,9 +252,8 @@ window.openTab = function(tabId) {
 
 async function fetchMonthData(month) {
     try {
-        // Lấy dữ liệu cá nhân theo chatId
-        const res = await fetch(`${FIREBASE_URL}/transactions/users/${chatId}/month_${parseInt(month, 10)}.json`);
-        const data = await res.json();
+        // Lấy dữ liệu qua API bảo mật
+        const data = await secureFetch(`/transactions/users/${chatId}/month_${parseInt(month, 10)}.json`);
         if(data) return Object.values(data).filter(item => item !== null);
     } catch (e) {} return [];
 }
@@ -494,17 +523,15 @@ function displaySearchResults() {
     document.querySelectorAll('#searchResultsContainer .edit-btn').forEach(btn => btn.onclick = () => openEditForm(data.find(i => String(i.id) === btn.getAttribute('data-id')))); document.querySelectorAll('#searchResultsContainer .delete-btn').forEach(btn => btn.onclick = () => deleteTransaction(btn.getAttribute('data-id')));
 }
 
-// ---------------- TAB 4: QUẢN LÝ TỪ KHÓA (GỌI FIREBASE CÁ NHÂN) ----------------
+// ---------------- TAB 4: QUẢN LÝ TỪ KHÓA ----------------
 window.loadKeywords = async function(isInit = false) {
     if(!isInit) showLoading(true, 'tab4');
     if(!isInit) document.getElementById('keywordsContainer').innerHTML = '';
     try {
-        const iconRes = await fetch(`${FIREBASE_URL}/users/${chatId}/categoryIcons.json`); 
-        const iconData = await iconRes.json(); 
+        const iconData = await secureFetch(`/users/${chatId}/categoryIcons.json`); 
         if(iconData) window.customCategoryIcons = iconData;
         
-        const res = await fetch(`${FIREBASE_URL}/users/${chatId}/keywords.json`); 
-        let data = await res.json();
+        let data = await secureFetch(`/users/${chatId}/keywords.json`); 
         
         cachedKeywords = data || []; 
         window.categoryIconMap = {}; 
@@ -603,8 +630,9 @@ async function submitTx(tx) {
     if (tx.action === 'addTransaction') { if (cachedTransactions?.data) cachedTransactions.data.unshift(fbTx); } else { [cachedTransactions?.data, cachedChartData?.txs, cachedSearchResults].forEach(arr => { if (!arr) return; const idx = arr.findIndex(i => String(i.id) === String(tx.id)); if (idx !== -1) arr[idx] = { ...arr[idx], ...fbTx }; }); }
     if(document.getElementById('tab1').classList.contains('active')) displayTransactions(); else if(document.getElementById('tab2').classList.contains('active')) updateTimeNavUI(); else if(document.getElementById('tab3').classList.contains('active')) displaySearchResults();
     
-    // Đẩy lên Firebase thư mục cá nhân
-    await fetch(`${FIREBASE_URL}/transactions/users/${chatId}/month_${month}/${tx.id}.json`, { method: 'PUT', body: JSON.stringify(fbTx) }); 
+    // Lưu giao dịch qua API bảo mật
+    await secureFetch(`/transactions/users/${chatId}/month_${month}/${tx.id}.json`, 'PUT', fbTx);
+    
     triggerHapticNotification('success'); showToast("Đã lưu giao dịch!", "success");
     
     // Gọi Google Apps Script qua Proxy (Backup)
@@ -625,8 +653,8 @@ window.deleteTransaction = function(id) {
           
           showToast("Đang xóa giao dịch...", "info");
           try { 
-              // Xóa khỏi thư mục cá nhân
-              await fetch(`${FIREBASE_URL}/transactions/users/${chatId}/month_${monthToUpdate}/${id}.json`, { method: 'DELETE' }); 
+              // Xóa giao dịch qua API bảo mật
+              await secureFetch(`/transactions/users/${chatId}/month_${monthToUpdate}/${id}.json`, 'DELETE'); 
               triggerHapticNotification('success'); showToast("Đã xóa giao dịch!", "success"); 
               
               if (apiUrl) fetch(proxyUrl + encodeURIComponent(apiUrl), { method: 'POST', body: JSON.stringify({action: 'deleteTransaction', id, month: monthToUpdate, sheetId}) }).catch(e => console.log("Lỗi xóa Sheet:", e)); 
@@ -1046,8 +1074,8 @@ window.openIconPickerModal = function() {
             
             triggerHaptic('medium'); showLoading(true, 'tab4');
             try {
-                // Lưu Icon vào cấu hình cá nhân
-                await fetch(`${FIREBASE_URL}/users/${chatId}/categoryIcons.json`, { method: 'PATCH', body: JSON.stringify({ [cat]: selectedIcon }) });
+                // Lưu Icon
+                await secureFetch(`/users/${chatId}/categoryIcons.json`, 'PATCH', { [cat]: selectedIcon });
                 window.customCategoryIcons[cat] = selectedIcon; 
                 
                 // Cập nhật cấu trúc Danh mục & Keywords
@@ -1059,8 +1087,8 @@ window.openIconPickerModal = function() {
                     cachedKeywords.push({ category: cat, icon: selectedIcon, keywords: newKws || "" });
                 }
                 
-                // Lưu mảng từ khóa mới lên Firebase
-                await fetch(`${FIREBASE_URL}/users/${chatId}/keywords.json`, { method: 'PUT', body: JSON.stringify(cachedKeywords) });
+                // Lưu mảng từ khóa mới
+                await secureFetch(`/users/${chatId}/keywords.json`, 'PUT', cachedKeywords);
                 
                 // Bắn API gọi Worker đẩy lên Sheet
                 if (workerUrl) {
@@ -1087,12 +1115,12 @@ window.openIconPickerModal = function() {
                     showLoading(true, 'tab4');
                     try {
                         // Xóa icon Firebase
-                        await fetch(`${FIREBASE_URL}/users/${chatId}/categoryIcons/${cat}.json`, { method: 'DELETE' });
+                        await secureFetch(`/users/${chatId}/categoryIcons/${cat}.json`, 'DELETE');
                         delete window.customCategoryIcons[cat];
                         
                         // Lọc bỏ danh mục và cập nhật Firebase
                         cachedKeywords = cachedKeywords.filter(k => k.category !== cat);
-                        await fetch(`${FIREBASE_URL}/users/${chatId}/keywords.json`, { method: 'PUT', body: JSON.stringify(cachedKeywords) });
+                        await secureFetch(`/users/${chatId}/keywords.json`, 'PUT', cachedKeywords);
 
                         // Bắn API gọi Worker đẩy lên Sheet
                         if (workerUrl) {
@@ -1271,7 +1299,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                           kwArray = kwArray.filter(k => k !== currentEditKeyword);
                           kwObj.keywords = kwArray.join(', ');
                           
-                          await fetch(`${FIREBASE_URL}/users/${chatId}/keywords.json`, { method: 'PUT', body: JSON.stringify(cachedKeywords) });
+                          await secureFetch(`/users/${chatId}/keywords.json`, 'PUT', cachedKeywords);
                           if (workerUrl) {
                               fetch(`${workerUrl}/api/update_sheet_keywords`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ chatId: chatId, keywordsData: cachedKeywords }) }).catch(e=>console.log(e));
                           }
@@ -1346,7 +1374,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 kwObj.keywords = kwArray.join(', ');
             }
             
-            await fetch(`${FIREBASE_URL}/users/${chatId}/keywords.json`, { method: 'PUT', body: JSON.stringify(cachedKeywords) });
+            await secureFetch(`/users/${chatId}/keywords.json`, 'PUT', cachedKeywords);
             if (workerUrl) {
                 fetch(`${workerUrl}/api/update_sheet_keywords`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ chatId: chatId, keywordsData: cachedKeywords }) }).catch(e=>console.log(e));
             }
@@ -1393,16 +1421,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   
   window.initCategories();
 
-  // ===== LOAD DỮ LIỆU BAN ĐẦU DỰA VÀO CHAT ID TỪ TELEGRAM =====
+  // ===== BẮT ĐẦU VẬN HÀNH APP =====
   window.openTab('tab1'); 
   showLoading(true, 'tab1');
   
   if (chatId && workerUrl) {
+      // 1. Kiểm tra với Bot xem User này đã kết nối Drive chưa
       fetch(`${workerUrl}/api/get_user_info?chatId=${chatId}`)
           .then(res => res.json())
           .then(data => {
               if (data.sheetId) {
-                  sheetId = data.sheetId; // Nạp đúng dữ liệu của user
+                  sheetId = data.sheetId; 
+                  // 2. Load dữ liệu an toàn qua API bảo mật
                   window.loadKeywords(true); 
                   window.fetchTransactions(false);
               } else {
@@ -1412,7 +1442,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           })
           .catch(e => {
               showLoading(false, 'tab1');
-              showToast("Lỗi tải dữ liệu người dùng", "error");
+              showToast("Lỗi kết nối máy chủ", "error");
           });
   } else {
       showLoading(false, 'tab1');
