@@ -6,16 +6,19 @@ if (window.Telegram && window.Telegram.WebApp) {
 
 const urlParams = new URLSearchParams(window.location.search);
 const apiUrl = urlParams.get('api');
-const sheetId = urlParams.get('sheetId');
-const chatId = urlParams.get('chatId'); 
 const workerUrl = urlParams.get('workerUrl'); 
 const proxyUrl = '/api/proxy?url=';
 
-// KẾT NỐI TRỰC TIẾP FIREBASE - ĐÃ SỬA THÀNH LINK CHUẨN CỦA BẠN
+// KẾT NỐI TRỰC TIẾP FIREBASE
 const FIREBASE_URL = 'https://hmh-finance-default-rtdb.firebaseio.com';
 
-if (!chatId) showToast("Thiếu định danh người dùng (chatId)!", "error");
-if (!sheetId) showToast("Thiếu thông tin Sheet ID!", "error");
+let chatId = null;
+let sheetId = null;
+
+// Lấy thông tin user an toàn từ Telegram
+if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe?.user) {
+    chatId = window.Telegram.WebApp.initDataUnsafe.user.id;
+}
 
 // Quản lý trạng thái
 let cachedTransactions = null, cachedChartData = null; 
@@ -1289,8 +1292,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const prevDayBtn = document.getElementById('prevDayBtn'); if(prevDayBtn) { prevDayBtn.onclick = (e) => { e.stopPropagation(); triggerHaptic('light'); const dateInput = document.getElementById('transactionDate'); if (!dateInput.value) return; const [y, m, d] = dateInput.value.split('-'); const currDate = new Date(y, m - 1, d); currDate.setDate(currDate.getDate() - 1); dateInput.value = formatDateToYYYYMMDD(currDate); window.fetchTransactions(true); }; }
   const nextDayBtn = document.getElementById('nextDayBtn'); if(nextDayBtn) { nextDayBtn.onclick = (e) => { e.stopPropagation(); triggerHaptic('light'); const dateInput = document.getElementById('transactionDate'); if (!dateInput.value) return; const [y, m, d] = dateInput.value.split('-'); const currDate = new Date(y, m - 1, d); currDate.setDate(currDate.getDate() + 1); dateInput.value = formatDateToYYYYMMDD(currDate); window.fetchTransactions(true); }; }
 
-  window.openTab('tab1'); showLoading(true, 'tab1'); window.loadKeywords(true); window.fetchTransactions(false);
-
   document.getElementById('filterWeeklyBtn').onclick = () => { triggerHaptic('light'); setFilterMode('weekly'); };
   document.getElementById('filterMonthlyBtn').onclick = () => { triggerHaptic('light'); setFilterMode('monthly'); };
   document.getElementById('filterYearlyBtn').onclick = () => { triggerHaptic('light'); setFilterMode('yearly'); };
@@ -1391,4 +1392,30 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   
   window.initCategories();
+
+  // ===== LOAD DỮ LIỆU BAN ĐẦU DỰA VÀO CHAT ID TỪ TELEGRAM =====
+  window.openTab('tab1'); 
+  showLoading(true, 'tab1');
+  
+  if (chatId && workerUrl) {
+      fetch(`${workerUrl}/api/get_user_info?chatId=${chatId}`)
+          .then(res => res.json())
+          .then(data => {
+              if (data.sheetId) {
+                  sheetId = data.sheetId; // Nạp đúng dữ liệu của user
+                  window.loadKeywords(true); 
+                  window.fetchTransactions(false);
+              } else {
+                  showLoading(false, 'tab1');
+                  showToast("Bạn chưa kết nối Drive! Quay lại chat gõ /ketnoi", "error");
+              }
+          })
+          .catch(e => {
+              showLoading(false, 'tab1');
+              showToast("Lỗi tải dữ liệu người dùng", "error");
+          });
+  } else {
+      showLoading(false, 'tab1');
+      showToast("Vui lòng mở ứng dụng từ trong Telegram", "error");
+  }
 });
