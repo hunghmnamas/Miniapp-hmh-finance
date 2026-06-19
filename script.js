@@ -10,7 +10,7 @@ const workerUrl = urlParams.get('workerUrl');
 const proxyUrl = '/api/proxy?url=';
 
 // KẾT NỐI TRỰC TIẾP FIREBASE
-const FIREBASE_URL = 'https://hmh-finance-default-rtdb.firebaseio.com';
+const FIREBASE_URL = 'https://finance-hmh-new-default-rtdb.firebaseio.com';
 
 let chatId = null;
 let sheetId = null;
