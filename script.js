@@ -7,12 +7,15 @@ if (window.Telegram && window.Telegram.WebApp) {
 const urlParams = new URLSearchParams(window.location.search);
 const apiUrl = urlParams.get('api');
 const sheetId = urlParams.get('sheetId');
+const chatId = urlParams.get('chatId'); 
+const workerUrl = urlParams.get('workerUrl'); 
 const proxyUrl = '/api/proxy?url=';
 
-// KẾT NỐI TRỰC TIẾP FIREBASE
-const FIREBASE_URL = 'https://quanlychitieu-hmh-default-rtdb.firebaseio.com/';
+// KẾT NỐI TRỰC TIẾP FIREBASE - ĐÃ SỬA THÀNH LINK CHUẨN CỦA BẠN
+const FIREBASE_URL = 'https://hmh-finance-default-rtdb.firebaseio.com';
 
-if (!apiUrl || !sheetId) showToast("Thiếu thông tin API hoặc Sheet ID!", "error");
+if (!chatId) showToast("Thiếu định danh người dùng (chatId)!", "error");
+if (!sheetId) showToast("Thiếu thông tin Sheet ID!", "error");
 
 // Quản lý trạng thái
 let cachedTransactions = null, cachedChartData = null; 
@@ -216,7 +219,8 @@ window.openTab = function(tabId) {
 
 async function fetchMonthData(month) {
     try {
-        const res = await fetch(`${FIREBASE_URL}/transactions/month_${parseInt(month, 10)}.json`);
+        // Lấy dữ liệu cá nhân theo chatId
+        const res = await fetch(`${FIREBASE_URL}/transactions/users/${chatId}/month_${parseInt(month, 10)}.json`);
         const data = await res.json();
         if(data) return Object.values(data).filter(item => item !== null);
     } catch (e) {} return [];
@@ -472,7 +476,6 @@ const categoryView = document.getElementById('categoryDetailView'); let touchSta
 function displaySearchResults() {
     const list = document.getElementById('searchResultsContainer'); list.innerHTML='';
     const data = cachedSearchResults;
-    const headerTitle = document.querySelector('#tab3 .section-title'); // Fixed notification selector
     
     if(!data || data.length === 0) {
         document.getElementById('placeholderTab3').style.display = 'block';
@@ -488,15 +491,22 @@ function displaySearchResults() {
     document.querySelectorAll('#searchResultsContainer .edit-btn').forEach(btn => btn.onclick = () => openEditForm(data.find(i => String(i.id) === btn.getAttribute('data-id')))); document.querySelectorAll('#searchResultsContainer .delete-btn').forEach(btn => btn.onclick = () => deleteTransaction(btn.getAttribute('data-id')));
 }
 
-// ---------------- TAB 4: TÌM KIẾM TỪ KHÓA (ACCORDION NÂNG CẤP) ----------------
+// ---------------- TAB 4: QUẢN LÝ TỪ KHÓA (GỌI FIREBASE CÁ NHÂN) ----------------
 window.loadKeywords = async function(isInit = false) {
     if(!isInit) showLoading(true, 'tab4');
     if(!isInit) document.getElementById('keywordsContainer').innerHTML = '';
     try {
-        const iconRes = await fetch(`${FIREBASE_URL}/categoryIcons.json`); const iconData = await iconRes.json(); if(iconData) window.customCategoryIcons = iconData;
-        const res = await fetch(`${FIREBASE_URL}/keywords.json`); let data = await res.json();
-        if(!data) { const gasRes = await fetch(proxyUrl + encodeURIComponent(`${apiUrl}?action=getKeywords&sheetId=${sheetId}`)); data = await gasRes.json(); }
-        cachedKeywords = data || []; window.categoryIconMap = {}; cachedKeywords.forEach(kw => { if (kw && kw.category && kw.icon) window.categoryIconMap[kw.category.trim()] = kw.icon.trim(); });
+        const iconRes = await fetch(`${FIREBASE_URL}/users/${chatId}/categoryIcons.json`); 
+        const iconData = await iconRes.json(); 
+        if(iconData) window.customCategoryIcons = iconData;
+        
+        const res = await fetch(`${FIREBASE_URL}/users/${chatId}/keywords.json`); 
+        let data = await res.json();
+        
+        cachedKeywords = data || []; 
+        window.categoryIconMap = {}; 
+        cachedKeywords.forEach(kw => { if (kw && kw.category && kw.icon) window.categoryIconMap[kw.category.trim()] = kw.icon.trim(); });
+        
         if(!isInit) displayKeywords();
     } catch(e) { if(!isInit) showToast(e.message, 'error'); } finally { if(!isInit) showLoading(false, 'tab4'); }
 };
@@ -563,14 +573,12 @@ function displayKeywords() {
 }
 
 // ---------------- CÁC HÀM MODALS GIAO DỊCH ----------------
-async function fetchCategories() { 
-    try { 
-        const res = await fetch(`${FIREBASE_URL}/categories.json`); 
-        let cats = await res.json(); 
-        if(!cats) { const gasRes = await fetch(proxyUrl + encodeURIComponent(`${apiUrl}?action=getCategories&sheetId=${sheetId}`)); cats = await gasRes.json(); } 
-        if (cats && Array.isArray(cats)) { cats.sort((a, b) => { if (a.toLowerCase() === 'khác') return 1; if (b.toLowerCase() === 'khác') return -1; return a.localeCompare(b, 'vi'); }); }
-        return cats || []; 
-    } catch(e) { return []; } 
+async function fetchCategories() {
+    if (!cachedKeywords || cachedKeywords.length === 0) await window.loadKeywords(true);
+    let cats = cachedKeywords.map(k => k.category);
+    cats = [...new Set(cats)]; // Loại bỏ trùng lặp
+    cats.sort((a, b) => { if (a.toLowerCase() === 'khác') return 1; if (b.toLowerCase() === 'khác') return -1; return a.localeCompare(b, 'vi'); });
+    return cats.length > 0 ? cats : ["Ăn uống", "Đi lại", "Mua sắm", "Khác"];
 }
 
 window.selectType = function(formId, type, el) { triggerHaptic('light'); document.getElementById(formId + 'Type').value = type; const pills = el.parentElement.querySelectorAll('.type-pill'); pills.forEach(p => p.classList.remove('income-active', 'expense-active')); if(type === 'Chi tiêu') el.classList.add('expense-active'); else el.classList.add('income-active'); };
@@ -579,24 +587,30 @@ window.closeAddForm = function() { document.getElementById('addModal').classList
 window.openEditForm = async function(tx) { if(!tx) return; triggerHaptic('light'); document.getElementById('modalOverlay').classList.add('show'); setTimeout(() => document.getElementById('editModal').classList.add('show'), 10); const pills = document.querySelectorAll('#editModal .type-pill'); pills.forEach(p => { if(p.textContent.includes('Thu nhập')) p.innerHTML = '<i class="fas fa-hand-holding-dollar" style="margin-right: 5px;"></i>Thu nhập'; else if(p.textContent.includes('Chi tiêu')) p.innerHTML = '<i class="fas fa-money-bill-transfer" style="margin-right: 5px;"></i>Chi tiêu'; }); document.getElementById('editTransactionId').value = tx.id; document.getElementById('editContent').value = tx.content; document.getElementById('editAmount').value = formatNumberWithCommas(tx.amount.toString()); document.getElementById('editNote').value = tx.note || ''; const [d,m,y] = tx.date.split('/'); document.getElementById('editDate').value = `${y}-${m}-${d}`; pills.forEach(p => { if(tx.type === 'Thu nhập' && p.textContent.includes('Thu nhập')) p.click(); if(tx.type === 'Chi tiêu' && p.textContent.includes('Chi tiêu')) p.click(); }); const catSel = document.getElementById('editCategory'); catSel.innerHTML = ''; const cats = await fetchCategories(); cats.forEach(c => { const opt = new Option(c, c); if(c === tx.category) opt.selected = true; catSel.appendChild(opt); }); };
 window.closeEditForm = function() { document.getElementById('editModal').classList.remove('show'); setTimeout(() => document.getElementById('modalOverlay').classList.remove('show'), 300); };
 window.closeAllModals = function() { closeAddForm(); closeEditForm(); if (document.getElementById('iconPickerModal')) document.getElementById('iconPickerModal').classList.remove('show'); if (document.getElementById('pdfPreviewModal')) document.getElementById('pdfPreviewModal').classList.remove('show'); };
+
 document.getElementById('addForm').onsubmit = async function(e) { e.preventDefault(); closeAddForm(); const [y,m,d] = document.getElementById('addDate').value.split('-'); const tx = { content: document.getElementById('addContent').value, amount: parseNumber(document.getElementById('addAmount').value), type: document.getElementById('addType').value, category: document.getElementById('addCategory').value, note: document.getElementById('addNote').value, date: `${d}/${m}/${y}`, action: 'addTransaction', sheetId }; await submitTx(tx); };
-document.getElementById('editForm').onsubmit = async function(e) { e.preventDefault(); closeEditForm(); const [y,m,d] = document.getElementById('editDate').value.split('-'); const tx = { id: document.getElementById('editTransactionId').value, content: document.getElementById('editContent').value, amount: parseNumber(document.getElementById('editAmount').value), type: document.getElementById('editType').value, category: document.getElementById('editCategory').value, note: document.getElementById('editNote').value, date: `${d}/${m}/${y}`, month: m, action: 'updateTransaction', sheetId }; await submitTx(tx); };
+document.getElementById('editForm').onsubmit = async function(e) { e.preventDefault(); closeEditForm(); const [y,m,d] = document.getElementById('editDate').value.split('-'); const tx = { id: document.getElementById('editTransactionId').value, content: document.getElementById('editContent').value, amount: parseNumber(document.getElementById('editAmount').value), type: document.getElementById('editType').value, category: document.getElementById('editCategory').value, note: document.getElementById('editNote').value, date: `${d}/${m}/${y}`, month: parseInt(m,10), action: 'updateTransaction', sheetId }; await submitTx(tx); };
 
 async function submitTx(tx) {
   try {
     showToast("Đang lưu giao dịch...", "info");
     if (tx.action === 'addTransaction') { let maxId = 0; const allLoadedTxs = [...(cachedTransactions?.data || []), ...(cachedChartData?.txs || []), ...(cachedSearchResults || [])]; allLoadedTxs.forEach(item => { if (item.id && String(item.id).startsWith('GD') && !String(item.id).includes('_')) { let num = parseInt(String(item.id).replace('GD', ''), 10); if (!isNaN(num) && num > maxId) maxId = num; } }); tx.id = "GD" + String(maxId + 1).padStart(3, '0'); }
     const month = parseInt(tx.date.split('/')[1], 10); const fbTx = { id: tx.id, date: tx.date, type: tx.type, content: tx.content, amount: tx.amount, category: tx.category, note: tx.note };
+    
     if (tx.action === 'addTransaction') { if (cachedTransactions?.data) cachedTransactions.data.unshift(fbTx); } else { [cachedTransactions?.data, cachedChartData?.txs, cachedSearchResults].forEach(arr => { if (!arr) return; const idx = arr.findIndex(i => String(i.id) === String(tx.id)); if (idx !== -1) arr[idx] = { ...arr[idx], ...fbTx }; }); }
     if(document.getElementById('tab1').classList.contains('active')) displayTransactions(); else if(document.getElementById('tab2').classList.contains('active')) updateTimeNavUI(); else if(document.getElementById('tab3').classList.contains('active')) displaySearchResults();
-    await fetch(`${FIREBASE_URL}/transactions/month_${month}/${tx.id}.json`, { method: 'PUT', body: JSON.stringify(fbTx) }); triggerHapticNotification('success'); showToast("Đã lưu giao dịch!", "success");
-    fetch(proxyUrl + encodeURIComponent(apiUrl), { method: 'POST', body: JSON.stringify(tx) }).catch(e => console.log("Lỗi backup Sheet:", e));
+    
+    // Đẩy lên Firebase thư mục cá nhân
+    await fetch(`${FIREBASE_URL}/transactions/users/${chatId}/month_${month}/${tx.id}.json`, { method: 'PUT', body: JSON.stringify(fbTx) }); 
+    triggerHapticNotification('success'); showToast("Đã lưu giao dịch!", "success");
+    
+    // Gọi Google Apps Script qua Proxy (Backup)
+    if (apiUrl) fetch(proxyUrl + encodeURIComponent(apiUrl), { method: 'POST', body: JSON.stringify(tx) }).catch(e => console.log("Lỗi backup Sheet:", e));
   } catch(e) { showToast(e.message, "error"); }
 }
 
 window.deleteTransaction = function(id) {
   closeEditForm(); triggerHaptic('medium'); 
-  
   showCustomConfirm(
       'Xóa giao dịch',
       `Bạn có chắc chắn muốn xóa giao dịch <strong>#${escapeHTML(id)}</strong> này không?`,
@@ -605,8 +619,15 @@ window.deleteTransaction = function(id) {
           let tx = null; if (cachedTransactions?.data) tx = cachedTransactions.data.find(i => String(i.id) === String(id)); if (!tx && cachedSearchResults) tx = cachedSearchResults.find(i => String(i.id) === String(id)); if (!tx && cachedChartData?.txs) tx = cachedChartData.txs.find(i => String(i.id) === String(id)); const monthToUpdate = tx ? parseInt(tx.date.split('/')[1], 10) : 1;
           [cachedTransactions?.data, cachedChartData?.txs, cachedSearchResults].forEach(arr => { if (!arr) return; const idx = arr.findIndex(i => String(i.id) === String(id)); if (idx !== -1) arr.splice(idx, 1); });
           if(document.getElementById('tab1').classList.contains('active')) displayTransactions(); else if(document.getElementById('tab2').classList.contains('active')) updateTimeNavUI(); else if(document.getElementById('tab3').classList.contains('active')) displaySearchResults(); 
+          
           showToast("Đang xóa giao dịch...", "info");
-          try { await fetch(`${FIREBASE_URL}/transactions/month_${monthToUpdate}/${id}.json`, { method: 'DELETE' }); triggerHapticNotification('success'); showToast("Đã xóa giao dịch!", "success"); fetch(proxyUrl + encodeURIComponent(apiUrl), { method: 'POST', body: JSON.stringify({action: 'deleteTransaction', id, month: monthToUpdate, sheetId}) }).catch(e => console.log("Lỗi xóa Sheet:", e)); } catch(e) { showToast(e.message, "error"); }
+          try { 
+              // Xóa khỏi thư mục cá nhân
+              await fetch(`${FIREBASE_URL}/transactions/users/${chatId}/month_${monthToUpdate}/${id}.json`, { method: 'DELETE' }); 
+              triggerHapticNotification('success'); showToast("Đã xóa giao dịch!", "success"); 
+              
+              if (apiUrl) fetch(proxyUrl + encodeURIComponent(apiUrl), { method: 'POST', body: JSON.stringify({action: 'deleteTransaction', id, month: monthToUpdate, sheetId}) }).catch(e => console.log("Lỗi xóa Sheet:", e)); 
+          } catch(e) { showToast(e.message, "error"); }
       }
   );
 };
@@ -623,7 +644,7 @@ window.exportToCSV = async function() {
 };
 
 // ==========================================
-// KHÔI PHỤC LOGIC PDF HOÀN CHỈNH BẢN XỊN NHẤT
+// BÁO CÁO PDF
 // ==========================================
 window.exportToPDF = function() {
     const isTab2 = document.getElementById('tab2').classList.contains('active');
@@ -644,8 +665,6 @@ window.exportToPDF = function() {
     const reportNameForFile = isTab2 ? (cachedChartData?.periodStr || "Bao_Cao") : formatDateToYYYYMMDD(new Date());
 
     const element = document.createElement('div');
-    
-    /* CHÚ Ý: HTML2PDF bắt buộc phải có CSS inline ở đây để kết xuất đúng bố cục trang A4 */
     element.style.width = '720px';
     element.style.minWidth = '720px'; 
     element.style.maxWidth = '720px'; 
@@ -951,7 +970,7 @@ window.exportToPDF = function() {
 };
 
 // ==========================================
-// TÍNH NĂNG CỬA SỔ "ICON PICKER" MỚI
+// TÍNH NĂNG CỬA SỔ "ICON PICKER" (CẬP NHẬT CHO SAAS)
 // ==========================================
 let pendingTags = [];
 window.openIconPickerModal = function() {
@@ -1024,9 +1043,26 @@ window.openIconPickerModal = function() {
             
             triggerHaptic('medium'); showLoading(true, 'tab4');
             try {
-                await fetch(`${FIREBASE_URL}/categoryIcons.json`, { method: 'PATCH', body: JSON.stringify({ [cat]: selectedIcon }) });
+                // Lưu Icon vào cấu hình cá nhân
+                await fetch(`${FIREBASE_URL}/users/${chatId}/categoryIcons.json`, { method: 'PATCH', body: JSON.stringify({ [cat]: selectedIcon }) });
                 window.customCategoryIcons[cat] = selectedIcon; 
-                await fetch(proxyUrl + encodeURIComponent(apiUrl), { method: 'POST', body: JSON.stringify({ action: 'updateCategoryIcon', category: cat, icon: selectedIcon, newKeywords: newKws, sheetId: sheetId }) });
+                
+                // Cập nhật cấu trúc Danh mục & Keywords
+                let kwObjIndex = cachedKeywords.findIndex(k => k.category === cat);
+                if (kwObjIndex >= 0) {
+                    cachedKeywords[kwObjIndex].icon = selectedIcon;
+                    if (newKws) cachedKeywords[kwObjIndex].keywords = newKws;
+                } else {
+                    cachedKeywords.push({ category: cat, icon: selectedIcon, keywords: newKws || "" });
+                }
+                
+                // Lưu mảng từ khóa mới lên Firebase
+                await fetch(`${FIREBASE_URL}/users/${chatId}/keywords.json`, { method: 'PUT', body: JSON.stringify(cachedKeywords) });
+                
+                // Bắn API gọi Worker đẩy lên Sheet
+                if (workerUrl) {
+                    fetch(`${workerUrl}/api/update_sheet_keywords`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ chatId: chatId, keywordsData: cachedKeywords }) }).catch(e => console.log(e));
+                }
 
                 showToast('Đã lưu cấu hình danh mục!', 'success'); closeIconPickerModal();
                 await window.initCategories(true); window.loadKeywords(false); 
@@ -1047,9 +1083,18 @@ window.openIconPickerModal = function() {
                 async () => {
                     showLoading(true, 'tab4');
                     try {
-                        await fetch(`${FIREBASE_URL}/categoryIcons/${cat}.json`, { method: 'DELETE' });
+                        // Xóa icon Firebase
+                        await fetch(`${FIREBASE_URL}/users/${chatId}/categoryIcons/${cat}.json`, { method: 'DELETE' });
                         delete window.customCategoryIcons[cat];
-                        await fetch(proxyUrl + encodeURIComponent(apiUrl), { method: 'POST', body: JSON.stringify({ action: 'deleteCategory', category: cat, sheetId: sheetId }) });
+                        
+                        // Lọc bỏ danh mục và cập nhật Firebase
+                        cachedKeywords = cachedKeywords.filter(k => k.category !== cat);
+                        await fetch(`${FIREBASE_URL}/users/${chatId}/keywords.json`, { method: 'PUT', body: JSON.stringify(cachedKeywords) });
+
+                        // Bắn API gọi Worker đẩy lên Sheet
+                        if (workerUrl) {
+                            fetch(`${workerUrl}/api/update_sheet_keywords`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ chatId: chatId, keywordsData: cachedKeywords }) }).catch(e => console.log(e));
+                        }
                         
                         showToast('Đã xóa danh mục thành công!', 'success'); closeIconPickerModal();
                         await window.initCategories(false); window.loadKeywords(false);
@@ -1217,7 +1262,17 @@ document.addEventListener('DOMContentLoaded', async () => {
               async () => {
                   showLoading(true, 'tab4'); 
                   try { 
-                      await fetch(proxyUrl + encodeURIComponent(apiUrl), { method: 'POST', body: JSON.stringify({ action: 'deleteKeyword', category: cat, keyword: currentEditKeyword, sheetId: sheetId }) }); 
+                      let kwObj = cachedKeywords.find(k => k.category === cat);
+                      if (kwObj && kwObj.keywords) {
+                          let kwArray = kwObj.keywords.split(',').map(k=>k.trim());
+                          kwArray = kwArray.filter(k => k !== currentEditKeyword);
+                          kwObj.keywords = kwArray.join(', ');
+                          
+                          await fetch(`${FIREBASE_URL}/users/${chatId}/keywords.json`, { method: 'PUT', body: JSON.stringify(cachedKeywords) });
+                          if (workerUrl) {
+                              fetch(`${workerUrl}/api/update_sheet_keywords`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ chatId: chatId, keywordsData: cachedKeywords }) }).catch(e=>console.log(e));
+                          }
+                      }
                       triggerHapticNotification('success'); 
                       showToast('Đã xóa từ khóa thành công!', 'success'); window.cancelEditKeyword(); window.loadKeywords(false); 
                   } catch(e) { showToast(e.message, 'error'); } finally { showLoading(false, 'tab4'); }
@@ -1272,16 +1327,33 @@ document.addEventListener('DOMContentLoaded', async () => {
   };
   
   document.getElementById('fetchKeywordsBtn').onclick = () => { triggerHaptic('light'); window.loadKeywords(false); };
+  
   document.getElementById('addKeywordBtn').onclick = async () => {
         triggerHaptic('light');
         const cat = document.getElementById('keywordCategory').value, kw = document.getElementById('keywordInput').value;
         if(!cat || !kw) return showToast('Vui lòng nhập đủ thông tin', 'warning');
         showLoading(true, 'tab4');
         try {
-            if (currentEditKeyword) await fetch(proxyUrl + encodeURIComponent(apiUrl), { method: 'POST', body: JSON.stringify({ action: 'deleteKeyword', category: cat, keyword: currentEditKeyword, sheetId: sheetId }) });
-            await fetch(proxyUrl + encodeURIComponent(apiUrl), { method: 'POST', body: JSON.stringify({ action: 'addKeyword', category: cat, keywords: kw, sheetId: sheetId }) });
+            let kwObj = cachedKeywords.find(k => k.category === cat);
+            if (!kwObj) {
+                kwObj = { category: cat, icon: "❗", keywords: kw };
+                cachedKeywords.push(kwObj);
+            } else {
+                let kwArray = kwObj.keywords ? kwObj.keywords.split(',').map(k=>k.trim()) : [];
+                if (currentEditKeyword) { kwArray = kwArray.filter(k => k !== currentEditKeyword); }
+                kw.split(',').forEach(newK => { if (!kwArray.includes(newK.trim())) kwArray.push(newK.trim()); });
+                kwObj.keywords = kwArray.join(', ');
+            }
+            
+            await fetch(`${FIREBASE_URL}/users/${chatId}/keywords.json`, { method: 'PUT', body: JSON.stringify(cachedKeywords) });
+            if (workerUrl) {
+                fetch(`${workerUrl}/api/update_sheet_keywords`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ chatId: chatId, keywordsData: cachedKeywords }) }).catch(e=>console.log(e));
+            }
+            
             triggerHapticNotification('success');
-            showToast(currentEditKeyword ? 'Cập nhật từ khóa thành công!' : 'Thêm từ khóa mới thành công!', 'success'); window.cancelEditKeyword(); window.loadKeywords(false);
+            showToast(currentEditKeyword ? 'Cập nhật từ khóa thành công!' : 'Thêm từ khóa mới thành công!', 'success'); 
+            window.cancelEditKeyword(); 
+            window.loadKeywords(false);
         } catch(e) { showToast(e.message, 'error'); } finally { showLoading(false, 'tab4'); }
   };
 
