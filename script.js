@@ -23,19 +23,17 @@ if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData
 async function secureFetch(path, method = 'GET', data = null) {
     if (!workerUrl) throw new Error("Lỗi: Không tìm thấy máy chủ bảo mật (workerUrl).");
     
-    // Lấy vé thông hành (chữ ký mã hóa) từ Telegram
     const tgInitData = window.Telegram?.WebApp?.initData;
     if (!tgInitData) throw new Error("Từ chối truy cập: Không có chữ ký bảo mật của Telegram!");
 
     const payload = { path: path, method: method };
     if (data) payload.data = data;
 
-    // Luôn gửi bằng phương thức POST tới Trạm Kiểm Soát của Cloudflare
     const res = await fetch(`${workerUrl}/api/secure_firebase`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': tgInitData // Dán tem bảo mật vào đây
+            'Authorization': tgInitData 
         },
         body: JSON.stringify(payload)
     });
@@ -252,7 +250,6 @@ window.openTab = function(tabId) {
 
 async function fetchMonthData(month) {
     try {
-        // Lấy dữ liệu qua API bảo mật
         const data = await secureFetch(`/transactions/users/${chatId}/month_${parseInt(month, 10)}.json`);
         if(data) return Object.values(data).filter(item => item !== null);
     } catch (e) {} return [];
@@ -606,7 +603,7 @@ function displayKeywords() {
 async function fetchCategories() {
     if (!cachedKeywords || cachedKeywords.length === 0) await window.loadKeywords(true);
     let cats = cachedKeywords.map(k => k.category);
-    cats = [...new Set(cats)]; // Loại bỏ trùng lặp
+    cats = [...new Set(cats)]; 
     cats.sort((a, b) => { if (a.toLowerCase() === 'khác') return 1; if (b.toLowerCase() === 'khác') return -1; return a.localeCompare(b, 'vi'); });
     return cats.length > 0 ? cats : ["Ăn uống", "Đi lại", "Mua sắm", "Khác"];
 }
@@ -630,12 +627,10 @@ async function submitTx(tx) {
     if (tx.action === 'addTransaction') { if (cachedTransactions?.data) cachedTransactions.data.unshift(fbTx); } else { [cachedTransactions?.data, cachedChartData?.txs, cachedSearchResults].forEach(arr => { if (!arr) return; const idx = arr.findIndex(i => String(i.id) === String(tx.id)); if (idx !== -1) arr[idx] = { ...arr[idx], ...fbTx }; }); }
     if(document.getElementById('tab1').classList.contains('active')) displayTransactions(); else if(document.getElementById('tab2').classList.contains('active')) updateTimeNavUI(); else if(document.getElementById('tab3').classList.contains('active')) displaySearchResults();
     
-    // Lưu giao dịch qua API bảo mật
     await secureFetch(`/transactions/users/${chatId}/month_${month}/${tx.id}.json`, 'PUT', fbTx);
     
     triggerHapticNotification('success'); showToast("Đã lưu giao dịch!", "success");
     
-    // Gọi Google Apps Script qua Proxy (Backup)
     if (apiUrl) fetch(proxyUrl + encodeURIComponent(apiUrl), { method: 'POST', body: JSON.stringify(tx) }).catch(e => console.log("Lỗi backup Sheet:", e));
   } catch(e) { showToast(e.message, "error"); }
 }
@@ -653,7 +648,6 @@ window.deleteTransaction = function(id) {
           
           showToast("Đang xóa giao dịch...", "info");
           try { 
-              // Xóa giao dịch qua API bảo mật
               await secureFetch(`/transactions/users/${chatId}/month_${monthToUpdate}/${id}.json`, 'DELETE'); 
               triggerHapticNotification('success'); showToast("Đã xóa giao dịch!", "success"); 
               
