@@ -514,19 +514,58 @@ function updateTimeNavUI() {
 }
 
 async function showCategoryDetail(cat, amt, color) {
+  // Chặn lỗi nếu chưa có dữ liệu báo cáo
+  if (!cachedChartData || !Array.isArray(cachedChartData.txs)) {
+    showToast("Chưa có dữ liệu báo cáo. Vui lòng tải lại tab Báo cáo.", "warning");
+    return;
+  }
+
   savedScrollPositionTab2 = window.scrollY || document.documentElement.scrollTop;
-  document.getElementById('tab2Overview').style.display='none';
-  const detailView = document.getElementById('categoryDetailView'); detailView.style.display='block'; detailView.classList.remove('slide-out-right'); detailView.classList.add('slide-in-right'); window.scrollTo(0, 0);
-  document.getElementById('categoryDetailTitle').textContent = cat; document.getElementById('categoryDetailTitle').style.color = color;
-  const totalAmtEl = document.getElementById('categoryDetailTotalAmt'); if(totalAmtEl) { const amtObj = formatCurrencyWithUnit(amt); totalAmtEl.innerHTML = `${amtObj.val}<span>${amtObj.unit}</span>`; totalAmtEl.style.color = color; }
+
+  const overview = document.getElementById('tab2Overview');
+  const detailView = document.getElementById('categoryDetailView');
+  if (overview) overview.style.display = 'none';
+  if (detailView) {
+    detailView.style.display = 'block';
+    detailView.classList.remove('slide-out-right');
+    detailView.classList.add('slide-in-right');
+  }
+  window.scrollTo(0, 0);
+
+  const titleEl = document.getElementById('categoryDetailTitle');
+  if (titleEl) { titleEl.textContent = cat; titleEl.style.color = color; }
+
+  const totalAmtEl = document.getElementById('categoryDetailTotalAmt');
+  if (totalAmtEl) { const amtObj = formatCurrencyWithUnit(amt); totalAmtEl.innerHTML = `${amtObj.val}<span>${amtObj.unit}</span>`; totalAmtEl.style.color = color; }
+
   const txs = cachedChartData.txs.filter(t => t.category === cat);
-  const detailHeader = document.getElementById('categoryDetailListTitle'); if(detailHeader) detailHeader.innerHTML = `Giao dịch chi tiết <span style="font-size: 0.75rem; color: var(--text-2); text-transform: none;">(Tổng: ${txs.length})</span>`;
-  const ctx = document.getElementById('categoryMonthlyChart').getContext('2d'); if (window.categoryMonthlyChartInstance) window.categoryMonthlyChartInstance.destroy();
-  let chartLabels = [], chartData = [];
-  if (cachedChartData.mode === 'weekly') { const map = {}; txs.forEach(t => { map[t.date] = (map[t.date]||0) + t.amount; }); chartLabels = Object.keys(map).map(d => `Ngày ${d.substring(0,5)}`); chartData = Object.values(map); }
-  else { const map = {}; txs.forEach(t => { const m = parseInt(t.date.split('/')[1]); map[m] = (map[m]||0) + t.amount; }); const allMonths = [...new Set(cachedChartData.txs.map(t => parseInt(t.date.split('/')[1])))].sort((a,b)=>a-b); chartLabels = allMonths.map(m => `Tháng ${m}`); chartData = allMonths.map(m => map[m] || 0); }
-  window.categoryMonthlyChartInstance = new Chart(ctx, { type: 'bar', data: { labels: chartLabels, datasets: [{label: cat, data: chartData, backgroundColor: color+'CC', borderColor: color, borderWidth: 1, borderRadius: 0, maxBarThickness: 20}] }, options: { responsive: true, maintainAspectRatio: false, layout: {padding:{top:10}}, scales: { x:{grid:{display:false}, ticks:{color:'#94A3B8', font:{size:10, family:'Plus Jakarta Sans'}}}, y:{ticks:{callback:v=>{ if(isPrivacyActive) return '***'; const vO = formatCurrencyWithUnit(v); return vO.val + vO.unit; }, color:'#94A3B8', font:{size:10, family:'Plus Jakarta Sans'}}, grid:{color:'rgba(255,255,255,0.05)'}} }, plugins: { legend:{display:false}, tooltip: {callbacks:{label:ctx=>{ if(isPrivacyActive) return '***'; const cO=formatCurrencyWithUnit(ctx.raw); return `${cO.val}${cO.unit}`; }}} } } });
+
+  const detailHeader = document.getElementById('categoryDetailListTitle');
+  if (detailHeader) detailHeader.innerHTML = `Giao dịch chi tiết <span style="font-size: 0.75rem; color: var(--text-2); text-transform: none;">(Tổng: ${txs.length})</span>`;
+
+  // ƯU TIÊN HIỂN THỊ DANH SÁCH GIAO DỊCH TRƯỚC (không phụ thuộc biểu đồ)
   displayCategoryTransactionsList(txs);
+
+  // Vẽ biểu đồ mini — bọc try/catch để nếu thiếu canvas vẫn KHÔNG chặn danh sách
+  try {
+    const canvasEl = document.getElementById('categoryMonthlyChart');
+    if (canvasEl && typeof Chart !== 'undefined') {
+      const ctx = canvasEl.getContext('2d');
+      if (window.categoryMonthlyChartInstance) window.categoryMonthlyChartInstance.destroy();
+      let chartLabels = [], chartData = [];
+      if (cachedChartData.mode === 'weekly') {
+        const map = {}; txs.forEach(t => { map[t.date] = (map[t.date]||0) + t.amount; });
+        chartLabels = Object.keys(map).map(d => `Ngày ${d.substring(0,5)}`); chartData = Object.values(map);
+      } else {
+        const map = {}; txs.forEach(t => { const m = parseInt(t.date.split('/')[1]); map[m] = (map[m]||0) + t.amount; });
+        const allMonths = [...new Set(cachedChartData.txs.map(t => parseInt(t.date.split('/')[1])))].sort((a,b)=>a-b);
+        chartLabels = allMonths.map(m => `Tháng ${m}`); chartData = allMonths.map(m => map[m] || 0);
+      }
+      window.categoryMonthlyChartInstance = new Chart(ctx, { type: 'bar', data: { labels: chartLabels, datasets: [{label: cat, data: chartData, backgroundColor: color+'CC', borderColor: color, borderWidth: 1, borderRadius: 0, maxBarThickness: 20}] }, options: { responsive: true, maintainAspectRatio: false, layout: {padding:{top:10}}, scales: { x:{grid:{display:false}, ticks:{color:'#94A3B8', font:{size:10, family:'Plus Jakarta Sans'}}}, y:{ticks:{callback:v=>{ if(isPrivacyActive) return '***'; const vO = formatCurrencyWithUnit(v); return vO.val + vO.unit; }, color:'#94A3B8', font:{size:10, family:'Plus Jakarta Sans'}}, grid:{color:'rgba(255,255,255,0.05)'}} }, plugins: { legend:{display:false}, tooltip: {callbacks:{label:ctx=>{ if(isPrivacyActive) return '***'; const cO=formatCurrencyWithUnit(ctx.raw); return `${cO.val}${cO.unit}`; }}} } } });
+    }
+  } catch (err) {
+    console.log("Lỗi vẽ biểu đồ chi tiết danh mục:", err);
+  }
 }
 
 function displayCategoryTransactionsList(txs) {
