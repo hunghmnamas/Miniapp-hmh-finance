@@ -19,7 +19,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
   <!-- Dùng bản rời (unbundled) thay vì html2pdf.bundle.min.js vì bản bundle
        đóng gói nội bộ (webpack) không phơi html2canvas/jsPDF ra window,
-       trong khi script.js cần gọi trực tiếp 2 thư viện này. -->
+       trong khi script cần gọi trực tiếp 2 thư viện này. -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -559,6 +559,11 @@
     </button>
   </div>
 
-  <script src="script.js" defer></script>
+  <!-- Cac file JS da tach tu script.js (nap theo dung thu tu phu thuoc) -->
+  <script src="app-core.js" defer></script>
+  <script src="app-reports.js" defer></script>
+  <script src="app-crud.js" defer></script>
+  <script src="app-export.js" defer></script>
+  <script src="app-init.js" defer></script>
 </body>
 </html>
