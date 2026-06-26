@@ -1227,7 +1227,35 @@ document.getElementById('deleteIconCategoryBtn').onclick = function() {
         }
     );
 };
+// ---------------- THIẾT LẬP GIAO DIỆN & TAB CÀI ĐẶT ----------------
+function applyTheme(theme) {
+    document.body.classList.remove('theme-auto', 'theme-light', 'theme-dark');
+    document.body.classList.add(`theme-${theme || 'auto'}`);
+}
 
+function initSettingsUI() {
+    // Đổ giá trị đã lưu vào các control trong Tab Cài đặt
+    const elTheme = document.getElementById('settingTheme');
+    if (elTheme) elTheme.value = localStorage.getItem('settingTheme') || 'auto';
+
+    const elTab = document.getElementById('settingDefaultTab');
+    if (elTab) elTab.value = localStorage.getItem('settingDefaultTab') || 'tab1';
+
+    const elWeek = document.getElementById('settingStartOfWeek');
+    if (elWeek) elWeek.value = localStorage.getItem('settingStartOfWeek') || '1';
+
+    const elCur = document.getElementById('settingCurrencyFormat');
+    if (elCur) elCur.value = localStorage.getItem('settingCurrencyFormat') || 'full';
+
+    const elPriv = document.getElementById('settingPrivacyMode');
+    if (elPriv) elPriv.checked = (localStorage.getItem('settingPrivacyMode') === 'true');
+
+    const elHap = document.getElementById('settingHaptic');
+    if (elHap) elHap.checked = (localStorage.getItem('settingHaptic') !== 'false');
+
+    const elChat = document.getElementById('settingChatId');
+    if (elChat) elChat.textContent = chatId || '—';
+}
 // ---------------- KHỞI ĐỘNG APP ----------------
 document.addEventListener('DOMContentLoaded', async function() {
     // Áp dụng giao diện & quyền riêng tư đã lưu
