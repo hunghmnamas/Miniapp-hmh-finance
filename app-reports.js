@@ -34,6 +34,9 @@ window.fetchTransactions = async function(forceRefresh = false) {
   if (!forceRefresh && cachedTransactions && cachedTransactions.cacheKey === cacheKey) { displayTransactions(); return; }
 
   showLoading(true, 'tab1');
+  // Trong lúc chờ tải dữ liệu, hiển thị dấu — mờ thay cho 0 ₫ cho hợp lý
+  ['heroExpenseMain','heroIncome','heroBalanceSub'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = '<span style="opacity:0.45;">—</span>'; });
+  const heroCmpEl = document.getElementById('heroExpenseCompare'); if (heroCmpEl) heroCmpEl.innerHTML = '';
   try {
     const dNum = parseInt(d, 10); const mNum = parseInt(m, 10); const yNum = parseInt(y, 10);
     const pdNum = currDateObj.getDate(); const pmNum = currDateObj.getMonth() + 1; const pyNum = currDateObj.getFullYear();
