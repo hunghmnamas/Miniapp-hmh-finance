@@ -175,15 +175,26 @@ function applyPrivacyMode() {
     updatePrivacyUI(true);
 }
 
-// HÀM ĐỊNH DẠNG TIỀN NÂNG CẤP: Chống lỗi 50Kđ
+// HÀM ĐỊNH DẠNG TIỀN NÂNG CẤP: Chống lỗi 50Kđ + hỗ trợ tiền triệu dạng 1m520
 function formatCurrencyWithUnit(value) {
     const format = localStorage.getItem('settingCurrencyFormat') || 'full';
     let num = parseInt(value.toString().replace(/[^0-9-]/g, '')) || 0;
     
     if (format === 'short' && Math.abs(num) >= 1000) {
-        let shortNum = Math.round(num / 1000);
+        const sign = num < 0 ? '-' : '';
+        const absNum = Math.abs(num);
+        // Từ 1 triệu trở lên: hiển thị gọn dạng 1m520 (m = triệu, 3 số sau là phần nghìn)
+        if (absNum >= 1000000) {
+            const totalK = Math.round(absNum / 1000);
+            const millions = Math.floor(totalK / 1000);
+            const remainderK = totalK % 1000;
+            const val = remainderK === 0 ? `${millions}m` : `${millions}m${String(remainderK).padStart(3, '0')}`;
+            return { val: sign + val, unit: '' };
+        }
+        // Dưới 1 triệu: giữ dạng K
+        let shortNum = Math.round(absNum / 1000);
         let formattedShort = shortNum.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-        return { val: formattedShort + 'K', unit: '' }; 
+        return { val: sign + formattedShort + 'K', unit: '' }; 
     }
     
     return { val: num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'), unit: 'đ' };
@@ -197,7 +208,7 @@ function formatFullCurrency(value) {
 
 function escapeHTML(str) {
     if (!str) return '';
-    return str.toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    return str.toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\"/g, '&quot;').replace(/'/g, '&#039;');
 }
 
 window.showCustomConfirm = function(title, messageHtml, confirmText, onConfirm) {
@@ -210,7 +221,7 @@ window.showCustomConfirm = function(title, messageHtml, confirmText, onConfirm) 
     }
     const modal = document.createElement('div');
     modal.className = 'custom-confirm-modal';
-    modal.innerHTML = `<div style="padding:24px 20px 20px; text-align:center;"><div class="custom-confirm-icon"><i class="fas fa-trash-alt"></i></div><h3 class="custom-confirm-title">${title}</h3><p class="custom-confirm-message">${messageHtml}</p></div><div class="custom-confirm-actions"><button id="customConfirmCancel" class="custom-confirm-cancel">Hủy</button><button id="customConfirmOk" class="custom-confirm-ok">${confirmText}</button></div>`;
+    modal.innerHTML = `<div style=\"padding:24px 20px 20px; text-align:center;\"><div class=\"custom-confirm-icon\"><i class=\"fas fa-trash-alt\"></i></div><h3 class=\"custom-confirm-title\">${title}</h3><p class=\"custom-confirm-message\">${messageHtml}</p></div><div class=\"custom-confirm-actions\"><button id=\"customConfirmCancel\" class=\"custom-confirm-cancel\">Hủy</button><button id=\"customConfirmOk\" class=\"custom-confirm-ok\">${confirmText}</button></div>`;
     overlay.innerHTML = ''; overlay.appendChild(modal); overlay.style.display = 'flex';
     void overlay.offsetWidth; overlay.style.opacity = '1'; modal.style.transform = 'scale(1)'; modal.style.opacity = '1';
     const closeModal = () => { overlay.style.opacity = '0'; modal.style.transform = 'scale(0.9)'; modal.style.opacity = '0'; setTimeout(() => { overlay.style.display = 'none'; }, 200); };
@@ -224,7 +235,7 @@ function processToastQueue() {
   isShowingToast = true; const { message, type } = toastQueue.shift();
   const toast = document.createElement('div'); toast.className = `premium-toast toast-${type}`;
   let icon = type === 'success' ? 'fa-check-circle' : (type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle');
-  toast.innerHTML = `<i class="fas ${icon} toast-icon"></i><span class="toast-message">${escapeHTML(message)}</span><div class="toast-progress"></div>`;
+  toast.innerHTML = `<i class=\"fas ${icon} toast-icon\"></i><span class=\"toast-message\">${escapeHTML(message)}</span><div class=\"toast-progress\"></div>`;
   document.body.appendChild(toast); void toast.offsetWidth; toast.classList.add('show');
   setTimeout(() => { toast.classList.remove('show'); setTimeout(() => { toast.remove(); processToastQueue(); }, 400); }, 3000);
 }
@@ -267,29 +278,29 @@ function getRawFaIconName(catName) {
 }
 
 function getCategoryIcon(cat) {
-    if (!cat) return '<i class="fas fa-box-open"></i>';
+    if (!cat) return '<i class=\"fas fa-box-open\"></i>';
     const rawFaIcon = getRawFaIconName(cat);
     if (rawFaIcon) {
         let finalIcon = rawFaIcon;
         if (!finalIcon.includes('fa-')) finalIcon = `fa-${finalIcon}`;
         if (!finalIcon.includes('fas ')) finalIcon = `fas ${finalIcon}`;
-        return `<i class="${finalIcon}"></i>`;
+        return `<i class=\"${finalIcon}\"></i>`;
     }
     const firstLetter = Array.from(cat.trim())[0].toUpperCase();
-    return `<span style="font-weight: 900; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.9em; line-height: 1;">${firstLetter}</span>`;
+    return `<span style=\"font-weight: 900; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.9em; line-height: 1;\">${firstLetter}</span>`;
 }
 
 function getCompareHTML(current, prev, type, text = 'so với kỳ trước') {
     let zeroObj = formatCurrencyWithUnit(0);
-    if (prev === 0 && current === 0) return `<span style="color: var(--text-2); font-weight: 500;">− ${zeroObj.val}${zeroObj.unit} ${escapeHTML(text)}</span>`;
+    if (prev === 0 && current === 0) return `<span style=\"color: var(--text-2); font-weight: 500;\">− ${zeroObj.val}${zeroObj.unit} ${escapeHTML(text)}</span>`;
     let diff = current - prev;
-    if (diff === 0) return `<span style="color: var(--text-2); font-weight: 500;">− Bằng ${escapeHTML(text)}</span>`;
+    if (diff === 0) return `<span style=\"color: var(--text-2); font-weight: 500;\">− Bằng ${escapeHTML(text)}</span>`;
     let isUp = diff > 0;
-    let icon = isUp ? '<i class="fas fa-arrow-up"></i>' : '<i class="fas fa-arrow-down"></i>';
+    let icon = isUp ? '<i class=\"fas fa-arrow-up\"></i>' : '<i class=\"fas fa-arrow-down\"></i>';
     let arrowText = isUp ? (type === 'balance' ? 'Dư' : 'Tăng') : (type === 'balance' ? 'Âm' : 'Giảm');
     let colorVar = type === 'expense' ? (isUp ? 'var(--expense)' : 'var(--income)') : (isUp ? 'var(--income)' : 'var(--expense)');
     let diffObj = formatCurrencyWithUnit(Math.abs(diff));
-    return `<span style="color: ${colorVar}; font-weight: 600;">${icon} ${arrowText} ${diffObj.val}${diffObj.unit} ${escapeHTML(text)}</span>`;
+    return `<span style=\"color: ${colorVar}; font-weight: 600;\">${icon} ${arrowText} ${diffObj.val}${diffObj.unit} ${escapeHTML(text)}</span>`;
 }
 
 window.openTab = function(tabId) {
@@ -297,7 +308,7 @@ window.openTab = function(tabId) {
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById(tabId).classList.add('active');
-  const btn = document.querySelector(`.nav-btn[data-tab="${tabId}"]`);
+  const btn = document.querySelector(`.nav-btn[data-tab=\"${tabId}\"]`);
   if(btn) btn.classList.add('active');
 };
 
