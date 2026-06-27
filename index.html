@@ -18,7 +18,7 @@
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
   <!-- Dùng bản rời (unbundled) thay vì html2pdf.bundle.min.js vì bản bundle
-       đóng gói nội bộ (webpack) không phơi html2canvas/jsPDF ra window,
+       đóng gói nội bộ (webpack) không phơi html2canvas/jSPDF ra window,
        trong khi script cần gọi trực tiếp 2 thư viện này. -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -248,7 +248,7 @@
               <div class="settings-info"><i class="fas fa-coins"></i><span>Định dạng tiền</span></div>
               <select id="settingCurrencyFormat" class="settings-select">
                   <option value="full">Đầy đủ (VD: 50.000đ)</option>
-                  <option value="short">Rút gọn (VD: 50K)</option>
+                  <option value="short">Rút gọn (VD: 50K / 1m5)</option>
               </select>
           </div>
           <div class="settings-row">
@@ -295,6 +295,13 @@
           <div><i class="fas fa-university"></i> <strong>Ngân hàng:</strong> SHB</div>
           <div><i class="fas fa-user"></i> <strong>Chủ tài khoản:</strong> Hoang Manh Hung</div>
           <div><i class="fas fa-credit-card"></i> <strong>Số tài khoản:</strong> 6666.6789.9999</div>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="chart-title">Liên hệ</div>
+        <div class="info-list">
+          <div><i class="fab fa-telegram" style="color: #0088cc;"></i> <strong>Telegram:</strong> <a href="https://t.me/masterhmh" target="_blank" rel="noopener" style="color: var(--primary);">@masterhmh</a></div>
+          <div><i class="fab fa-facebook" style="color: #1877f2;"></i> <strong>Facebook:</strong> <a href="https://facebook.com/masterhmh" target="_blank" rel="noopener" style="color: var(--primary);">facebook.com/masterhmh</a></div>
         </div>
       </div>
       <div class="qr-container">
