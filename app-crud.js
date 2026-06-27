@@ -123,7 +123,22 @@ window.closeConfirmDeleteModal = function() { const m = document.getElementById(
 async function submitTx(tx) {
   try {
     showToast("Đang lưu giao dịch...", "info");
-    if (tx.action === 'addTransaction') { tx.id = generateSafeTransactionId(); }
+    if (tx.action === 'addTransaction') {
+      let maxNum = 0;
+      try {
+        const allData = await secureFetch(`/transactions/users/${chatId}.json`);
+        if (allData && typeof allData === 'object') {
+          Object.values(allData).forEach(monthObj => {
+            if (monthObj && typeof monthObj === 'object') {
+              Object.values(monthObj).forEach(item => {
+                if (item && item.id) { const mm = /^GD(\d+)$/.exec(String(item.id)); if (mm) { const nn = parseInt(mm[1], 10); if (nn > maxNum) maxNum = nn; } }
+              });
+            }
+          });
+        }
+      } catch (e) {}
+      tx.id = 'GD' + String(maxNum + 1).padStart(3, '0');
+    }
     const month = parseInt(tx.date.split('/')[1], 10); const fbTx = { id: tx.id, date: tx.date, type: tx.type, content: tx.content, amount: tx.amount, category: tx.category, note: tx.note };
     if (tx.action === 'addTransaction') { if (cachedTransactions?.data) cachedTransactions.data.unshift(fbTx); } else { [cachedTransactions?.data, cachedChartData?.txs, cachedSearchResults].forEach(arr => { if (!arr) return; const idx = arr.findIndex(i => String(i.id) === String(tx.id)); if (idx !== -1) arr[idx] = { ...arr[idx], ...fbTx }; }); }
     if(document.getElementById('tab1').classList.contains('active')) displayTransactions(); else if(document.getElementById('tab2').classList.contains('active')) updateTimeNavUI(); else if(document.getElementById('tab3').classList.contains('active')) displaySearchResults();
