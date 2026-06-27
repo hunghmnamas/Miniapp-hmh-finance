@@ -186,6 +186,18 @@ async function getTransactionsInRange(startDate, endDate) {
     } catch (e) { return []; }
 }
 
+// ---------------- ĐỊNH DẠNG TIỀN RÚT GỌN CHO Ô LỊCH (luôn k/tr/tỷ, không xuống dòng) ----------------
+function formatCalShort(value) {
+    let num = parseInt(value.toString().replace(/[^0-9-]/g, '')) || 0;
+    const sign = num < 0 ? '-' : '';
+    const absNum = Math.abs(num);
+    if (absNum < 1000) return sign + absNum.toString();
+    const fmt = (n) => (Math.round(n * 100) / 100).toString().replace('.', ',');
+    if (absNum >= 1000000000) return sign + fmt(absNum / 1000000000) + 'tỷ';
+    if (absNum >= 1000000) return sign + fmt(absNum / 1000000) + 'tr';
+    return sign + fmt(absNum / 1000) + 'k';
+}
+
 function renderCalendar(txs, dateObj, mode) {
     const grid = document.getElementById('calendarGrid');
     const box = document.getElementById('calendarStatbox');
@@ -224,10 +236,8 @@ function renderCalendar(txs, dateObj, mode) {
             const bal = data.inc - data.exp;
             let balHTML = `<span class="calendar-balance neutral">0</span>`;
             if (data.inc > 0 || data.exp > 0) {
-                const incObj = data.inc > 0 ? formatCurrencyWithUnit(data.inc) : null;
-                const expObj = data.exp > 0 ? formatCurrencyWithUnit(data.exp) : null;
-                let incStr = incObj ? `<span class="calendar-balance positive cal-row-amt">+${incObj.val}${incObj.unit}</span>` : '';
-                let expStr = expObj ? `<span class="calendar-balance negative cal-row-amt">-${expObj.val}${expObj.unit}</span>` : '';
+                let incStr = data.inc > 0 ? `<span class="calendar-balance positive cal-row-amt">+${formatCalShort(data.inc)}</span>` : '';
+                let expStr = data.exp > 0 ? `<span class="calendar-balance negative cal-row-amt">-${formatCalShort(data.exp)}</span>` : '';
                 balHTML = `<div class="cal-amt-col">${incStr}${expStr}</div>`;
             }
 
@@ -261,10 +271,8 @@ function renderCalendar(txs, dateObj, mode) {
             const data = dailyData[dayKey] || { inc: 0, exp: 0 }; const bal = data.inc - data.exp;
             let balHTML = `<span class="calendar-balance neutral">0</span>`;
             if (data.inc > 0 || data.exp > 0) {
-                const incObj2 = data.inc > 0 ? formatCurrencyWithUnit(data.inc) : null;
-                const expObj2 = data.exp > 0 ? formatCurrencyWithUnit(data.exp) : null;
-                let incStr2 = incObj2 ? `<span class="calendar-balance positive cal-row-amt">+${incObj2.val}${incObj2.unit}</span>` : '';
-                let expStr2 = expObj2 ? `<span class="calendar-balance negative cal-row-amt">-${expObj2.val}${expObj2.unit}</span>` : '';
+                let incStr2 = data.inc > 0 ? `<span class="calendar-balance positive cal-row-amt">+${formatCalShort(data.inc)}</span>` : '';
+                let expStr2 = data.exp > 0 ? `<span class="calendar-balance negative cal-row-amt">-${formatCalShort(data.exp)}</span>` : '';
                 balHTML = `<div class="cal-amt-col">${incStr2}${expStr2}</div>`;
             }
 
