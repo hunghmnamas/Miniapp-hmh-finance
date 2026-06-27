@@ -209,11 +209,14 @@ function renderCalendar(txs, dateObj, mode) {
     const startOfWeek = parseInt(localStorage.getItem('settingStartOfWeek') || '1', 10);
     
     if (mode === 'weekly') {
-        if (header) header.style.display = 'none';
+        if (header) {
+            header.style.display = 'grid';
+            if (startOfWeek === 1) { header.innerHTML = `<span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span>`; }
+            else { header.innerHTML = `<span>CN</span><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span>`; }
+        }
         grid.style.gridTemplateColumns = 'repeat(7, 1fr)';
         grid.style.borderTop = '1px solid var(--border-color)';
         grid.style.borderRadius = '10px';
-        const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
         for (let i = 0; i < 7; i++) {
             const d = new Date(dateObj); d.setDate(d.getDate() + i);
             const dayKey = formatDateToYYYYMMDD(d);
@@ -229,7 +232,7 @@ function renderCalendar(txs, dateObj, mode) {
             }
 
             const dayDiv = document.createElement('div'); dayDiv.className = 'calendar-day';
-            dayDiv.innerHTML = `<span style="font-size:0.65rem; color:var(--text-3); font-weight:600;">${dayNames[d.getDay()]}</span><span class="calendar-date">${d.getDate()}</span>${balHTML}`;
+            dayDiv.innerHTML = `<span class="calendar-date">${d.getDate()}</span>${balHTML}`;
             
             dayDiv.onclick = () => { triggerHaptic('light'); document.querySelectorAll('.calendar-day').forEach(el => el.classList.remove('selected-day')); dayDiv.classList.add('selected-day'); openDailyDetailView(d.getDate(), d.getMonth() + 1, d.getFullYear(), txs); };
             grid.appendChild(dayDiv);
