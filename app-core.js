@@ -175,7 +175,7 @@ function applyPrivacyMode() {
     updatePrivacyUI(true);
 }
 
-// HÀM ĐỊNH DẠNG TIỀN NÂNG CẤP: Chống lỗi 50Kđ + hỗ trợ tiền triệu dạng 1M520
+// HÀM ĐỊNH DẠNG TIỀN: rút gọn kiểu Việt (k = nghìn, tr = triệu, tỷ), giữ chế độ đầy đủ
 function formatCurrencyWithUnit(value) {
     const format = localStorage.getItem('settingCurrencyFormat') || 'full';
     let num = parseInt(value.toString().replace(/[^0-9-]/g, '')) || 0;
@@ -183,18 +183,13 @@ function formatCurrencyWithUnit(value) {
     if (format === 'short' && Math.abs(num) >= 1000) {
         const sign = num < 0 ? '-' : '';
         const absNum = Math.abs(num);
-        // Từ 1 triệu trở lên: hiển thị gọn dạng 1M520 (M = triệu, 3 số sau là phần nghìn)
-        if (absNum >= 1000000) {
-            const millions = Math.floor(absNum / 1000000);
-            const remainderK = Math.floor((absNum % 1000000) / 1000);
-            const val = remainderK === 0 ? `${millions}M` : `${millions}M${String(remainderK).padStart(3, '0')}`;
-            return { val: sign + val, unit: '' };
-        }
-        // Dưới 1 triệu: hiển thị đủ phần lẻ dạng 48K750 (K = nghìn, 3 số sau là phần lẻ)
-        const thousands = Math.floor(absNum / 1000);
-        const remainder = absNum % 1000;
-        const val = remainder === 0 ? `${thousands}K` : `${thousands}K${String(remainder).padStart(3, '0')}`;
-        return { val: sign + val, unit: '' }; 
+        // Làm tròn 2 chữ số thập phân, bỏ số 0 thừa, dùng dấu phẩy kiểu Việt Nam
+        const fmt = (n) => (Math.round(n * 100) / 100).toString().replace('.', ',');
+        let val;
+        if (absNum >= 1000000000) val = fmt(absNum / 1000000000) + 'tỷ';
+        else if (absNum >= 1000000) val = fmt(absNum / 1000000) + 'tr';
+        else val = fmt(absNum / 1000) + 'k';
+        return { val: sign + val, unit: '' };
     }
     
     return { val: num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'), unit: 'đ' };
