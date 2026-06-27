@@ -201,16 +201,16 @@ async function getTransactionsInRange(startDate, endDate) {
     } catch (e) { return []; }
 }
 
-// ---------------- ĐỊNH DẠNG TIỀN RÚT GỌN CHO Ô LỊCH (luôn k/tr/tỷ, không xuống dòng) ----------------
+// ---------------- ĐỊNH DẠNG TIỀN RÚT GỌN CHO Ô LỊCH (chuẩn quốc tế K/M/B, không xuống dòng) ----------------
 function formatCalShort(value) {
     let num = parseInt(value.toString().replace(/[^0-9-]/g, '')) || 0;
     const sign = num < 0 ? '-' : '';
     const absNum = Math.abs(num);
     if (absNum < 1000) return sign + absNum.toString();
-    const fmt = (n) => (Math.round(n * 100) / 100).toString().replace('.', ',');
-    if (absNum >= 1000000000) return sign + fmt(absNum / 1000000000) + 'tỷ';
-    if (absNum >= 1000000) return sign + fmt(absNum / 1000000) + 'tr';
-    return sign + fmt(absNum / 1000) + 'k';
+    const fmt = (n) => (Math.round(n * 100) / 100).toString();
+    if (absNum >= 1000000000) return sign + fmt(absNum / 1000000000) + 'B';
+    if (absNum >= 1000000) return sign + fmt(absNum / 1000000) + 'M';
+    return sign + fmt(absNum / 1000) + 'K';
 }
 
 function renderCalendar(txs, dateObj, mode) {

@@ -175,7 +175,7 @@ function applyPrivacyMode() {
     updatePrivacyUI(true);
 }
 
-// HÀM ĐỊNH DẠNG TIỀN: rút gọn kiểu Việt (k = nghìn, tr = triệu, tỷ), giữ chế độ đầy đủ
+// HÀM ĐỊNH DẠNG TIỀN: chuẩn quốc tế (K = nghìn, M = triệu, B = tỷ), giữ chế độ đầy đủ
 function formatCurrencyWithUnit(value) {
     const format = localStorage.getItem('settingCurrencyFormat') || 'full';
     let num = parseInt(value.toString().replace(/[^0-9-]/g, '')) || 0;
@@ -183,22 +183,22 @@ function formatCurrencyWithUnit(value) {
     if (format === 'short' && Math.abs(num) >= 1000) {
         const sign = num < 0 ? '-' : '';
         const absNum = Math.abs(num);
-        // Làm tròn 2 chữ số thập phân, bỏ số 0 thừa, dùng dấu phẩy kiểu Việt Nam
-        const fmt = (n) => (Math.round(n * 100) / 100).toString().replace('.', ',');
+        // Giữ tối đa 2 chữ số thập phân (không làm tròn về số nguyên), dùng dấu chấm thập phân chuẩn quốc tế
+        const fmt = (n) => (Math.round(n * 100) / 100).toString();
         let val;
-        if (absNum >= 1000000000) val = fmt(absNum / 1000000000) + 'tỷ';
-        else if (absNum >= 1000000) val = fmt(absNum / 1000000) + 'tr';
-        else val = fmt(absNum / 1000) + 'k';
+        if (absNum >= 1000000000) val = fmt(absNum / 1000000000) + 'B';
+        else if (absNum >= 1000000) val = fmt(absNum / 1000000) + 'M';
+        else val = fmt(absNum / 1000) + 'K';
         return { val: sign + val, unit: '' };
     }
     
-    return { val: num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'), unit: 'đ' };
+    return { val: num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ','), unit: ' ₫' };
 }
 
 // Định dạng tiền đầy đủ (dùng cho xuất PDF)
 function formatFullCurrency(value) {
     let num = parseInt(value.toString().replace(/[^0-9-]/g, '')) || 0;
-    return num.toLocaleString('vi-VN') + 'đ';
+    return num.toLocaleString('en-US') + ' ₫';
 }
 
 function escapeHTML(str) {
@@ -252,7 +252,7 @@ function formatNumberWithCommas(value) {
     if (!value) return '';
     let val = value.toString().replace(/[^0-9]/g, '');
     if (!val) return '';
-    return parseInt(val, 10).toLocaleString('vi-VN');
+    return parseInt(val, 10).toLocaleString('en-US');
 }
 function getColorByIndex(i) { const c = ['#6366F1', '#F43F5E', '#10B981', '#F59E0B', '#06B6D4', '#EC4899', '#84CC16', '#8B5CF6', '#F97316', '#14B8A6', '#EAB308', '#D946EF', '#22C55E', '#0EA5E9', '#A855F7', '#EF4444', '#64748B', '#059669', '#DC2626', '#4F46E5', '#C026D3']; return c[i % c.length]; }
 
