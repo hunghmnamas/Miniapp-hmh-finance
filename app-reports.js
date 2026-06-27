@@ -134,34 +134,49 @@ function displayTransactions() {
 }
 
 // ---------------- CÁC BÁO CÁO ----------------
-function getWeekNumber(d) { 
-    const startOfWeek = parseInt(localStorage.getItem('settingStartOfWeek') || '1', 10);
-    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate())); 
-    const dayNum = d.getUTCDay() || 7;
-    if (startOfWeek === 1) d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    else d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() + 1));
-    var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1)); 
-    return Math.ceil((((d - yearStart) / 86400000) + 1)/7); 
+// Lấy ngày đầu tuần (theo cài đặt Thứ 2 / Chủ nhật) của tuần chứa `date`
+function getWeekStart(date) {
+    const startDay = parseInt(localStorage.getItem('settingStartOfWeek') || '1', 10);
+    const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const dow = d.getDay();
+    const diff = (startDay === 1) ? ((dow === 0) ? -6 : (1 - dow)) : (-dow);
+    d.setDate(d.getDate() + diff);
+    return d;
 }
 
-function formatWeekInput(date) { return `${date.getFullYear()}-W${String(getWeekNumber(date)).padStart(2, '0')}`; }
+// Số tuần theo chuẩn ISO (luôn đúng "tuần lịch"), đồng nhất cho cả kiểu T2 và CN
+function getWeekNumber(date) {
+    const startDay = parseInt(localStorage.getItem('settingStartOfWeek') || '1', 10);
+    const start = getWeekStart(date);
+    const thursday = new Date(start);
+    thursday.setDate(start.getDate() + (startDay === 1 ? 3 : 4));
+    const t = new Date(Date.UTC(thursday.getFullYear(), thursday.getMonth(), thursday.getDate()));
+    const yearStart = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+    return Math.ceil((((t - yearStart) / 86400000) + 1) / 7);
+}
 
-function getDateFromWeekString(weekStr) { 
+function formatWeekInput(date) {
+    const startDay = parseInt(localStorage.getItem('settingStartOfWeek') || '1', 10);
+    const start = getWeekStart(date);
+    const thursday = new Date(start);
+    thursday.setDate(start.getDate() + (startDay === 1 ? 3 : 4));
+    return `${thursday.getFullYear()}-W${String(getWeekNumber(date)).padStart(2, '0')}`;
+}
+
+function getDateFromWeekString(weekStr) {
     const startDay = parseInt(localStorage.getItem('settingStartOfWeek') || '1', 10);
     if (!weekStr) return null;
-    const [yearStr, weekPart] = weekStr.split('-W'); 
-    if(!yearStr || !weekPart) return null; 
-    const year = parseInt(yearStr); const week = parseInt(weekPart); 
-    const simple = new Date(year, 0, 1 + (week - 1) * 7); 
-    const dow = simple.getDay(); 
-    const start = new Date(simple); 
-    if (startDay === 1) {
-        if (dow <= 4) start.setDate(simple.getDate() - simple.getDay() + 1);
-        else start.setDate(simple.getDate() + 8 - simple.getDay());
-    } else {
-        start.setDate(simple.getDate() - simple.getDay());
-    }
-    return start; 
+    const [yearStr, weekPart] = weekStr.split('-W');
+    if (!yearStr || !weekPart) return null;
+    const year = parseInt(yearStr); const week = parseInt(weekPart);
+    const jan4 = new Date(year, 0, 4);
+    const jan4Dow = jan4.getDay() || 7;
+    const week1Monday = new Date(jan4);
+    week1Monday.setDate(jan4.getDate() - (jan4Dow - 1));
+    const monday = new Date(week1Monday);
+    monday.setDate(week1Monday.getDate() + (week - 1) * 7);
+    if (startDay === 0) monday.setDate(monday.getDate() - 1);
+    return monday;
 }
 
 async function getTransactionsInRange(startDate, endDate) {
