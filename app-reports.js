@@ -2,6 +2,19 @@
 // PHẦN 2/5: TAB 1 GIAO DỊCH + CÁC BÁO CÁO (calendar, charts, detail modal)
 // =====================================================================
 
+// ---------------- HELPER: SẮP XẾP GIAO DỊCH MỚI -> CŨ ----------------
+function sortTxByDateDesc(arr) {
+  if (!Array.isArray(arr)) return arr;
+  return arr.sort((a, b) => {
+    const pa = (a && a.date) ? a.date.split('/') : ['0','0','0'];
+    const pb = (b && b.date) ? b.date.split('/') : ['0','0','0'];
+    const da = new Date(parseInt(pa[2], 10), parseInt(pa[1], 10) - 1, parseInt(pa[0], 10));
+    const db = new Date(parseInt(pb[2], 10), parseInt(pb[1], 10) - 1, parseInt(pb[0], 10));
+    if (db - da !== 0) return db - da;
+    return String(b.id).localeCompare(String(a.id));
+  });
+}
+
 // ---------------- TAB 1: GIAO DỊCH ----------------
 window.fetchTransactions = async function(forceRefresh = false) {
   const tDate = document.getElementById('transactionDate').value;
@@ -374,7 +387,7 @@ function showCategoryDetail(cat) {
   document.getElementById('detailModalTitle').textContent = cat.toUpperCase(); 
   document.getElementById('detailModalTitle').style.color = 'var(--primary)';
   
-  const txs = cachedChartData.txs.filter(t => t.category === cat);
+  const txs = sortTxByDateDesc(cachedChartData.txs.filter(t => t.category === cat));
   let totalInc = 0, totalExp = 0;
   txs.forEach(t => { if(t.type === 'Thu nhập') totalInc += t.amount; else totalExp += t.amount; });
   
@@ -398,12 +411,12 @@ function showCategoryDetail(cat) {
 function openDailyDetailView(d, m, y, allTxs) {
     const dNum = parseInt(d, 10); const mNum = parseInt(m, 10); const yNum = parseInt(y, 10);
     
-    const dayTxs = allTxs.filter(t => { 
+    const dayTxs = sortTxByDateDesc(allTxs.filter(t => { 
         if (!t || !t.date) return false; 
         const parts = t.date.split('/'); 
         if (parts.length !== 3) return false; 
         return parseInt(parts[0], 10) === dNum && parseInt(parts[1], 10) === mNum && parseInt(parts[2], 10) === yNum; 
-    });
+    }));
 
     const detailModal = document.getElementById('detailModal');
     document.getElementById('modalOverlay').classList.add('show');
