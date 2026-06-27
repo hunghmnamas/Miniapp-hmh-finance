@@ -185,16 +185,16 @@ function formatCurrencyWithUnit(value) {
         const absNum = Math.abs(num);
         // Từ 1 triệu trở lên: hiển thị gọn dạng 1m520 (m = triệu, 3 số sau là phần nghìn)
         if (absNum >= 1000000) {
-            const totalK = Math.round(absNum / 1000);
-            const millions = Math.floor(totalK / 1000);
-            const remainderK = totalK % 1000;
+            const millions = Math.floor(absNum / 1000000);
+            const remainderK = Math.floor((absNum % 1000000) / 1000);
             const val = remainderK === 0 ? `${millions}m` : `${millions}m${String(remainderK).padStart(3, '0')}`;
             return { val: sign + val, unit: '' };
         }
-        // Dưới 1 triệu: giữ dạng K
-        let shortNum = Math.round(absNum / 1000);
-        let formattedShort = shortNum.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-        return { val: sign + formattedShort + 'K', unit: '' }; 
+        // Dưới 1 triệu: hiển thị đủ phần lẻ dạng 48k750 (k = nghìn, 3 số sau là phần lẻ)
+        const thousands = Math.floor(absNum / 1000);
+        const remainder = absNum % 1000;
+        const val = remainder === 0 ? `${thousands}K` : `${thousands}k${String(remainder).padStart(3, '0')}`;
+        return { val: sign + val, unit: '' }; 
     }
     
     return { val: num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.'), unit: 'đ' };
