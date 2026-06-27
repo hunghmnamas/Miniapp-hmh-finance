@@ -229,11 +229,11 @@ h1 { font-size: 1.1rem; font-weight: 800; color: var(--primary-light); margin: 1
 .stat-compare { font-size: 0.6rem; text-align: left; line-height: 1.4; width: 100%; }
 .stat-compare span { background: transparent !important; padding: 0 !important; }
 
-.calendar-header { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.72rem; font-weight: 700; color: var(--text-2); border: 1px solid var(--border-color); border-bottom: none; border-radius: 10px 10px 0 0; overflow: hidden; }
-.calendar-header span { padding: 10px 0; border-right: 1px solid var(--border-color); }
+.calendar-header { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.72rem; font-weight: 700; color: var(--text-2); background: var(--bg-card2); border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; margin-bottom: 8px; }
+.calendar-header span { padding: 9px 0; }
 .calendar-header span:last-child { border-right: none; }
-.calendar-grid { display: grid; gap: 0; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 10px 10px; overflow: hidden; }
-.calendar-day { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 5px 1px 4px; border-radius: 0; cursor: pointer; transition: background 0.15s ease; border: none; border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); min-height: 58px; background: transparent; overflow: hidden; box-sizing: border-box; width: 100%; }
+.calendar-grid { display: grid; gap: 0; border: 1px solid var(--border-color) !important; border-top: 1px solid var(--border-color) !important; border-radius: 10px !important; overflow: hidden; }
+.calendar-day { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 4px 1px 3px; border-radius: 0; cursor: pointer; transition: background 0.15s ease; border: none; border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); min-height: 40px; background: transparent; overflow: hidden; box-sizing: border-box; width: 100%; }
 .calendar-day:nth-child(7n) { border-right: none; }
 .calendar-day:hover:not(.empty) { background: var(--bg-card2); }
 .calendar-day.empty { pointer-events: none; background: rgba(255,255,255,0.01); }
