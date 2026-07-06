@@ -1,0 +1,217 @@
+/* ============================================================================
+   upgrade.css - Nav bar + Overlays + Privacy + Tinh nang moi (nap SAU styles.css)
+   Tu chua toan bo style cua nav/fab (styles.css khong con rule nav).
+   ============================================================================ */
+
+/* ---------- THANH NAV: 4 TAB + NUT FAB TACH RIENG + PILL INDICATOR ---------- */
+.bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 400px; height: auto; background: transparent; box-shadow: none; border: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 0; z-index: 1000; }
+.bottom-nav::before, .bottom-nav::after { display: none !important; }
+
+/* Cum 4 tab: nen kinh mo, bo tron 32px. container-type=inline-size => cac tab con
+   co the tu thu nho theo be rong THUC TE cua cum nay (xem @container ben duoi). */
+.nav-tabs-group { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 2px; flex: 1 1 auto; min-width: 0; height: 64px; padding: 0 4px; background: var(--nav-bg); backdrop-filter: var(--glass-effect); -webkit-backdrop-filter: var(--glass-effect); border-radius: 32px; border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 10px 40px rgba(0,0,0,0.2), inset 0 1px 1px rgba(255,255,255,0.1); container-type: inline-size; }
+
+/* Nut tab: cao bang thanh nav (62px); icon tren, chu duoi sat nhau.
+   overflow:hidden + label ellipsis => noi dung KHONG BAO GIO tran ra ngoai pill. */
+.nav-btn { flex: 1 1 0; min-width: 0; max-width: 100%; overflow: hidden; position: relative; z-index: 1; height: 62px; padding: 0 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; background: transparent; border: none; border-radius: 26px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.nav-btn:active { transform: scale(0.94); }
+.nav-icon-wrap { width: 32px; height: 32px; min-width: 32px; min-height: 32px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: var(--text-2); background: transparent; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.nav-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.65rem; font-weight: 700; color: var(--text-2); margin-top: -4px; transition: color 0.3s ease, font-size 0.2s ease; }
+.nav-btn:hover .nav-icon-wrap { color: var(--primary-light); background: rgba(255,255,255,0.05); transform: translateY(-2px) scale(1.1); }
+.nav-btn:hover .nav-label { color: var(--primary-light); }
+
+/* Pill indicator truot: vien trong suot 6px + background-clip padding-box => offset deu 4 phia, dong tam voi thanh nav */
+.nav-indicator { position: absolute; left: 0; top: 0; z-index: 0; height: 62px; border: 6px solid transparent; border-radius: 999px; background: rgba(148,163,184,0.28); background-clip: padding-box; -webkit-background-clip: padding-box; opacity: 0; pointer-events: none; transition: transform 0.34s cubic-bezier(0.4,0,0.2,1), width 0.34s cubic-bezier(0.4,0,0.2,1), opacity 0.2s ease; }
+
+/* Tab dang chon: chi doi mau icon/chu, pill dam nhan phan nen */
+.nav-btn.active { background: transparent !important; }
+.nav-btn.active .nav-icon-wrap { background: transparent !important; color: var(--primary-light) !important; box-shadow: none !important; transform: none !important; }
+.nav-btn.active .nav-label { color: var(--primary-light) !important; font-weight: 800; }
+
+/* ---------- THU NHO NOI DUNG TAB KHI CUM NAV HEP (desktop mo khung nho) ----------
+   Do theo be rong THUC TE cua .nav-tabs-group (container query), khong phai vw,
+   nen icon + chu tu co lai vua khung o moi kich thuoc, khong tran ra ngoai pill. */
+@container (max-width: 340px) {
+  .nav-icon-wrap { width: 29px; height: 29px; min-width: 29px; min-height: 29px; font-size: 1.02rem; }
+  .nav-label { font-size: 0.6rem; }
+}
+@container (max-width: 300px) {
+  .nav-icon-wrap { width: 26px; height: 26px; min-width: 26px; min-height: 26px; font-size: 0.94rem; }
+  .nav-label { font-size: 0.55rem; letter-spacing: -0.02em; }
+}
+@container (max-width: 268px) {
+  .nav-icon-wrap { width: 24px; height: 24px; min-width: 24px; min-height: 24px; font-size: 0.86rem; }
+  .nav-label { font-size: 0.5rem; }
+}
+
+/* Nut FAB (+) tach rieng ben phai */
+.fab-btn { flex-shrink: 0; width: 58px; height: 58px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.35); background: var(--grad-primary); color: #fff; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 10px 30px rgba(6,182,212,0.45), inset 0 1px 1px rgba(255,255,255,0.2); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s ease; }
+.fab-btn:hover { box-shadow: 0 12px 34px rgba(6,182,212,0.6); filter: brightness(1.05); }
+.fab-btn:active { transform: scale(0.92); }
+.fab-btn.active { transform: rotate(45deg); }
+
+/* ---------- MENU FAB ---------- */
+.fab-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.45); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); opacity: 0; pointer-events: none; transition: opacity 0.25s ease; z-index: 1550; }
+.fab-backdrop.show { opacity: 1; pointer-events: auto; }
+.fab-menu { position: fixed; right: 22px; bottom: 100px; display: flex; flex-direction: column; align-items: flex-end; gap: 14px; opacity: 0; transform: translateY(24px) scale(0.96); transform-origin: bottom right; pointer-events: none; transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1); z-index: 1600; }
+.fab-menu.show { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.fab-item { display: flex; align-items: center; gap: 12px; background: transparent; border: none; cursor: pointer; padding: 0; }
+.fab-item-label { background: var(--bg-card); backdrop-filter: var(--glass-effect); -webkit-backdrop-filter: var(--glass-effect); padding: 8px 14px; border-radius: 12px; font-size: 0.85rem; font-weight: 700; color: var(--text-1); box-shadow: 0 4px 14px rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.15); white-space: nowrap; }
+.fab-item-icon { width: 46px; height: 46px; border-radius: 50%; background: var(--bg-surface); backdrop-filter: var(--glass-effect); -webkit-backdrop-filter: var(--glass-effect); display: flex; align-items: center; justify-content: center; color: var(--primary-light); font-size: 1.05rem; box-shadow: 0 4px 14px rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.18); transition: transform 0.2s ease; }
+.fab-item:hover .fab-item-icon { transform: scale(1.08); }
+.fab-item:active .fab-item-icon { transform: scale(0.94); }
+.fab-item-icon.income { color: var(--income); }
+.fab-item-icon.expense { color: var(--expense); }
+
+/* ---------- KHUNG DIEN THOAI (Telegram desktop / man hinh rong) ----------
+   Telegram desktop KHONG cho web app tu dat/keo kich thuoc cua so (khong co API).
+   Vi vay ta khoa noi dung app vao khung ~430px CAN GIUA o MOI kich thuoc cua so:
+   - Dien thoai (hep hon 430px): van co gian binh thuong, khong doi.
+   - May tinh (rong hon 430px): noi dung luon can giua dung ty le nhu tren dien
+     thoai => mo len la CAN NGAY, khong con phai tu keo dan chieu ngang. */
+.content-wrapper { max-width: 430px; }
+.modal-sheet { max-width: 430px; }
+/* Khi cua so rong hon khung (nav bi khoa 400px, nut + nam giua man hinh) => neo
+   menu FAB thang hang voi nut + thay vi dinh sat mep phai cua so. */
+@media (min-width: 432px) {
+  .fab-menu { right: calc(50% - 200px); }
+}
+
+/* ---------- TRANG TOAN MAN HINH (Cai dat / Gioi thieu) ---------- */
+body.fullscreen-open { overflow: hidden; }
+.fullscreen-page { position: fixed; inset: 0; z-index: 3000; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 0 16px 48px; background-color: var(--bg-base); background-image: radial-gradient(circle at 15% 20%, rgba(6,182,212,0.15) 0%, transparent 40%), radial-gradient(circle at 85% 80%, rgba(59,130,246,0.15) 0%, transparent 40%); transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1); }
+.fullscreen-page.show { transform: translateX(0); }
+.fs-inner { max-width: 430px; margin: 0 auto; }
+.fs-header { position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px 0 12px; margin-bottom: 6px; background: transparent; z-index: 2; }
+.fs-title { order: 1; font-size: 1.2rem; font-weight: 800; color: var(--text-1); text-transform: uppercase; letter-spacing: -0.01em; }
+.fs-back { order: 2; width: auto; min-height: 42px; padding: 8px 16px; border-radius: 22px; gap: 8px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-1); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.95rem; transition: all 0.2s ease; }
+.fs-back:hover { background: var(--bg-card2); color: var(--primary-light); }
+.fs-back:active { transform: scale(0.94); }
+.fs-back-label { font-size: 0.9rem; font-weight: 700; }
+
+/* ---------- THANH DIEU KHIEN AN/HIEN LICH TAB 2 ---------- */
+#timeNavContainer { display: none !important; }
+.cal-ctrl-bar { display: none; align-items: center; justify-content: space-between; gap: 8px; background: var(--bg-card); backdrop-filter: var(--glass-effect); -webkit-backdrop-filter: var(--glass-effect); border: 1px solid rgba(255,255,255,0.15); border-radius: var(--radius-md); padding: 6px 10px; margin-bottom: 10px; }
+.cal-ctrl-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.cal-ctrl-icon { color: var(--primary-light); font-size: 0.95rem; flex-shrink: 0; }
+#calCtrlLabel { font-weight: 700; color: var(--text-1); font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-ctrl-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+/* Nut caret + mui ten tien/lui: vong tron nho, mui ten chiem ty le lon; bong don gian.
+   Ep len layer GPU rieng (translateZ + backface-visibility + will-change) de tranh
+   loi iOS Safari lam box-shadow bi loang/chong khi nam trong vung backdrop-filter. */
+.cal-ctrl-arrow, .cal-ctrl-toggle { width: 24px; height: 24px; padding: 0; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; background: var(--bg-card2); border: 1px solid var(--border-color); color: var(--text-2); cursor: pointer; border-radius: 50%; font-size: 0.82rem; line-height: 1; box-shadow: 0 1px 2px rgba(0,0,0,0.22); transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.15s ease; -webkit-backface-visibility: hidden; backface-visibility: hidden; will-change: transform; transform: translateZ(0); }
+.cal-ctrl-arrow:hover, .cal-ctrl-toggle:hover { color: var(--primary-light); background: var(--primary-alpha); border-color: rgba(6,182,212,0.35); }
+.cal-ctrl-arrow:active, .cal-ctrl-toggle:active { transform: scale(0.9) translateZ(0); }
+.cal-ctrl-toggle { color: var(--primary-light); }
+.cal-ctrl-toggle i { transition: transform 0.3s ease; }
+/* Mui ten bi mo khi ky lien ke khong co du lieu (tuong lai hoac ngoai pham vi) */
+.cal-ctrl-arrow:disabled, .cal-ctrl-arrow.nav-disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; background: transparent; border-color: transparent; color: var(--text-2); box-shadow: none; transform: translateZ(0); }
+#calendarWidget.cal-collapsed #calendarStatbox { display: none !important; }
+#calendarWidget.cal-collapsed .cal-ctrl-toggle i { transform: rotate(180deg); }
+
+/* ---------- O CHON NGAY FORM: hien thi dd/MM/yyyy bang lop phu ---------- */
+input[type="date"].date-native { color: transparent !important; text-align: left !important; }
+input[type="date"].date-native::-webkit-datetime-edit { color: transparent !important; }
+input[type="date"].date-native::-webkit-date-and-time-value { color: transparent !important; text-align: left !important; }
+.date-field-wrap { position: relative; }
+.date-display { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 0.95rem; font-weight: 500; color: var(--text-1); pointer-events: none; z-index: 1; }
+
+/* ---------- TAB 1: o date goc trong suot phu len dong ngay ---------- */
+.hero-date-tap { position: relative; display: inline-flex; align-items: center; gap: 4px; }
+.hero-date-native { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: none; background: transparent; opacity: 0; -webkit-appearance: none; appearance: none; cursor: pointer; }
+
+/* ---------- NUT DONG X CHO MODAL TRUOT ---------- */
+.modal-close-x { position: absolute; top: 14px; right: 16px; width: 34px; height: 34px; border-radius: 50%; background: var(--bg-card2); border: 1px solid var(--border-color); color: var(--text-1); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 6; font-size: 0.95rem; transition: all 0.2s ease; }
+.modal-close-x:hover { background: var(--expense-bg); color: var(--expense); border-color: rgba(244,63,94,0.3); }
+.modal-close-x:active { transform: scale(0.9); }
+
+/* ---------- HIEU UNG CHUYEN VIEW (slide) ---------- */
+.slide-in-right { animation: slideInRight 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.slide-out-right { animation: slideOutRight 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+.fade-in-view { animation: fadeInView 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
+@keyframes slideInRight { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes slideOutRight { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(40px); } }
+@keyframes fadeInView { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+
+/* ---------- CHE DO AN SO DU (PRIVACY MODE ***) ---------- */
+body.privacy-on .hero-balance,
+body.privacy-on .hero-stat-val,
+body.privacy-on .tx-amount,
+body.privacy-on .stat-num,
+body.privacy-on .cat-progress-amt,
+body.privacy-on #detailTotalIncome,
+body.privacy-on #detailTotalExpense,
+body.privacy-on #detailTotalBalance,
+body.privacy-on .cal-row-amt,
+body.privacy-on .calendar-balance,
+body.privacy-on .legend-pct {
+    font-size: 0 !important;
+    letter-spacing: 0 !important;
+    color: transparent !important;
+}
+body.privacy-on .hero-balance span,
+body.privacy-on .tx-amount span {
+    display: none !important;
+}
+body.privacy-on .hero-balance::after,
+body.privacy-on .hero-stat-val::after,
+body.privacy-on .tx-amount::after,
+body.privacy-on .stat-num::after,
+body.privacy-on .cat-progress-amt::after,
+body.privacy-on #detailTotalIncome::after,
+body.privacy-on #detailTotalExpense::after,
+body.privacy-on #detailTotalBalance::after,
+body.privacy-on .calendar-balance::after,
+body.privacy-on .legend-pct::after {
+    content: '***';
+    visibility: visible;
+    display: inline-block;
+    color: inherit;
+}
+body.privacy-on .hero-balance::after,
+body.privacy-on .hero-stat-val::after {
+    color: white !important;
+}
+body.privacy-on .hero-balance::after { font-size: 2.2rem; transform: translateY(4px); }
+body.privacy-on .hero-stat-val::after { font-size: 1.05rem; }
+body.privacy-on .tx-amount::after { font-size: 1.1rem; }
+body.privacy-on .stat-num::after { font-size: 1.05rem; }
+body.privacy-on .cat-progress-amt::after { font-size: 0.95rem; }
+body.privacy-on #detailTotalIncome::after,
+body.privacy-on #detailTotalExpense::after,
+body.privacy-on #detailTotalBalance::after { font-size: 1.1rem; }
+body.privacy-on .calendar-balance::after { font-size: 0.55rem; }
+body.privacy-on .legend-pct::after { font-size: 0.75rem; }
+body.privacy-on #heroExpenseCompare,
+body.privacy-on .stat-compare {
+    display: none !important;
+}
+
+/* ---------- FIX UI ICON PICKER: BO CUON LONG NHAU ----------
+   Truoc day #iconGridContainer co scroll rieng (max-height 240px) NAM TRONG vung
+   scroll cua than modal => cuon long nhau, vuot chon icon rat "dinh"/kho tren dt.
+   Bo scroll rieng cua luoi icon => CA modal chi cuon 1 lop duy nhat, vuot muot. */
+.icon-grid.icon-grid-scrollable { max-height: none !important; min-height: 0 !important; overflow-y: visible !important; }
+/* O nhap ten danh muc & vung nhap tu khoa: chua vao giua khi ban phim hien len */
+#iconPickerCategory, #tagInputArea, #tagInputField { scroll-margin-top: 20px; scroll-margin-bottom: 140px; }
+
+/* ---------- O NHAP TU KHOA: can giua chu theo chieu doc (tren/duoi bang nhau) ----------
+   O .tag-input-container dung chung class .field-input (co padding doc lon) nen
+   dong chu placeholder bi dinh len tren. Ep flex + can giua theo chieu doc de
+   khoang cach tren va duoi bang nhau. Them cursor:text de cham vao dau trong o cung go duoc. */
+.tag-input-container { display: flex !important; align-items: center !important; flex-wrap: wrap; gap: 6px; min-height: 48px; cursor: text; }
+.tag-input-container .tag-input-field { flex: 1; min-width: 120px; align-self: center; }
+
+/* ---------- LICH THANG TAB 2: to nen pill cho cac ngay thuoc TUAN HIEN TAI ----------
+   Tuan chua hom nay se co mau nen khac (amber nhat) de noi bat so voi cac ngay con lai.
+   Van giu nguyen kieu o "hom nay" (cyan) va o "dang chon" bang selector uu tien cao hon. */
+.calendar-day.current-week { background: rgba(255, 184, 0, 0.16); }
+.calendar-day.current-week.today { background: rgba(6, 182, 212, 0.30); }
+.calendar-day.current-week.selected-day { background: var(--primary-alpha); }
+
+/* ---------- LICH THANG TAB 2: hien AM LICH goc phai tren moi o (PA1) ----------
+   So am nho, mo (text-3) o goc phai tren. Mung 1 hien "1/<thang am>", to dam.
+   Ram (15) & mung 1 to mau TIM (khong trung mau do cua so tien) de de nhan biet. */
+.calendar-day { position: relative; }
+.calendar-lunar { position: absolute; top: 2px; right: 3px; font-size: 0.5rem; font-weight: 600; line-height: 1; color: var(--text-3); pointer-events: none; }
+.calendar-lunar.lunar-special { color: #A855F7; font-weight: 800; }

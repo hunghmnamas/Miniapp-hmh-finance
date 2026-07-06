@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="upgrade.css">
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
   <!-- Dùng bản rời (unbundled) thay vì html2pdf.bundle.min.js vì bản bundle
@@ -28,10 +29,12 @@
     <div class="app-branding">©masterhmh</div>
     
     <div id="tab1" class="tab-content active">
+      <input type="date" id="transactionDate" style="display:none;">
       <div class="hero-card">
         <div class="hero-date-nav">
           <button id="prevDayBtn" class="date-nav-btn"><i class="fas fa-chevron-left"></i></button>
           <div class="hero-date" id="displayCurrentDate">Hôm nay, ...</div>
+          <i class="fas fa-caret-down" style="color: rgba(255,255,255,0.6); font-size: 0.75rem; cursor: pointer;"></i>
           <button id="nextDayBtn" class="date-nav-btn"><i class="fas fa-chevron-right"></i></button>
         </div>
         
@@ -51,22 +54,6 @@
             <div class="hero-stat-label"><i class="fas fa-wallet"></i> Số dư</div>
             <div class="hero-stat-val" id="heroBalanceSub"><span style="opacity:0.45;">—</span></div>
           </div>
-        </div>
-      </div>
-      
-      <div class="quick-actions">
-        <div class="qa-btn qa-btn-relative" onclick="try{ document.getElementById('transactionDate').showPicker(); } catch(e){}">
-          <div class="qa-icon filter"><i class="fas fa-calendar-day"></i></div>
-          <span class="qa-label">Lọc ngày</span>
-          <input type="date" id="transactionDate" class="hidden-picker">
-        </div>
-        <div class="qa-btn" onclick="openAddForm()">
-          <div class="qa-icon add"><i class="fas fa-plus"></i></div>
-          <span class="qa-label">Thêm mới</span>
-        </div>
-        <div class="qa-btn" onclick="openSearchModal()">
-          <div class="qa-icon search"><i class="fas fa-search"></i></div>
-          <span class="qa-label">Tìm kiếm</span>
         </div>
       </div>
 
@@ -158,11 +145,24 @@
             <button class="btn-soft m-0 flex-1" onclick="exportToPDF()"><i class="fas fa-file-pdf text-expense-color"></i> Xuất báo cáo PDF</button>
           </div>
 
-          <div id="calendarStatbox" class="info-card" style="display: none; margin-bottom: 16px; padding: 12px;">
-             <div class="calendar-header">
-                 <span>CN</span><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span>
-             </div>
-             <div id="calendarGrid" class="calendar-grid"></div>
+          <div id="calendarWidget">
+            <div id="calCtrlBar" class="cal-ctrl-bar">
+               <div class="cal-ctrl-left">
+                  <i class="fas fa-calendar-alt cal-ctrl-icon"></i>
+                  <span id="calCtrlLabel">Lịch thu chi</span>
+                  <button id="calToggleBtn" class="cal-ctrl-toggle" type="button" title="Ẩn / hiện lịch"><i class="fas fa-chevron-up"></i></button>
+               </div>
+               <div class="cal-ctrl-right">
+                  <button id="calPrevBtn" class="cal-ctrl-arrow" type="button"><i class="fas fa-chevron-left"></i></button>
+                  <button id="calNextBtn" class="cal-ctrl-arrow" type="button"><i class="fas fa-chevron-right"></i></button>
+               </div>
+            </div>
+            <div id="calendarStatbox" class="info-card" style="display: none; margin-bottom: 16px; padding: 12px;">
+               <div class="calendar-header">
+                   <span>CN</span><span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span>
+               </div>
+               <div id="calendarGrid" class="calendar-grid"></div>
+            </div>
           </div>
 
           <div id="placeholderTab2" class="empty-state" style="display: none;">Dữ liệu báo cáo sẽ hiển thị ở đây</div>
@@ -215,9 +215,11 @@
       <div class="keywords-list" id="keywordsContainer"></div>
     </div>
 
-    <div id="tab4" class="tab-content">
-      <div class="section-header">
-        <span class="section-title">Cài Đặt</span>
+    <div id="settingsPage" class="fullscreen-page">
+     <div class="fs-inner">
+      <div class="fs-header">
+        <button class="fs-back" type="button" onclick="closeFullscreen('settingsPage')"><i class="fas fa-arrow-left"></i></button>
+        <span class="fs-title">Cài đặt</span>
       </div>
 
       <div class="settings-group-title"><i class="fas fa-palette"></i> Hiển thị & Trải nghiệm</div>
@@ -278,11 +280,14 @@
               <i class="fas fa-trash"></i> Xóa tất cả dữ liệu!
           </div>
       </div>
+     </div>
     </div>
 
-    <div id="tab5" class="tab-content">
-      <div class="section-header">
-        <span class="section-title">Giới Thiệu</span>
+    <div id="aboutPage" class="fullscreen-page">
+     <div class="fs-inner">
+      <div class="fs-header">
+        <button class="fs-back" type="button" onclick="closeFullscreen('aboutPage')"><i class="fas fa-arrow-left"></i></button>
+        <span class="fs-title">Giới thiệu</span>
       </div>
       <div class="info-card">
         <div class="chart-title">Về MiniApp</div>
@@ -309,6 +314,7 @@
           <img id="qrImage" class="qr-image" src="https://i.pinimg.com/736x/7c/13/53/7c135389e26cbc6460626deb9e2aa5c6.jpg" alt="QR Code">
         </div>
       </div>
+     </div>
     </div>
 
     <div id="modalOverlay" class="overlay" style="display: none;" onclick="closeAllModals()"></div>
@@ -543,27 +549,46 @@
       </div>
     </div>
 
+  <div id="fabBackdrop" class="fab-backdrop" onclick="closeFabMenu()"></div>
+  <div id="fabMenu" class="fab-menu">
+    <button class="fab-item" type="button" onclick="fabAddIncome()">
+      <span class="fab-item-label">Thêm thu nhập</span>
+      <span class="fab-item-icon income"><i class="fas fa-hand-holding-dollar"></i></span>
+    </button>
+    <button class="fab-item" type="button" onclick="fabAddExpense()">
+      <span class="fab-item-label">Thêm chi tiêu</span>
+      <span class="fab-item-icon expense"><i class="fas fa-money-bill-transfer"></i></span>
+    </button>
+    <button class="fab-item" type="button" onclick="fabSearch()">
+      <span class="fab-item-label">Tìm kiếm</span>
+      <span class="fab-item-icon"><i class="fas fa-search"></i></span>
+    </button>
+    <button class="fab-item" type="button" onclick="fabSettings()">
+      <span class="fab-item-label">Cài đặt</span>
+      <span class="fab-item-icon"><i class="fas fa-cog"></i></span>
+    </button>
+    <button class="fab-item" type="button" onclick="fabAbout()">
+      <span class="fab-item-label">Giới thiệu</span>
+      <span class="fab-item-icon"><i class="fas fa-user"></i></span>
+    </button>
+  </div>
+
   <div class="bottom-nav">
-    <button class="nav-btn active" data-tab="tab1">
-      <div class="nav-icon-wrap"><i class="fas fa-exchange-alt"></i></div>
-      <span class="nav-label">Giao dịch</span>
-    </button>
-    <button class="nav-btn" data-tab="tab2">
-      <div class="nav-icon-wrap"><i class="fas fa-chart-pie"></i></div>
-      <span class="nav-label">Báo cáo</span>
-    </button>
-    <button class="nav-btn" data-tab="tab3">
-      <div class="nav-icon-wrap"><i class="fas fa-tags"></i></div>
-      <span class="nav-label">Từ khóa</span>
-    </button>
-    <button class="nav-btn" data-tab="tab4">
-      <div class="nav-icon-wrap"><i class="fas fa-cog"></i></div>
-      <span class="nav-label">Cài đặt</span>
-    </button>
-    <button class="nav-btn" data-tab="tab5">
-      <div class="nav-icon-wrap"><i class="fas fa-user"></i></div>
-      <span class="nav-label">Về app</span>
-    </button>
+    <div class="nav-tabs-group">
+      <button class="nav-btn active" data-tab="tab1">
+        <div class="nav-icon-wrap"><i class="fas fa-exchange-alt"></i></div>
+        <span class="nav-label">Giao dịch</span>
+      </button>
+      <button class="nav-btn" data-tab="tab2">
+        <div class="nav-icon-wrap"><i class="fas fa-chart-pie"></i></div>
+        <span class="nav-label">Báo cáo</span>
+      </button>
+      <button class="nav-btn" data-tab="tab3">
+        <div class="nav-icon-wrap"><i class="fas fa-tags"></i></div>
+        <span class="nav-label">Từ khóa</span>
+      </button>
+    </div>
+    <button id="fabBtn" class="fab-btn" type="button" aria-label="Thêm / Menu"><i class="fas fa-plus"></i></button>
   </div>
 
   <!-- Cac file JS da tach tu script.js (nap theo dung thu tu phu thuoc) -->
@@ -572,5 +597,6 @@
   <script src="app-crud.js" defer></script>
   <script src="app-export.js" defer></script>
   <script src="app-init.js" defer></script>
+  <script src="app-upgrade.js" defer></script>
 </body>
 </html>
