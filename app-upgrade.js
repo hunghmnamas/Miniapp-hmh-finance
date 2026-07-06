@@ -13,13 +13,10 @@
 // 10) Nhãn so sánh ghi rõ kỳ trước (so với tuần 26 / tháng 6 / năm 2025).
 // 11) Che do Nam: lam mo mui ten lui khi nam lien truoc khong co du lieu.
 // ----------------------------------------------------------------------------
-// [FINANCE] LUU Y QUAN TRONG VE DU LIEU:
-//   Repo Miniapp-hmh-finance dung lop du lieu PER-USER qua secureFetch (moi
-//   nguoi dung co du lieu rieng theo chatId), KHONG dung Firebase toan cuc.
-//   Vi vay ban nay da BO co che "nap ca nam 1 request" cua repo goc
-//   (MINIAPP-CLOUDFLARE) de tranh goi sai nguon du lieu. Toan bo viec doc du
-//   lieu van do chinh cac ham GOC cua repo dam nhan: fetchMonthData() va
-//   getTransactionsInRange() (per-user) -> DAM BAO LAY DUNG DU LIEU.
+// [FINANCE] Ban nay da duoc chinh cho repo Miniapp-hmh-finance: LOP DU LIEU giu
+// nguyen 100% (app-core/app-crud/app-reports/app-init dung secureFetch per-user).
+// fetchYearData bi vo hieu hoa (no-op) de du lieu CHI den tu getTransactionsInRange
+// / fetchMonthData goc cua finance, tranh goi Firebase global (repo nay khong dung).
 // ============================================================================
 
 (function () {
@@ -202,40 +199,25 @@
   }
 
   // ------------------------------------------------------------------
-  // WRAP fetchTransactions — lam moi cache dieu huong khi tai lai (force)
+  // WRAP fetchTransactions — lam moi moc du lieu dieu huong khi tai lai
   // ------------------------------------------------------------------
   var _origFetchTransactions = window.fetchTransactions;
   if (typeof _origFetchTransactions === 'function') {
     window.fetchTransactions = function (force) {
-      if (force === true) { window.__navBoundsPromise = null; window.__yearHasDataCache = {}; }
+      if (force === true) { window.__navBoundsPromise = null; window.monthDataCache = {}; window.__yearHasDataCache = {}; window.apiTxCache = {}; window.__yearFetchInFlight = {}; }
       return _origFetchTransactions.apply(this, arguments);
     };
   }
 
   // ------------------------------------------------------------------
-  // [FINANCE] fetchYearData: KHONG dung o repo nay.
-  //   Repo goc (Firebase toan cuc) gom ca nam trong 1 request. Repo finance la
-  //   per-user (secureFetch) nen KHONG co endpoint nay. Giu ham de khong vo tham
-  //   chieu (getNavDataBounds/prefetch van goi duoc) nhung khong lam gi -> moi
-  //   viec doc du lieu deu do fetchMonthData()/getTransactionsInRange() GOC lo.
+  // [FINANCE] fetchYearData VO HIEU HOA (no-op).
+  // Repo finance khong dung Firebase RTDB global; du lieu duoc lay theo tung
+  // user qua secureFetch (fetchMonthData / getTransactionsInRange trong app-core).
+  // De KHONG lam sai nguon du lieu, ta khong tai "ca nam" tu Firebase o day nua.
+  // fetchMonthData goc cua finance van tu tai theo thang khi can.
   // ------------------------------------------------------------------
   function fetchYearData(year, force) { return Promise.resolve(false); }
   window.fetchYearData = fetchYearData;
-
-  function prefetchYearIdle(year) {
-    var y = parseInt(year, 10);
-    if (!y || y < 2000) return;
-    var runIdle = window.requestIdleCallback || function (fn) { return setTimeout(fn, 200); };
-    runIdle(function () { try { fetchYearData(y); } catch (e) {} });
-  }
-  window.__prefetchYearIdle = prefetchYearIdle;
-
-  function prefetchYearsForReports() {
-    var cy = new Date().getFullYear();
-    prefetchYearIdle(cy);
-    prefetchYearIdle(cy - 1);
-  }
-  window.__prefetchYearsForReports = prefetchYearsForReports;
 
   // ------------------------------------------------------------------
   // WRAP openAddForm — khóa loại giao dịch (Thu nhập / Chi tiêu)
@@ -315,7 +297,7 @@
   }
 
   // ------------------------------------------------------------------
-  // WRAP so sánh kỳ trước — HIỂN THỊ RÕ kỳ được so sánh
+  // WRAP so sánh kỳ trước — HIỂN THỊ RÕ kỳ được so sánh.
   // ------------------------------------------------------------------
   var _origProcessReportData = window.processReportData;
   if (typeof _origProcessReportData === 'function') {
@@ -411,14 +393,14 @@
   }
 
   // ------------------------------------------------------------------
-  // GIOI HAN DIEU HUONG: khong cho sang ky (tuan/thang) tuong lai.
+  // GIOI HAN DIEU HUONG: khong cho sang ky (tuan/thang) khong co du lieu.
   // ------------------------------------------------------------------
   function keyOf(d) { return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); }
 
   function weekStartOf(date) {
     var sow = parseInt(localStorage.getItem('settingStartOfWeek') || '1', 10);
     var d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-    var day = d.getDay(); // 0 = CN ... 6 = T7
+    var day = d.getDay();
     var diff = (sow === 1) ? (day === 0 ? 6 : day - 1) : day;
     d.setDate(d.getDate() - diff);
     return d;
@@ -437,19 +419,34 @@
     var ws = weekStartOf(activePeriodDate); ws.setDate(ws.getDate() - 1); return keyOf(ws);
   }
 
-  // [FINANCE] Bo quet moc du lieu ca nam (can Firebase toan cuc). Tra ve moc
-  // rong -> mui ten chi bi chan theo "tuong lai", KHONG bi khoa nham khi lui ve
-  // qua khu (du lieu nam cu van xem duoc binh thuong).
+  // [FINANCE] fetchYearData la no-op -> monthDataCache rong -> bounds {null,null}.
+  // refreshNavArrows ben duoi da xu ly an toan truong hop bounds null (chi chan tuong lai).
   function getNavDataBounds(force) {
     if (force) window.__navBoundsPromise = null;
     if (window.__navBoundsPromise) return window.__navBoundsPromise;
-    window.__navBoundsPromise = Promise.resolve({ minKey: null, maxKey: null });
+    window.__navBoundsPromise = (async function () {
+      var minKey = null, maxKey = null;
+      try {
+        var yr = new Date().getFullYear();
+        await fetchYearData(yr);
+        for (var m = 1; m <= 12; m++) {
+          var arr = (window.monthDataCache && window.monthDataCache[yr + '_' + m]) || [];
+          arr.forEach(function (t) {
+            if (!t || !t.date) return;
+            var p = String(t.date).split('/');
+            if (p.length !== 3) return;
+            var k = parseInt(p[2], 10) * 10000 + parseInt(p[1], 10) * 100 + parseInt(p[0], 10);
+            if (minKey === null || k < minKey) minKey = k;
+            if (maxKey === null || k > maxKey) maxKey = k;
+          });
+        }
+      } catch (e) {}
+      return { minKey: minKey, maxKey: maxKey };
+    })();
     return window.__navBoundsPromise;
   }
   window.__invalidateNavBounds = function () { window.__navBoundsPromise = null; };
 
-  // CHE DO NAM: kiem tra 1 nam co du lieu hay khong (co cache) de lam mo mui ten
-  // lui. Dung getTransactionsInRange GOC (per-user) -> lay dung du lieu.
   async function yearHasData(year) {
     if (!window.__yearHasDataCache) window.__yearHasDataCache = {};
     if (year in window.__yearHasDataCache) return window.__yearHasDataCache[year];
@@ -497,11 +494,10 @@
     var todayKey = keyOf(new Date());
     var nStart = nextPeriodStartKey();
     var pEnd = prevPeriodEndKey();
-    // Chan tuong lai ngay lap tuc.
     setArrowDisabled(nextIds, nStart > todayKey);
     setArrowDisabled(prevIds, false);
-    // [FINANCE] Chi tinh chinh them KHI biet chac moc du lieu (min/max khac null).
-    // Voi repo nay moc luon null -> khong lam mo nham mui ten lui.
+    // [FINANCE] Khi bounds null (fetchYearData no-op) -> KHONG chan lui/toi theo bounds.
+    // Chi giu quy tac chan tuong lai (nStart > todayKey). Qua khu luon cho phep.
     try {
       var b = await getNavDataBounds(false);
       if (b) {

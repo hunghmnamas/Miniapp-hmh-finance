@@ -406,4 +406,137 @@
             <input type="text" id="addNote" class="field-input" placeholder="Tùy chọn">
           </div>
         </div>
-        <div class="modal-actions m-0 pt-3" style="border-top: 1px solid var(--border-color); flex-shrink: 0;
+        <div class="modal-actions m-0 pt-3" style="border-top: 1px solid var(--border-color); flex-shrink: 0;">
+          <button type="button" class="btn-cancel w-full flex-1 m-0" onclick="closeAddForm()"><i class="fas fa-times"></i> Hủy</button>
+          <button type="submit" class="btn-save w-full flex-1 m-0"><i class="fas fa-save"></i> Lưu</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="editModal" class="modal-sheet" style="display: flex; flex-direction: column;">
+      <div class="modal-handle" onclick="closeEditForm()"></div>
+      <div class="modal-title" style="margin-bottom: 16px;">Chỉnh sửa giao dịch</div>
+      <form id="editForm" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
+        <div style="flex: 1; overflow-y: auto; padding-bottom: 10px; -webkit-overflow-scrolling: touch;">
+          <input type="hidden" id="editTransactionId">
+          <div class="field-group">
+            <div class="field-label">Phân loại</div>
+            <div class="type-row">
+              <div class="type-pill expense-active" onclick="selectType('edit', 'Chi tiêu', this)">⬆ Chi tiêu</div>
+              <div class="type-pill" onclick="selectType('edit', 'Thu nhập', this)">⬇ Thu nhập</div>
+            </div>
+            <input type="hidden" id="editType" value="Chi tiêu">
+          </div>
+          <div class="field-group">
+            <div class="field-label">Số tiền</div>
+            <input type="text" id="editAmount" class="field-input" required>
+          </div>
+          <div class="field-group">
+            <div class="field-label">Nội dung</div>
+            <input type="text" id="editContent" class="field-input" required>
+          </div>
+          <div class="field-group">
+            <div class="field-label">Ngày</div>
+            <input type="date" id="editDate" class="field-input date-input" required>
+          </div>
+          <div class="field-group">
+            <div class="field-label">Phân loại chi tiết</div>
+            <select id="editCategory" class="field-input" required></select>
+          </div>
+          <div class="field-group">
+            <div class="field-label">Ghi chú</div>
+            <input type="text" id="editNote" class="field-input">
+          </div>
+        </div>
+        <div class="modal-actions m-0 pt-3" style="border-top: 1px solid var(--border-color); flex-shrink: 0;">
+          <button type="button" class="btn-cancel flex-1 m-0" onclick="closeEditForm()"><i class="fas fa-times"></i> Hủy</button>
+          <button type="button" class="btn-danger-outline flex-1 m-0" onclick="deleteTransaction(document.getElementById('editTransactionId').value)"><i class="fas fa-trash"></i> Xóa</button>
+          <button type="submit" class="btn-save flex-1 m-0"><i class="fas fa-save"></i> Lưu</button>
+        </div>
+      </form>
+    </div>
+
+    <div id="detailModal" class="modal-sheet" style="display: flex; flex-direction: column;">
+      <div class="modal-handle" onclick="closeDetailModal()"></div>
+      <div class="modal-title" id="detailModalTitle" style="justify-content: center; margin-bottom: 16px;">Chi tiết</div>
+      <div style="flex: 1; overflow-y: auto; padding-bottom: 20px; -webkit-overflow-scrolling: touch;">
+          <div class="detail-total-card" style="display: flex; gap: 10px; margin-bottom: 16px; padding: 0; background: transparent; border: none; box-shadow: none;">
+             <div style="flex: 1; background: var(--income-bg); padding: 12px; border-radius: 12px; text-align: center;">
+                 <div style="font-size: 0.75rem; color: var(--income); font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                     <i class="fas fa-hand-holding-dollar"></i> THU NHẬP
+                 </div>
+                 <div id="detailTotalIncome" style="font-size: 1.1rem; font-weight: 800; color: var(--income);">+0đ</div>
+             </div>
+             <div style="flex: 1; background: var(--expense-bg); padding: 12px; border-radius: 12px; text-align: center;">
+                 <div style="font-size: 0.75rem; color: var(--expense); font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 6px;">
+                     <i class="fas fa-money-bill-transfer"></i> CHI TIÊU
+                 </div>
+                 <div id="detailTotalExpense" style="font-size: 1.1rem; font-weight: 800; color: var(--expense);">-0đ</div>
+             </div>
+          </div>
+          
+          <div id="detailChartContainer" class="chart-placeholder" style="display: none;">
+            <canvas id="categoryMonthlyChart"></canvas>
+          </div>
+
+          <div id="dailyPieChartContainer" class="chart-placeholder pie-layout-wrapper" style="display: none; margin-bottom: 16px; padding: 12px;">
+              <div class="pie-chart-inner" style="flex: 0 0 110px; width: 110px; height: 110px; min-width: 110px !important; min-height: 110px !important;">
+                <canvas id="dailyPieChart"></canvas>
+              </div>
+              <div id="dailyCustomLegend" class="compact-legend" style="max-height: 110px;"></div>
+          </div>
+
+          <div id="detailListTitle" class="chart-title text-left mb-3 mt-2">Giao dịch chi tiết</div>
+          <div class="tx-list" id="detailTransactionsContainer"></div>
+          <div id="paginationDetail" class="pagination-container" style="display: none;">
+            <button id="prevPageDetail" class="pagination-btn" disabled><i class="fas fa-chevron-left"></i></button>
+            <span id="pageInfoDetail" class="pagination-info"></span>
+            <button id="nextPageDetail" class="pagination-btn"><i class="fas fa-chevron-right"></i></button>
+          </div>
+      </div>
+    </div>
+    
+    <div id="confirmDeleteModal" class="overlay" style="display: none;">
+      <div class="modal-sheet show confirm-dialog">
+        <h2 class="confirm-title" style="text-transform: uppercase;">Xác nhận xóa</h2>
+        <p class="confirm-desc">Bạn có chắc chắn muốn xóa giao dịch này? Hành động này không thể hoàn tác.</p>
+        <div class="modal-actions confirm-actions">
+          <button type="button" class="btn-cancel m-0" onclick="closeConfirmDeleteModal()">Hủy</button>
+          <button type="button" class="btn-danger btn-save m-0" id="confirmDeleteBtn">Xóa</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="pdfPreviewModal" class="modal-sheet" style="display: flex; flex-direction: column;">
+      <div class="modal-handle" onclick="closeAllModals()"></div>
+      <div class="modal-title" style="display: flex; justify-content: space-between; align-items: center;">
+          <span><i class="fas fa-file-invoice" style="color: var(--primary); margin-right: 8px;"></i> Xem trước báo cáo</span>
+      </div>
+      <div id="pdfPreviewContainer" style="flex: 1; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-card); margin-bottom: 16px; overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; padding: 10px; display: block;"></div>
+      <div class="modal-actions m-0 pt-3" style="border-top: 1px solid var(--border-color); flex-shrink: 0;">
+          <button class="btn-cancel m-0 flex-1" onclick="closeAllModals()"><i class="fas fa-times"></i> Đóng</button>
+          <button class="btn-save m-0 flex-1" id="sharePdfBtn"><i class="fas fa-share-nodes"></i> Tải / Chia sẻ PDF</button>
+      </div>
+    </div>
+
+   <div id="iconPickerModal" class="modal-sheet" style="display: flex; flex-direction: column;">
+      <div class="modal-handle" onclick="closeIconPickerModal()"></div>
+      <div class="modal-title"><i class="fas fa-shapes" style="color: var(--primary); margin-right: 8px;"></i> Cấu hình Danh mục & Icon</div>
+      <div style="flex: 1; overflow-y: auto; padding-bottom: 10px; -webkit-overflow-scrolling: touch;">
+          <div class="field-group flex-shrink-0">
+              <div class="field-label">Chọn danh mục để sửa</div>
+              <select id="iconPickerSelect" class="field-input"><option value="">-- Chọn danh mục --</option></select>
+          </div>
+          <div class="field-group flex-shrink-0" id="newCategoryInputGroup" style="display: none; animation: fadeIn 0.3s ease;">
+              <div class="field-label" style="color: var(--primary-light);">Tạo tên danh mục mới</div>
+              <input type="text" id="iconPickerCategory" class="field-input" placeholder="VD: Học phí, Du lịch...">
+          </div>
+          <div class="field-label flex-shrink-0">Icon phân loại</div>
+          <div id="iconGridContainer" class="icon-grid icon-grid-scrollable"></div>
+          <div class="field-group flex-shrink-0" id="tagInputArea" style="margin-top: 10px; display: none; animation: fadeIn 0.3s ease;">
+              <div class="field-label">Thêm từ khóa (Gõ phẩy hoặc Enter để tạo)</div>
+              <div class="field-input tag-input-container">
+                  <span id="tagsWrapper" style="display: flex; flex-wrap: wrap; gap: 6px;"></span>
+                  <input type="text" id="tagInputField" class="tag-input-field" placeholder="VD: ăn sáng, ăn trưa...">
+              </div>
+              <input type="hidden" id="iconPick
