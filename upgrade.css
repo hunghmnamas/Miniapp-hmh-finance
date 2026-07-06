@@ -4,7 +4,7 @@
    ============================================================================ */
 
 /* ---------- THANH NAV: 4 TAB + NUT FAB TACH RIENG + PILL INDICATOR ---------- */
-.bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 400px; height: auto; background: transparent; box-shadow: none; border: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 0; z-index: 1000; }
+.bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 400px; height: auto; background: transparent !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; box-shadow: none !important; border: none !important; border-radius: 0 !important; display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 0; z-index: 1000; }
 .bottom-nav::before, .bottom-nav::after { display: none !important; }
 
 /* Cum 4 tab: nen kinh mo, bo tron 32px. container-type=inline-size => cac tab con
