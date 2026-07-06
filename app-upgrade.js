@@ -17,15 +17,26 @@
 // 13) Tinh chinh toc do: CHI gom-tai ca nam cho bao cao Nam/Tuy chon (>=4 thang);
 //     Tuan/Thang giu ban goc (1-2 request/thang, nhe hon) de khong giai bang thong
 //     lam cham Tab 1. Khi xem 1 nam -> nap ngam nam so sanh ke tiep (selY-2) de
-//     bam "lui" hien ra tuc thi (nam hien tai da co san, nam so sanh cung da san).
+//     bam \"lui\" hien ra tuc thi (nam hien tai da co san, nam so sanh cung da san).
 // 14) Am lich (Tab 2): ghep thuat toan Ho Ngoc Duc tu CLOUDFLARE, hien so ngay am
 //     o goc phai tren moi o lich tuan/thang. KHONG dung toi lop du lieu finance.
 // 15) Trang thai rong Tab 2: khi ky bao cao khong co giao dich -> an bieu do va
-//     hien dong "Khong co du lieu bao cao" thay cho bieu do trong rong.
+//     hien dong \"Khong co du lieu bao cao\" thay cho bieu do trong rong.
+// 16) Kieu bieu do (Cai dat): luu lua chon Cot/Duong vao may (localStorage) — noi
+//     luu DUY NHAT. Nut chuyen nhanh tren Tab Bao cao chi doi tam trong phien
+//     dang mo, KHONG ghi de cai dat da luu (mo lai app se quay ve kieu trong Cai dat).
 // ============================================================================
 
 (function () {
   'use strict';
+
+  // [16] Kieu bieu do da luu (Cai dat) — nap som truoc khi bat ky bieu do nao ve.
+  try {
+    var __savedChartType = localStorage.getItem('settingChartType');
+    if (__savedChartType === 'bar' || __savedChartType === 'line') {
+      window.currentChartType = __savedChartType;
+    }
+  } catch (e) {}
 
   function fmtDMY(yyyymmdd) {
     if (!yyyymmdd) return '';
@@ -81,7 +92,7 @@
     btn.type = 'button';
     btn.className = 'modal-close-x';
     btn.setAttribute('aria-label', 'Đóng');
-    btn.innerHTML = '<i class="fas fa-times"></i>';
+    btn.innerHTML = '<i class=\"fas fa-times\"></i>';
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
       triggerHaptic('light');
@@ -127,7 +138,7 @@
       btn.id = 'navSearchBtn';
       btn.className = 'nav-btn';
       btn.type = 'button';
-      btn.innerHTML = '<div class="nav-icon-wrap"><i class="fas fa-search"></i></div><span class="nav-label">Tìm kiếm</span>';
+      btn.innerHTML = '<div class=\"nav-icon-wrap\"><i class=\"fas fa-search\"></i></div><span class=\"nav-label\">Tìm kiếm</span>';
       btn.onclick = function () { triggerHaptic('light'); if (typeof window.openSearchModal === 'function') window.openSearchModal(); };
       group.appendChild(btn);
     }
@@ -190,6 +201,56 @@
     if (p.length !== 3) return 0;
     return parseInt(p[2], 10) * 10000 + parseInt(p[1], 10) * 100 + parseInt(p[0], 10);
   }
+
+  // ------------------------------------------------------------------
+  // [16] KIEU BIEU DO — Cai dat la noi luu duy nhat; nut Tab Bao cao chi doi tam.
+  // ------------------------------------------------------------------
+  function syncToggleChartBtnIcon() {
+    var btn = document.getElementById('toggleChartBtn');
+    if (!btn) return;
+    btn.innerHTML = (window.currentChartType === 'bar')
+      ? '<i class=\"fas fa-chart-line\"></i>'
+      : '<i class=\"fas fa-chart-bar\"></i>';
+  }
+  window.__syncToggleChartBtnIcon = syncToggleChartBtnIcon;
+
+  // Ap kieu bieu do cho bieu do dang hien thi (Tab 2) ma khong tai lai du lieu.
+  function applyChartTypeLive() {
+    var tab2 = document.getElementById('tab2');
+    var isTab2 = tab2 && tab2.classList.contains('active');
+    if (isTab2 && window.mChart && window.mChart.data && window.mChart.data.datasets) {
+      window.mChart.config.type = window.currentChartType;
+      if (window.currentChartType === 'line') {
+        [0, 1].forEach(function (i) {
+          var ds = window.mChart.data.datasets[i];
+          if (!ds) return;
+          ds.tension = 0.4; ds.fill = true; ds.borderWidth = 2; ds.pointRadius = 4;
+        });
+      } else {
+        [0, 1].forEach(function (i) {
+          var ds = window.mChart.data.datasets[i];
+          if (!ds) return;
+          ds.fill = false; ds.borderWidth = 0; ds.borderRadius = 4;
+        });
+      }
+      window.mChart.update();
+    }
+  }
+  window.__applyChartTypeLive = applyChartTypeLive;
+
+  // Dat kieu bieu do. persist=true -> luu vao may (Cai dat). persist=false -> chi phien.
+  function setChartType(type, persist) {
+    if (type !== 'bar' && type !== 'line') return;
+    window.currentChartType = type;
+    if (persist) {
+      try { localStorage.setItem('settingChartType', type); } catch (e) {}
+      var sel = document.getElementById('settingChartType');
+      if (sel && sel.value !== type) sel.value = type;
+    }
+    syncToggleChartBtnIcon();
+    applyChartTypeLive();
+  }
+  window.__setChartType = setChartType;
 
   // ------------------------------------------------------------------
   // WRAP openTab — cập nhật vị trí indicator + nap ngam du lieu bao cao
@@ -331,7 +392,7 @@
   }
   window.convertSolar2Lunar = convertSolar2Lunar;
 
-  // Tao/gan the <span.calendar-lunar> vao 1 o lich. Mung 1 hien "1/<thang am>";
+  // Tao/gan the <span.calendar-lunar> vao 1 o lich. Mung 1 hien \"1/<thang am>\";
   // mung 1 & ram (15) to mau tim (.lunar-special). Bo qua neu o da co am lich.
   function appendLunarCell(cell, dd, mm, yy) {
     if (!cell || cell.querySelector('.calendar-lunar')) return;
@@ -435,7 +496,7 @@
       var title = document.getElementById('detailListTitle');
       if (title) {
         var n = (txs && txs.length) ? txs.length : 0;
-        title.innerHTML = 'Giao dịch chi tiết <span style="font-size:0.72rem; color:var(--text-2); text-transform:none; font-weight:600;">(Tổng: ' + n + ')</span>';
+        title.innerHTML = 'Giao dịch chi tiết <span style=\"font-size:0.72rem; color:var(--text-2); text-transform:none; font-weight:600;\">(Tổng: ' + n + ')</span>';
       }
       return r;
     };
@@ -457,7 +518,7 @@
         try { if (typeof cachedSearchResults !== 'undefined' && cachedSearchResults) n = cachedSearchResults.length; } catch (e) {}
         if (n > 0) {
           lbl.style.display = 'block';
-          lbl.innerHTML = 'Kết quả <span style="font-size:0.72rem; color:var(--text-2); text-transform:none; font-weight:600;">(Tổng: ' + n + ')</span>';
+          lbl.innerHTML = 'Kết quả <span style=\"font-size:0.72rem; color:var(--text-2); text-transform:none; font-weight:600;\">(Tổng: ' + n + ')</span>';
         } else {
           lbl.style.display = 'none';
         }
@@ -485,7 +546,7 @@
         }
       } catch (e) {}
       // TRANG THAI RONG: khong co giao dich nao trong ky -> an bieu do trong rong
-      // va hien dong thong bao "Khong co du lieu bao cao". KHONG dung toi du lieu.
+      // va hien dong thong bao \"Khong co du lieu bao cao\". KHONG dung toi du lieu.
       try {
         var __hasData = Array.isArray(currentTx) && currentTx.length > 0;
         var __chartBox = document.querySelector('#tab2 .chart-container');
@@ -498,6 +559,8 @@
           if (__chartBox) __chartBox.style.display = 'block';
         }
       } catch (e) {}
+      // [16] Dam bao bieu do va nut chuyen doi dung theo kieu da chon.
+      try { syncToggleChartBtnIcon(); } catch (e) {}
       return r;
     };
   }
@@ -799,6 +862,24 @@
     });
     enableSwipeBack('settingsPage');
     enableSwipeBack('aboutPage');
+
+    // [16] KIEU BIEU DO — Cai dat luu duy nhat; nut Tab Bao cao chi doi tam trong phien.
+    var chartTypeSelect = document.getElementById('settingChartType');
+    if (chartTypeSelect) {
+      chartTypeSelect.value = (window.currentChartType === 'line') ? 'line' : 'bar';
+      chartTypeSelect.onchange = function (e) {
+        triggerHaptic('light');
+        setChartType(e.target.value, true);
+      };
+    }
+    var toggleChartBtn = document.getElementById('toggleChartBtn');
+    if (toggleChartBtn) {
+      toggleChartBtn.onclick = function () {
+        triggerHaptic('light');
+        setChartType(window.currentChartType === 'bar' ? 'line' : 'bar', false);
+      };
+    }
+    syncToggleChartBtnIcon();
 
     try { syncCalendarControlBar(); } catch (e) {}
     try { refreshNavArrows(); } catch (e) {}
