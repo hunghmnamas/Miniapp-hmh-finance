@@ -17,9 +17,11 @@
 // 13) Tinh chinh toc do: CHI gom-tai ca nam cho bao cao Nam/Tuy chon (>=4 thang);
 //     Tuan/Thang giu ban goc (1-2 request/thang, nhe hon) de khong giai bang thong
 //     lam cham Tab 1. Khi xem 1 nam -> nap ngam nam so sanh ke tiep (selY-2) de
-//     bam \"lui\" hien ra tuc thi (nam hien tai da co san, nam so sanh cung da san).
+//     bam "lui" hien ra tuc thi (nam hien tai da co san, nam so sanh cung da san).
 // 14) Am lich (Tab 2): ghep thuat toan Ho Ngoc Duc tu CLOUDFLARE, hien so ngay am
 //     o goc phai tren moi o lich tuan/thang. KHONG dung toi lop du lieu finance.
+// 15) Trang thai rong Tab 2: khi ky bao cao khong co giao dich -> an bieu do va
+//     hien dong "Khong co du lieu bao cao" thay cho bieu do trong rong.
 // ============================================================================
 
 (function () {
@@ -79,7 +81,7 @@
     btn.type = 'button';
     btn.className = 'modal-close-x';
     btn.setAttribute('aria-label', 'Đóng');
-    btn.innerHTML = '<i class=\"fas fa-times\"></i>';
+    btn.innerHTML = '<i class="fas fa-times"></i>';
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
       triggerHaptic('light');
@@ -125,7 +127,7 @@
       btn.id = 'navSearchBtn';
       btn.className = 'nav-btn';
       btn.type = 'button';
-      btn.innerHTML = '<div class=\"nav-icon-wrap\"><i class=\"fas fa-search\"></i></div><span class=\"nav-label\">Tìm kiếm</span>';
+      btn.innerHTML = '<div class="nav-icon-wrap"><i class="fas fa-search"></i></div><span class="nav-label">Tìm kiếm</span>';
       btn.onclick = function () { triggerHaptic('light'); if (typeof window.openSearchModal === 'function') window.openSearchModal(); };
       group.appendChild(btn);
     }
@@ -329,7 +331,7 @@
   }
   window.convertSolar2Lunar = convertSolar2Lunar;
 
-  // Tao/gan the <span.calendar-lunar> vao 1 o lich. Mung 1 hien \"1/<thang am>\";
+  // Tao/gan the <span.calendar-lunar> vao 1 o lich. Mung 1 hien "1/<thang am>";
   // mung 1 & ram (15) to mau tim (.lunar-special). Bo qua neu o da co am lich.
   function appendLunarCell(cell, dd, mm, yy) {
     if (!cell || cell.querySelector('.calendar-lunar')) return;
@@ -433,7 +435,7 @@
       var title = document.getElementById('detailListTitle');
       if (title) {
         var n = (txs && txs.length) ? txs.length : 0;
-        title.innerHTML = 'Giao dịch chi tiết <span style=\"font-size:0.72rem; color:var(--text-2); text-transform:none; font-weight:600;\">(Tổng: ' + n + ')</span>';
+        title.innerHTML = 'Giao dịch chi tiết <span style="font-size:0.72rem; color:var(--text-2); text-transform:none; font-weight:600;">(Tổng: ' + n + ')</span>';
       }
       return r;
     };
@@ -455,7 +457,7 @@
         try { if (typeof cachedSearchResults !== 'undefined' && cachedSearchResults) n = cachedSearchResults.length; } catch (e) {}
         if (n > 0) {
           lbl.style.display = 'block';
-          lbl.innerHTML = 'Kết quả <span style=\"font-size:0.72rem; color:var(--text-2); text-transform:none; font-weight:600;\">(Tổng: ' + n + ')</span>';
+          lbl.innerHTML = 'Kết quả <span style="font-size:0.72rem; color:var(--text-2); text-transform:none; font-weight:600;">(Tổng: ' + n + ')</span>';
         } else {
           lbl.style.display = 'none';
         }
@@ -465,7 +467,7 @@
   }
 
   // ------------------------------------------------------------------
-  // WRAP so sánh kỳ trước — HIỂN THỊ RÕ kỳ được so sánh.
+  // WRAP so sánh kỳ trước — HIỂN THỊ RÕ kỳ được so sánh + TRẠNG THÁI RỖNG.
   // ------------------------------------------------------------------
   var _origProcessReportData = window.processReportData;
   if (typeof _origProcessReportData === 'function') {
@@ -480,6 +482,20 @@
           var ei = document.getElementById('tab2IncomeCompare'); if (ei) ei.innerHTML = getCompareHTML(tInc, pInc, 'income', txt);
           var ee = document.getElementById('tab2ExpenseCompare'); if (ee) ee.innerHTML = getCompareHTML(tExp, pExp, 'expense', txt);
           var eb = document.getElementById('tab2BalanceCompare'); if (eb) eb.innerHTML = getCompareHTML(tBal, pBal, 'balance', txt);
+        }
+      } catch (e) {}
+      // TRANG THAI RONG: khong co giao dich nao trong ky -> an bieu do trong rong
+      // va hien dong thong bao "Khong co du lieu bao cao". KHONG dung toi du lieu.
+      try {
+        var __hasData = Array.isArray(currentTx) && currentTx.length > 0;
+        var __chartBox = document.querySelector('#tab2 .chart-container');
+        var __ph = document.getElementById('placeholderTab2');
+        if (!__hasData) {
+          if (__chartBox) __chartBox.style.display = 'none';
+          if (__ph) { __ph.textContent = 'Không có dữ liệu báo cáo'; __ph.style.display = 'block'; }
+        } else {
+          if (__ph) __ph.style.display = 'none';
+          if (__chartBox) __chartBox.style.display = 'block';
         }
       } catch (e) {}
       return r;
