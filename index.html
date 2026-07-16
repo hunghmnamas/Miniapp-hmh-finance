@@ -3,7 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Mini App Tổng Overview Chi Tiêu</title>
+  <title>MINI APP QUẢN LÝ TÀI CHÍNH</title>
+
+  <!-- ==== PWA / OFFLINE ==== -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#6C5CE7">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Quản lý chi tiêu">
   
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   
@@ -11,7 +19,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style id="app-font-config">
+    :root {
+      --app-font: 'Be Vietnam Pro', sans-serif;
+    }
+  </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
   
   <link rel="stylesheet" href="styles.css">
@@ -19,8 +32,8 @@
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
   <!-- Dùng bản rời (unbundled) thay vì html2pdf.bundle.min.js vì bản bundle
-       đóng gói nội bộ (webpack) không phơi html2canvas/jSPDF ra window,
-       trong khi script cần gọi trực tiếp 2 thư viện này. -->
+       đóng gói nội bộ (webpack) không phơi html2canvas/jsPDF ra window,
+       trong khi app-export.js cần gọi trực tiếp 2 thư viện này. -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
@@ -42,17 +55,17 @@
           <div><i class="fas fa-money-bill-transfer"></i> Chi tiêu trong ngày</div>
           <i class="fas fa-eye-slash privacy-toggle-btn" onclick="togglePrivacy()" style="font-size: 1.15rem; cursor: pointer; padding: 4px; color: rgba(255,255,255,0.8);"></i>
         </div>
-        <div class="hero-balance" id="heroExpenseMain"><span style="opacity:0.45;">—</span></div>
+        <div class="hero-balance" id="heroExpenseMain">—</div>
         <div id="heroExpenseCompare"></div>
         <div class="hero-sub">
           <div class="hero-stat">
             <div class="hero-stat-label"><i class="fas fa-hand-holding-dollar"></i> Thu nhập</div>
-            <div class="hero-stat-val" id="heroIncome"><span style="opacity:0.45;">—</span></div>
+            <div class="hero-stat-val" id="heroIncome">—</div>
           </div>
           <div class="divider-v"></div>
           <div class="hero-stat">
             <div class="hero-stat-label"><i class="fas fa-wallet"></i> Số dư</div>
-            <div class="hero-stat-val" id="heroBalanceSub"><span style="opacity:0.45;">—</span></div>
+            <div class="hero-stat-val" id="heroBalanceSub">—</div>
           </div>
         </div>
       </div>
@@ -81,7 +94,7 @@
           <div class="period-pills">
             <div id="filterWeeklyBtn" class="period-pill active">Theo tuần</div>
             <div id="filterMonthlyBtn" class="period-pill">Theo tháng</div>
-            <div id="filterYearlyBtn" class="period-pill">Cả năm</div>
+            <div id="filterYearlyBtn" class="period-pill">Theo năm</div>
             <div id="filterCustomBtn" class="period-pill">Tùy chọn</div>
           </div>
 
@@ -114,8 +127,8 @@
                   <i class="fas fa-hand-holding-dollar"></i>
                   <span class="stat-tag">Thu nhập</span>
               </div>
-              <div class="stat-num income" id="tab2Income"><span style="opacity:0.45;">—</span></div>
-              <div class="stat-compare" id="tab2IncomeCompare">-</div>
+              <div class="stat-num income" id="tab2Income">—</div>
+              <div class="stat-compare" id="tab2IncomeCompare">−</div>
             </div>
             
             <div class="stat-card">
@@ -123,8 +136,8 @@
                   <i class="fas fa-money-bill-transfer"></i>
                   <span class="stat-tag">Chi tiêu</span>
               </div>
-              <div class="stat-num expense" id="tab2Expense"><span style="opacity:0.45;">—</span></div>
-              <div class="stat-compare" id="tab2ExpenseCompare">-</div>
+              <div class="stat-num expense" id="tab2Expense">—</div>
+              <div class="stat-compare" id="tab2ExpenseCompare">−</div>
             </div>
             
             <div class="stat-card">
@@ -135,8 +148,8 @@
                   </div>
                   <i class="fas fa-eye-slash privacy-toggle-btn" onclick="togglePrivacy()" style="cursor:pointer; color:var(--text-3); font-size: 1.1rem;"></i>
               </div>
-              <div class="stat-num balance" id="tab2Balance"><span style="opacity:0.45;">—</span></div>
-              <div class="stat-compare" id="tab2BalanceCompare">-</div>
+              <div class="stat-num balance" id="tab2Balance">—</div>
+              <div class="stat-compare" id="tab2BalanceCompare">−</div>
             </div>
           </div>
 
@@ -310,10 +323,10 @@
         </div>
       </div>
       <div class="info-card">
-        <div class="chart-title">Liên hệ</div>
+        <div class="chart-title">Liên Hệ</div>
         <div class="info-list">
-          <div><i class="fab fa-telegram"></i> <strong>Telegram:</strong> <a href="https://t.me/masterhmh" target="_blank" rel="noopener" style="color: var(--primary);">@masterhmh</a></div>
-          <div><i class="fab fa-facebook"></i> <strong>Facebook:</strong> <a href="https://facebook.com/masterhmh" target="_blank" rel="noopener" style="color: var(--primary);">facebook.com/masterhmh</a></div>
+          <div><i class="fab fa-telegram"></i> <strong>Telegram:</strong> <a href="https://t.me/masterhmh" target="_blank" rel="noopener" style="color: var(--primary-light); text-decoration: none;">@masterhmh</a></div>
+          <div><i class="fab fa-facebook"></i> <strong>Facebook:</strong> <a href="https://facebook.com/masterhmh" target="_blank" rel="noopener" style="color: var(--primary-light); text-decoration: none;">facebook.com/masterhmh</a></div>
         </div>
       </div>
       <div class="qr-container">
@@ -333,33 +346,10 @@
         </div>
         
         <div style="flex: 1; overflow-y: auto; padding-bottom: 10px; -webkit-overflow-scrolling: touch;">
-            <div class="period-pills" style="margin-bottom: 12px;">
-                <div id="searchMonthlyBtn" class="period-pill active">Tháng này</div>
-                <div id="searchYearlyBtn" class="period-pill">Cả năm</div>
-                <div id="searchCustomBtn" class="period-pill">Tùy chọn</div>
-            </div>
-            
-            <div id="searchCustomFilterContainer" class="filter-controls" style="display: none;">
-                <select id="searchStartMonth" class="field-input flex-1">
-                  <option value="1">Tháng 1</option><option value="2">Tháng 2</option><option value="3">Tháng 3</option><option value="4">Tháng 4</option><option value="5">Tháng 5</option><option value="6">Tháng 6</option><option value="7">Tháng 7</option><option value="8">Tháng 8</option><option value="9">Tháng 9</option><option value="10">Tháng 10</option><option value="11">Tháng 11</option><option value="12">Tháng 12</option>
-                </select>
-                <span class="filter-separator">đến</span>
-                <select id="searchEndMonth" class="field-input flex-1">
-                  <option value="1">Tháng 1</option><option value="2">Tháng 2</option><option value="3">Tháng 3</option><option value="4">Tháng 4</option><option value="5">Tháng 5</option><option value="6">Tháng 6</option><option value="7">Tháng 7</option><option value="8">Tháng 8</option><option value="9">Tháng 9</option><option value="10">Tháng 10</option><option value="11">Tháng 11</option><option value="12">Tháng 12</option>
-                </select>
-            </div>
-            
             <div class="field-group">
-                <div class="field-label">Nội dung</div>
-                <input type="text" id="searchContent" class="field-input" placeholder="Nhập nội dung cần tìm">
-            </div>
-            <div class="field-group">
-                <div class="field-label">Số tiền</div>
-                <input type="text" id="searchAmount" class="field-input" placeholder="Ví dụ: 50.000">
-            </div>
-            <div class="field-group">
-                <div class="field-label">Phân loại chi tiết</div>
-                <select id="searchCategory" class="field-input"><option value="">Tất cả danh mục</option></select>
+                <div class="field-label">Từ khóa tìm kiếm</div>
+                <input type="text" id="searchQuery" class="field-input" placeholder="Nhập nội dung giao dịch hoặc số tiền">
+                <div style="font-size: 0.72rem; color: var(--text-3); margin-top: 6px; line-height: 1.4;">Tìm theo nội dung, ghi chú hoặc số tiền. Hỗ trợ nhập số tiền dạng đầy đủ (2.000.000) hoặc rút gọn (50k, 1tr5, 2m).</div>
             </div>
             
             <div id="loadingSearch" class="loading-spinner" style="display: none;"><i class="fas fa-spinner fa-spin"></i></div>
@@ -375,7 +365,7 @@
         
         <div class="modal-actions m-0 pt-3" style="border-top: 1px solid var(--border-color); flex-shrink: 0;">
             <button class="btn-cancel w-full m-0 flex-1" onclick="closeSearchModal()"><i class="fas fa-times"></i> Đóng</button>
-            <button class="btn-save w-full m-0 flex-1" id="searchTransactionsBtn"><i class="fas fa-search"></i> Áp dụng tìm kiếm</button>
+            <button class="btn-save w-full m-0 flex-1" id="searchTransactionsBtn"><i class="fas fa-search"></i> Tìm kiếm</button>
         </div>
     </div>
 
@@ -394,7 +384,7 @@
           </div>
           <div class="field-group">
             <div class="field-label">Số tiền</div>
-            <input type="text" id="addAmount" class="field-input" placeholder="0đ" required>
+            <input type="text" id="addAmount" class="field-input" placeholder="0 ₫" required>
           </div>
           <div class="field-group">
             <div class="field-label">Nội dung</div>
@@ -472,13 +462,13 @@
                  <div style="font-size: 0.75rem; color: var(--income); font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 6px;">
                      <i class="fas fa-hand-holding-dollar"></i> THU NHẬP
                  </div>
-                 <div id="detailTotalIncome" style="font-size: 1.1rem; font-weight: 800; color: var(--income);">+0đ</div>
+                 <div id="detailTotalIncome" style="font-size: 1.1rem; font-weight: 800; color: var(--income);">—</div>
              </div>
              <div style="flex: 1; background: var(--expense-bg); padding: 12px; border-radius: 12px; text-align: center;">
                  <div style="font-size: 0.75rem; color: var(--expense); font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; gap: 6px;">
                      <i class="fas fa-money-bill-transfer"></i> CHI TIÊU
                  </div>
-                 <div id="detailTotalExpense" style="font-size: 1.1rem; font-weight: 800; color: var(--expense);">-0đ</div>
+                 <div id="detailTotalExpense" style="font-size: 1.1rem; font-weight: 800; color: var(--expense);">—</div>
              </div>
           </div>
           
@@ -528,20 +518,21 @@
 
    <div id="iconPickerModal" class="modal-sheet" style="display: flex; flex-direction: column;">
       <div class="modal-handle" onclick="closeIconPickerModal()"></div>
-      <div class="modal-title"><i class="fas fa-shapes" style="color: var(--primary); margin-right: 8px;"></i> Cấu hình Danh mục & Icon</div>
+      <div class="modal-title"><i class="fas fa-shapes" style="color: var(--primary); margin-right: 8px;"></i> Quản lý danh mục</div>
+      <div class="field-helper" style="margin-top: -4px; margin-bottom: 12px; color: var(--text-3); font-size: 0.85rem; line-height: 1.4;">Đổi tên, icon và từ khóa của danh mục. Nếu đổi tên, các giao dịch liên quan cũng sẽ được cập nhật.</div>
       <div style="flex: 1; overflow-y: auto; padding-bottom: 10px; -webkit-overflow-scrolling: touch;">
           <div class="field-group flex-shrink-0">
-              <div class="field-label">Chọn danh mục để sửa</div>
-              <select id="iconPickerSelect" class="field-input"><option value="">-- Chọn danh mục --</option></select>
+              <div class="field-label">Chọn hoặc tạo danh mục</div>
+              <select id="iconPickerSelect" class="field-input"><option value="">-- Chọn hoặc tạo danh mục --</option></select>
           </div>
           <div class="field-group flex-shrink-0" id="newCategoryInputGroup" style="display: none; animation: fadeIn 0.3s ease;">
-              <div class="field-label" style="color: var(--primary-light);">Tạo tên danh mục mới</div>
-              <input type="text" id="iconPickerCategory" class="field-input" placeholder="VD: Học phí, Du lịch...">
+              <div class="field-label" style="color: var(--primary-light);">Tên danh mục</div>
+              <input type="text" id="iconPickerCategory" class="field-input" placeholder="VD: Ăn ngoài, Du lịch, Hóa đơn...">
           </div>
-          <div class="field-label flex-shrink-0">Icon phân loại</div>
+          <div class="field-label flex-shrink-0">Icon danh mục</div>
           <div id="iconGridContainer" class="icon-grid icon-grid-scrollable"></div>
           <div class="field-group flex-shrink-0" id="tagInputArea" style="margin-top: 10px; display: none; animation: fadeIn 0.3s ease;">
-              <div class="field-label">Thêm từ khóa (Gõ phẩy hoặc Enter để tạo)</div>
+              <div class="field-label">Từ khóa nhận diện (gõ phẩy hoặc Enter để thêm)</div>
               <div class="field-input tag-input-container">
                   <span id="tagsWrapper" style="display: flex; flex-wrap: wrap; gap: 6px;"></span>
                   <input type="text" id="tagInputField" class="tag-input-field" placeholder="VD: ăn sáng, ăn trưa...">
@@ -552,7 +543,7 @@
       <div class="modal-actions m-0 pt-3" style="border-top: 1px solid var(--border-color); flex-shrink: 0; align-items: stretch;">
           <button class="btn-danger-outline flex-shrink-0 m-0" id="deleteCategoryBtn" style="display: none; padding: 14px 0; border-radius: 12px; flex-basis: 44px;"><i class="fas fa-trash"></i></button>
           <button class="btn-cancel m-0 flex-1" onclick="closeIconPickerModal()"><i class="fas fa-times"></i> Đóng</button>
-          <button class="btn-save m-0 flex-1" id="saveIconPickerBtn"><i class="fas fa-save"></i> Áp dụng</button>
+          <button class="btn-save m-0 flex-1" id="saveIconPickerBtn"><i class="fas fa-save"></i> Lưu thay đổi</button>
       </div>
     </div>
 
@@ -598,14 +589,22 @@
     <button id="fabBtn" class="fab-btn" type="button" aria-label="Thêm / Menu"><i class="fas fa-plus"></i></button>
   </div>
 
-  <!-- Cac file JS da tach tu script.js (nap theo dung thu tu phu thuoc) -->
+  <!-- ============================================================
+       NẠP MODULE THEO THỨ TỰ (script.js cũ đã xóa; lịch sử ở Git)
+       1) app-core.js  : tiện ích nền + Tab 1
+       2) currency.js  : ghi đè parseNumber & định dạng tiền (chuẩn QT)
+       3) app-reports.js: báo cáo + biểu đồ + tìm kiếm
+       4) app-crud.js  : từ khóa, danh mục, CRUD, icon picker
+       5) app-export.js: xuất PDF/CSV
+       6) app-init.js  : gắn sự kiện & khởi động
+       7) app-upgrade.js: nâng cấp giao diện (CUỐI CÙNG)
+       ============================================================ -->
   <script src="app-core.js" defer></script>
+  <script src="currency.js" defer></script>
   <script src="app-reports.js" defer></script>
   <script src="app-crud.js" defer></script>
   <script src="app-export.js" defer></script>
   <script src="app-init.js" defer></script>
   <script src="app-upgrade.js" defer></script>
-  <script src="search-cf.js" defer></script>
-  <script src="whatsnew.js" defer></script>
 </body>
 </html>
