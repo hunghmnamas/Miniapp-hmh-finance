@@ -856,7 +856,7 @@
       if (!b.querySelector('.fs-back-label')) {
         var s = document.createElement('span');
         s.className = 'fs-back-label';
-        s.textContent = 'Quay Lại';
+        s.textContent = 'Quay lại';
         b.appendChild(s);
       }
     });
