@@ -2,10 +2,13 @@
 // Lấy font app từ biến CSS --app-font trong index.html/styles.css để Chart.js/canvas tự đổi theo font cấu hình.
 function getAppFontFamily() {
     try {
-        const cssFont = getComputedStyle(document.documentElement).getPropertyValue('--app-font').trim();
-        return cssFont || "'Be Vietnam Pro', sans-serif";
+        const cssFont = getComputedStyle(document.documentElement)
+            .getPropertyValue('--app-font')
+            .trim();
+
+        return cssFont || "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
     } catch (e) {
-        return "'Be Vietnam Pro', sans-serif";
+        return "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
     }
 }
 
