@@ -1,4 +1,5 @@
 :root {
+    --app-font: 'Be Vietnam Pro', sans-serif;
   --bg-base: #0B1120;
   --bg-surface: rgba(15, 23, 42, 0.65); 
   --bg-card: rgba(30, 41, 59, 0.45);
@@ -63,6 +64,14 @@ body.theme-light {
   --nav-bg: rgba(255, 255, 255, 0.75);
 }
 
+button,
+input,
+select,
+textarea {
+    font-family: inherit;
+}
+
+
 @media (prefers-color-scheme: light) {
   body.theme-auto {
     --bg-base: #F0F4F8;
@@ -91,7 +100,7 @@ body.theme-light {
 html { font-size: 15px; scroll-behavior: smooth; }
 
 body { 
-    font-family: 'Plus Jakarta Sans', sans-serif; 
+    font-family: var(--app-font);
     background-color: var(--bg-base);
     background-image: 
         radial-gradient(circle at 15% 20%, rgba(6, 182, 212, 0.15) 0%, transparent 40%),
@@ -229,19 +238,17 @@ h1 { font-size: 1.1rem; font-weight: 800; color: var(--primary-light); margin: 1
 .stat-compare { font-size: 0.6rem; text-align: left; line-height: 1.4; width: 100%; }
 .stat-compare span { background: transparent !important; padding: 0 !important; }
 
-.calendar-header { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.72rem; font-weight: 800; color: #FFFFFF; background: #5E6E88; border: 1px solid #5E6E88; border-bottom: none; border-radius: 10px 10px 0 0; overflow: hidden; margin-bottom: 0; }
-.calendar-header span { padding: 9px 0; border-right: 1px solid rgba(255,255,255,0.15); }
+.calendar-header { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 0.72rem; font-weight: 800; color: var(--text-1); background: var(--primary-alpha); border: 1px solid var(--border-color); border-bottom: none; border-radius: 10px 10px 0 0; overflow: hidden; margin-bottom: 0; }
+.calendar-header span { padding: 9px 0; border-right: 1px solid var(--border-color); }
 .calendar-header span:last-child { border-right: none; }
 .calendar-grid { display: grid; gap: 0; border: 1px solid var(--border-color) !important; border-top: none !important; border-radius: 0 0 10px 10px !important; overflow: hidden; }
 .calendar-day { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 4px 1px 3px; border-radius: 0; cursor: pointer; transition: background 0.15s ease; border: none; border-right: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); min-height: 40px; background: transparent; overflow: hidden; box-sizing: border-box; width: 100%; }
 .calendar-day:nth-child(7n) { border-right: none; }
 .calendar-day:hover:not(.empty) { background: var(--bg-card2); }
 .calendar-day.empty { pointer-events: none; background: rgba(255,255,255,0.01); }
-.calendar-day:nth-child(7n-1) { background: rgba(16, 185, 129, 0.14); }
-.calendar-day:nth-child(7n) { background: rgba(255, 184, 0, 0.14); }
 .calendar-day.selected-day { background: var(--primary-alpha); outline: 2px solid var(--primary); outline-offset: -2px; }
-.calendar-day.today { background: rgba(var(--primary-rgb, 99,102,241), 0.08); }
-.calendar-day.today .calendar-date { color: var(--primary); }
+.calendar-day.today { background: rgba(6, 182, 212, 0.30); }
+.calendar-day.today .calendar-date { color: var(--primary); font-weight: 800; }
 .calendar-date { font-size: 0.82rem; font-weight: 700; color: var(--text-1); line-height: 1; margin-bottom: 3px; }
 .cal-amt-col { display: flex; flex-direction: column; align-items: center; gap: 1px; width: 100%; }
 .cal-row-amt { display: block; width: 100%; text-align: center; font-size: 0.55rem; font-weight: 800; letter-spacing: -0.03em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.3; }
@@ -366,7 +373,7 @@ input:checked + .slider:before { transform: translateX(20px); }
 .btn-edit-kw { background: var(--balance) !important; color: white !important; box-shadow: 0 4px 15px rgba(255, 184, 0, 0.2) !important; }
 .btn-edit-kw:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(255, 184, 0, 0.35) !important; filter: brightness(1.1); }
 
-.premium-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-30px); background: var(--bg-card); backdrop-filter: var(--glass-effect); -webkit-backdrop-filter: var(--glass-effect); border: 1px solid rgba(255, 255, 255, 0.15); padding: 14px 18px; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 12px; z-index: 999999; opacity: 0; transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); min-width: 280px; max-width: 90%; overflow: hidden; font-family: 'Plus Jakarta Sans', sans-serif; }
+.premium-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-30px); background: var(--bg-card); backdrop-filter: var(--glass-effect); -webkit-backdrop-filter: var(--glass-effect); border: 1px solid rgba(255, 255, 255, 0.15); padding: 14px 18px; border-radius: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 12px; z-index: 999999; opacity: 0; transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); min-width: 280px; max-width: 90%; overflow: hidden; font-family: var(--app-font); }
 .premium-toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 .toast-icon { font-size: 1.5rem; flex-shrink: 0; }
 .toast-message { font-size: 0.95rem; font-weight: 600; color: var(--text-1); flex: 1; }
@@ -379,12 +386,12 @@ input:checked + .slider:before { transform: translateX(20px); }
 .custom-confirm-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 999999; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s ease; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
 .custom-confirm-modal { background: var(--bg-card); width: 85%; max-width: 320px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.25); transform: scale(0.9); opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); overflow: hidden; display: flex; flex-direction: column; }
 .custom-confirm-icon { width: 56px; height: 56px; border-radius: 50%; background: rgba(244,63,94,0.1); color: #f43f5e; display: flex; align-items: center; justify-content: center; font-size: 26px; margin: 0 auto 16px; }
-.custom-confirm-title { margin: 0 0 10px; font-size: 1.15rem; color: var(--text-1); font-family: 'Plus Jakarta Sans', sans-serif; text-align: center; }
-.custom-confirm-message { margin: 0; font-size: 0.95rem; color: var(--text-2); line-height: 1.5; font-family: 'Plus Jakarta Sans', sans-serif; text-align: center; padding: 0 20px 20px; }
+.custom-confirm-title { margin: 0 0 10px; font-size: 1.15rem; color: var(--text-1); font-family: var(--app-font); text-align: center; }
+.custom-confirm-message { margin: 0; font-size: 0.95rem; color: var(--text-2); line-height: 1.5; font-family: var(--app-font); text-align: center; padding: 0 20px 20px; }
 .custom-confirm-actions { display: flex; border-top: 1px solid var(--border-color); }
-.custom-confirm-cancel { flex: 1; padding: 16px; background: transparent; border: none; border-right: 1px solid var(--border-color); color: var(--text-2); font-weight: 600; font-size: 1rem; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.2s; }
+.custom-confirm-cancel { flex: 1; padding: 16px; background: transparent; border: none; border-right: 1px solid var(--border-color); color: var(--text-2); font-weight: 600; font-size: 1rem; cursor: pointer; font-family: var(--app-font); transition: 0.2s; }
 .custom-confirm-cancel:hover { background: rgba(255,255,255,0.05); }
-.custom-confirm-ok { flex: 1; padding: 16px; background: transparent; border: none; color: #f43f5e; font-weight: 800; font-size: 1rem; cursor: pointer; font-family: 'Plus Jakarta Sans', sans-serif; transition: 0.2s; }
+.custom-confirm-ok { flex: 1; padding: 16px; background: transparent; border: none; color: #f43f5e; font-weight: 800; font-size: 1rem; cursor: pointer; font-family: var(--app-font); transition: 0.2s; }
 .custom-confirm-ok:hover { background: rgba(244,63,94,0.1); }
 .btn-danger { background: var(--expense); color: white; border: none; padding: 14px; border-radius: var(--radius-md); font-weight: 800; flex: 1; cursor: pointer; transition: all 0.25s ease; box-shadow: 0 4px 15px rgba(244, 63, 94, 0.2); }
 .btn-danger:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(244, 63, 94, 0.35); filter: brightness(1.1); }
@@ -413,85 +420,38 @@ input:checked + .slider:before { transform: translateX(20px); }
 select.field-input { background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important; background-repeat: no-repeat !important; background-position: right 14px center !important; background-size: 16px !important; padding-right: 36px !important; cursor: pointer; }
 .app-branding { text-align: center; font-size: 0.85rem; font-weight: 800; color: var(--text-2); padding-top: 8px; margin-bottom: -12px; letter-spacing: 0.02em; }
 
-.bottom-nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 450px; height: 64px; background: var(--nav-bg) !important; backdrop-filter: var(--glass-effect) !important; -webkit-backdrop-filter: var(--glass-effect) !important; border-radius: 32px !important; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2), inset 0 1px 1px rgba(255,255,255,0.1) !important; border: 1px solid rgba(255, 255, 255, 0.15) !important; display: flex; justify-content: space-around; align-items: center; padding: 0 12px; z-index: 1000; }
-.bottom-nav::before, .bottom-nav::after { display: none !important; }
-.nav-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; background: transparent; border: none; cursor: pointer; min-width: 60px; height: 54px; border-radius: 27px; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-.nav-icon-wrap { width: 32px; height: 32px; min-width: 32px; min-height: 32px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: var(--text-2); background: transparent; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-.nav-label { font-size: 0.65rem; font-weight: 700; color: var(--text-2); transition: all 0.3s ease; }
-.nav-btn:hover .nav-icon-wrap { color: var(--primary-light); background: rgba(255,255,255,0.05); transform: translateY(-2px) scale(1.1); }
-.nav-btn:hover .nav-label { color: var(--primary-light); }
-.nav-btn:active { transform: scale(0.9); }
-.nav-btn.active { background: transparent !important; }
-.nav-btn.active .nav-icon-wrap { background: var(--primary-alpha) !important; color: var(--primary-light) !important; transform: translateY(-2px); box-shadow: 0 4px 10px var(--primary-alpha); }
-.nav-btn.active .nav-label { color: var(--primary-light) !important; font-weight: 800; }
 
-.slide-in-right { animation: slideInRight 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-.slide-out-right { animation: slideOutRight 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-.fade-in-view { animation: fadeInView 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
-@keyframes slideInRight { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
-@keyframes slideOutRight { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(40px); } }
-@keyframes fadeInView { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
-
-/* --------- CHẾ ĐỘ ẨN SỐ DƯ (PRIVACY MODE ***) --------- */
-body.privacy-on .hero-balance,
-body.privacy-on .hero-stat-val,
-body.privacy-on .tx-amount,
-body.privacy-on .stat-num,
-body.privacy-on .cat-progress-amt,
-body.privacy-on #detailTotalIncome,
-body.privacy-on #detailTotalExpense,
-body.privacy-on #detailTotalBalance,
-body.privacy-on .cal-row-amt,
-body.privacy-on .calendar-balance,
-body.privacy-on .legend-pct {
-    font-size: 0 !important;
-    letter-spacing: 0 !important;
-    color: transparent !important;
+/* FIX: Giữ nhãn thời gian không bị cắt khi chuyển Theo năm -> Theo tháng */
+.time-nav-container {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 8px !important;
 }
 
-/* Ẩn triệt để thẽ con chứa ký hiệu đ hoặc +/- */
-body.privacy-on .hero-balance span,
-body.privacy-on .tx-amount span {
-    display: none !important;
+.time-nav-center {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    overflow: visible !important;
 }
 
-/* Hiển thị dấu *** đè lên */
-body.privacy-on .hero-balance::after,
-body.privacy-on .hero-stat-val::after,
-body.privacy-on .tx-amount::after,
-body.privacy-on .stat-num::after,
-body.privacy-on .cat-progress-amt::after,
-body.privacy-on #detailTotalIncome::after,
-body.privacy-on #detailTotalExpense::after,
-body.privacy-on #detailTotalBalance::after,
-body.privacy-on .calendar-balance::after,
-body.privacy-on .legend-pct::after {
-    content: '***';
-    visibility: visible;
-    display: inline-block;
-    color: inherit;
+#currentPeriodLabel {
+    display: block !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
 }
 
-/* Giữ màu trắng cho dấu *** ở Tab 1 */
-body.privacy-on .hero-balance::after,
-body.privacy-on .hero-stat-val::after {
-    color: white !important;
-}
-
-/* Định dạng kích thước dấu *** khớp với từng vị trí */
-body.privacy-on .hero-balance::after { font-size: 2.2rem; transform: translateY(4px); }
-body.privacy-on .hero-stat-val::after { font-size: 1.05rem; }
-body.privacy-on .tx-amount::after { font-size: 1.1rem; }
-body.privacy-on .stat-num::after { font-size: 1.05rem; }
-body.privacy-on .cat-progress-amt::after { font-size: 0.95rem; }
-body.privacy-on #detailTotalIncome::after,
-body.privacy-on #detailTotalExpense::after,
-body.privacy-on #detailTotalBalance::after { font-size: 1.1rem; }
-body.privacy-on .calendar-balance::after { font-size: 0.55rem; }
-body.privacy-on .legend-pct::after { font-size: 0.75rem; }
-
-/* Ẩn hoàn toàn các dòng so sánh Tăng/Giảm */
-body.privacy-on #heroExpenseCompare,
-body.privacy-on .stat-compare {
-    display: none !important;
+.nav-arrow-btn,
+#prevPeriodBtn,
+#nextPeriodBtn {
+    flex: 0 0 auto !important;
 }
