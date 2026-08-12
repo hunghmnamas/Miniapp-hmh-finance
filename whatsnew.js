@@ -7,6 +7,7 @@
 //   3. dismissible: true  -> có checkbox "không hiển thị lần sau".
 //      dismissible: false -> KHÔNG cho tắt, hiện mọi lần mở app.
 //   4. enabled: false     -> tắt hẳn popup.
+//   5. align: 'justify' | 'left' | 'center' -> căn lề các đoạn văn.
 // ============================================================================
 (function () {
   'use strict';
@@ -20,7 +21,7 @@
     enabled: true,
 
     // >>> ĐỔI MỖI KHI CÓ THÔNG BÁO MỚI (bắt buộc) <<<
-    version: '2026.08.12b',
+    version: '2026.08.12c',
 
     // false = KHÔNG cho người dùng tắt, hiện mọi lần mở app
     dismissible: false,
@@ -30,10 +31,13 @@
     title: 'Thông báo quan trọng',
     subtitle: 'Ngừng duy trì Miniapp Quản lý tài chính',
 
+    // Căn lề đoạn văn: 'justify' (đều 2 bên) | 'left' | 'center'
+    align: 'justify',
+
     // Các đoạn văn. Cho phép thẻ HTML đơn giản: <b> <i> <br>
     body: [
       'Cảm ơn bạn đã đồng hành cùng Miniapp trong thời gian qua.',
-      'Sắp tới, do yêu cầu nâng cấp hệ thống và giới hạn nguồn lực duy trì server, tác giả xin phép ngừng hoạt động phiên bản này, dự kiến <b>12/12/2026</b>. Nếu có thay đổi tác giả sẽ thông báo sau',
+      'Sắp tới, do yêu cầu nâng cấp hệ thống và giới hạn nguồn lực duy trì server, tác giả xin phép ngừng hoạt động phiên bản này, dự kiến <b>12/12/2026</b>. Nếu có thay đổi tác giả sẽ thông báo sau.',
       'Bạn vui lòng <b>sao lưu hoặc trích xuất dữ liệu chi tiêu</b> của mình để tránh thất thoát.',
       'Rất mong bạn thông cảm cho sự bất tiện này. Chân thành cảm ơn!'
     ],
@@ -60,6 +64,7 @@
     info:    { grad: 'linear-gradient(135deg,#2b8ef0,#1c64c4)', soft: '#eff6ff', line: '#bfdbfe', dim: '#1e40af', strong: '#1c64c4', accent: '#1c64c4' }
   };
   var T = THEMES[POPUP.style] || THEMES.info;
+  var ALIGN = POPUP.align || 'left';
 
   // Khóa lưu RIÊNG cho từng version -> tick popup cũ không ảnh hưởng popup mới
   var STORAGE_KEY = 'whatsnewDismissed:' + POPUP.version;
@@ -103,11 +108,10 @@
     overlay.id = 'whatsnewOverlay';
     overlay.style.cssText = 'position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.65); display:flex; align-items:center; justify-content:center; padding:20px;';
 
-    // --- Các đoạn văn ---
-    // --- Các đoạn văn ---
-  var bodyHtml = (POPUP.body || []).map(function (p) {
-  return '<p style="margin:0 0 10px; color:#374151; font-size:0.9rem; line-height:1.6; text-align:justify; text-justify:inter-word; hyphens:none;">' + p + '</p>';
-  }).join('');
+    // --- Các đoạn văn (căn lề theo POPUP.align) ---
+    var bodyHtml = (POPUP.body || []).map(function (p) {
+      return '<p style="margin:0 0 10px; color:#374151; font-size:0.9rem; line-height:1.6; text-align:' + ALIGN + '; text-justify:inter-word; hyphens:none;">' + p + '</p>';
+    }).join('');
 
     // --- Danh sách gạch đầu dòng ---
     var items = POPUP.items || [];
@@ -117,7 +121,7 @@
                '<div style="font-size:1.35rem; line-height:1.35; flex-shrink:0;">' + (u.icon || '•') + '</div>' +
                '<div style="flex:1;">' +
                  '<div style="font-weight:700; color:#111827; font-size:0.95rem; margin-bottom:3px;">' + u.title + '</div>' +
-                 '<div style="color:#4b5563; font-size:0.84rem; line-height:1.5;">' + u.desc + '</div>' +
+                 '<div style="color:#4b5563; font-size:0.84rem; line-height:1.5; text-align:' + ALIGN + '; hyphens:none;">' + u.desc + '</div>' +
                '</div>' +
              '</div>';
     }).join('');
@@ -170,7 +174,7 @@
         '<div style="font-size:1.2rem; font-weight:800; color:#fff;">' + POPUP.title + '</div>' +
         subtitleHtml +
       '</div>' +
-      '<div style="padding:18px 20px 6px; overflow-y:auto; -webkit-overflow-scrolling:touch; background:#ffffff;">' +
+      '<div style="padding:18px 20px 14px; overflow-y:auto; -webkit-overflow-scrolling:touch; background:#ffffff;">' +
         bodyHtml + itemsHtml + cdHtml + contactHtml +
       '</div>' +
       '<div style="padding:14px 20px 18px; flex-shrink:0; border-top:1px solid #eef0f2; background:#ffffff;">' +
