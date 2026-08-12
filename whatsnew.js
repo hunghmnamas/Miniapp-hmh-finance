@@ -21,7 +21,7 @@
     enabled: true,
 
     // >>> ĐỔI MỖI KHI CÓ THÔNG BÁO MỚI (bắt buộc) <<<
-    version: '2026.08.12c',
+    version: '2026.08.12d',
 
     // false = KHÔNG cho người dùng tắt, hiện mọi lần mở app
     dismissible: false,
@@ -38,7 +38,7 @@
     body: [
       'Cảm ơn bạn đã đồng hành cùng Miniapp trong thời gian qua.',
       'Sắp tới, do yêu cầu nâng cấp hệ thống và giới hạn nguồn lực duy trì server, tác giả xin phép ngừng hoạt động phiên bản này, dự kiến <b>12/12/2026</b>. Nếu có thay đổi tác giả sẽ thông báo sau.',
-      'Bạn vui lòng <b>sao lưu hoặc trích xuất dữ liệu chi tiêu</b> của mình để tránh thất thoát.',
+      'Bạn vui lòng <b>sao lưu hoặc trích xuất dữ liệu chi tiêu</b> của mình để mất dữ liệu.',
       'Rất mong bạn thông cảm cho sự bất tiện này. Chân thành cảm ơn!'
     ],
 
