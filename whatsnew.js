@@ -20,7 +20,7 @@
     enabled: true,
 
     // >>> ĐỔI MỖI KHI CÓ THÔNG BÁO MỚI (bắt buộc) <<<
-    version: '2026.08.12',
+    version: '2026.08.12a',
 
     // false = KHÔNG cho người dùng tắt, hiện mọi lần mở app
     dismissible: false,
@@ -104,9 +104,10 @@
     overlay.style.cssText = 'position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.65); display:flex; align-items:center; justify-content:center; padding:20px;';
 
     // --- Các đoạn văn ---
-    var bodyHtml = (POPUP.body || []).map(function (p) {
-      return '<p style="margin:0 0 10px; color:#374151; font-size:0.9rem; line-height:1.6;">' + p + '</p>';
-    }).join('');
+    // --- Các đoạn văn ---
+  var bodyHtml = (POPUP.body || []).map(function (p) {
+  return '<p style="margin:0 0 10px; color:#374151; font-size:0.9rem; line-height:1.6; text-align:justify; text-justify:inter-word; hyphens:none;">' + p + '</p>';
+  }).join('');
 
     // --- Danh sách gạch đầu dòng ---
     var items = POPUP.items || [];
