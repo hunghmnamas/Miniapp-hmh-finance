@@ -20,7 +20,7 @@
     enabled: true,
 
     // >>> ĐỔI MỖI KHI CÓ THÔNG BÁO MỚI (bắt buộc) <<<
-    version: '2026.08.12-shutdown',
+    version: '2026.08.12',
 
     // false = KHÔNG cho người dùng tắt, hiện mọi lần mở app
     dismissible: false,
