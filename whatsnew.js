@@ -104,9 +104,9 @@
     overlay.style.cssText = 'position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,0.65); display:flex; align-items:center; justify-content:center; padding:20px;';
 
     // --- Các đoạn văn ---
-    var bodyHtml = BODY.map(function (p) {
-  return '<p style="margin:0 0 10px; color:#374151; font-size:0.9rem; line-height:1.6; text-align:justify; text-justify:inter-word;">' + p + '</p>';
-  }).join('');
+    var bodyHtml = (POPUP.body || []).map(function (p) {
+      return '<p style="margin:0 0 10px; color:#374151; font-size:0.9rem; line-height:1.6;">' + p + '</p>';
+    }).join('');
 
     // --- Danh sách gạch đầu dòng ---
     var items = POPUP.items || [];
