@@ -30,6 +30,7 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="upgrade.css">
   <link rel="stylesheet" href="optimize.css">
+  <link rel="stylesheet" href="redesign.css">
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
   <!-- Dùng bản rời (unbundled) thay vì html2pdf.bundle.min.js vì bản bundle
@@ -160,6 +161,28 @@
             <button class="btn-soft m-0 flex-1" onclick="exportToPDF()"><i class="fas fa-file-pdf text-expense-color"></i> Xuất báo cáo PDF</button>
           </div>
 
+          <div class="chart-container" style="display: none;">
+            <div id="pieChartTitleTab2" class="chart-title text-left w-full">Chi tiêu theo danh mục</div>
+
+            <div class="chart-placeholder pie-layout-wrapper" style="margin-bottom: 12px;">
+              <div class="pie-chart-inner">
+                <canvas id="monthlyPieChart"></canvas>
+              </div>
+              <div id="monthlyCustomLegend" class="compact-legend"></div>
+            </div>
+
+            <div id="monthlyCategoryProgressList"></div>
+
+            <div id="chartTitleTab2" class="chart-title text-left w-full mb-2">Thu nhập & Chi tiêu</div>
+
+            <div class="chart-placeholder w-full" style="position: relative;">
+               <button id="toggleChartBtn" class="chart-toggle-btn" title="Chuyển đổi biểu đồ">
+                   <i class="fas fa-chart-line"></i>
+               </button>
+               <canvas id="monthlyChart"></canvas>
+            </div>
+          </div>
+
           <div id="calendarWidget">
             <div id="calCtrlBar" class="cal-ctrl-bar">
                <div class="cal-ctrl-left">
@@ -181,28 +204,6 @@
           </div>
 
           <div id="placeholderTab2" class="empty-state" style="display: none;">Dữ liệu báo cáo sẽ hiển thị ở đây</div>
-          
-          <div class="chart-container" style="display: none;">
-            <div id="chartTitleTab2" class="chart-title text-left w-full mb-2">Thu nhập & Chi tiêu</div>
-            
-            <div class="chart-placeholder w-full" style="position: relative;">
-               <button id="toggleChartBtn" class="chart-toggle-btn" title="Chuyển đổi biểu đồ">
-                   <i class="fas fa-chart-line"></i>
-               </button>
-               <canvas id="monthlyChart"></canvas>
-            </div>
-
-            <div id="pieChartTitleTab2" class="chart-title text-left w-full mt-4">Chi tiêu theo danh mục</div>
-            
-            <div class="chart-placeholder pie-layout-wrapper" style="margin-bottom: 12px;">
-              <div class="pie-chart-inner">
-                <canvas id="monthlyPieChart"></canvas>
-              </div>
-              <div id="monthlyCustomLegend" class="compact-legend"></div>
-            </div>
-            
-            <div id="monthlyCategoryProgressList"></div>
-          </div>
       </div>
     </div>
 
@@ -583,6 +584,7 @@
         <div class="nav-icon-wrap"><i class="fas fa-chart-pie"></i></div>
         <span class="nav-label">Báo cáo</span>
       </button>
+      <div class="nav-spacer" aria-hidden="true"></div>
       <button class="nav-btn" data-tab="tab3">
         <div class="nav-icon-wrap"><i class="fas fa-tags"></i></div>
         <span class="nav-label">Từ khóa</span>
@@ -608,6 +610,7 @@
   <script src="app-export.js" defer></script>
   <script src="app-init.js" defer></script>
   <script src="app-upgrade.js" defer></script>
+  <script src="search-cf.js" defer></script>
   <script src="whatsnew.js" defer></script>
 </body>
 </html>
