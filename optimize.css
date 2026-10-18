@@ -1,0 +1,65 @@
+/* optimize.css — Lớp tối ưu giao diện (nạp SAU upgrade.css, chỉ ghi đè hiển thị, không đụng logic/dữ liệu)
+   Mục tiêu: dễ đọc hơn, bấm trúng hơn, mượt hơn trên Telegram WebView iPhone, giữ nguyên tông cyan/kính mờ hiện tại. */
+
+/* 1) Số liệu dùng số tabular: các con số tiền thẳng cột, không nhảy khi đổi giá trị */
+.hero-balance, .hero-stat-val, .tx-amount, .stat-num, .cat-progress-amt, .cal-row-amt, .calendar-balance {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* 2) Cỡ chữ sàn: nâng các chữ quá nhỏ (0.55–0.65rem) lên mức đọc được */
+.nav-label { font-size: 0.72rem; }
+.tx-badge { font-size: 0.7rem; padding: 3px 9px; }
+.tx-date, .tx-note { font-size: 0.8rem; }
+.stat-tag { font-size: 0.7rem; }
+.stat-compare { font-size: 0.72rem; line-height: 1.45; }
+.cal-row-amt, .calendar-balance { font-size: 0.62rem; }
+.calendar-lunar { font-size: 0.55rem; }
+.field-label { font-size: 0.78rem; }
+.empty-state { font-size: 0.95rem; }
+
+/* 3) Tương phản chữ phụ ở nền tối: #475569 trên nền #0B1120 rất khó đọc (chỉ áp khi nền thực sự tối) */
+body.theme-dark { --text-3: #7C8DA6; }
+@media (prefers-color-scheme: dark) { body.theme-auto { --text-3: #7C8DA6; } }
+
+/* 4) Vùng bấm đạt tối thiểu ~40px (chuẩn ngón tay iOS là 44px) */
+.date-nav-btn { width: 36px; height: 36px; font-size: 0.8rem; }
+.cal-ctrl-arrow, .cal-ctrl-toggle { width: 36px; height: 36px; font-size: 0.9rem; }
+.tx-btn { width: 38px; height: 38px; border-radius: 10px; }
+.chart-toggle-btn { width: 40px; height: 40px; }
+.pagination-btn { min-width: 44px; min-height: 44px; }
+.period-pill { padding: 13px 14px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+.nav-arrow-btn { padding: 12px 16px; }
+
+/* 5) Ô nhập liệu 16px: chặn iOS tự phóng to khi chạm vào ô nhập (hiện tại 0.95rem ≈ 14px) */
+.field-input, .tag-input-field, .settings-select { font-size: 16px; }
+.field-input { padding: 14px; border-radius: 12px; }
+
+/* 6) Safe-area iPhone (tai thỏ / thanh Home): thanh nav và modal không bị che */
+.bottom-nav { bottom: calc(14px + env(safe-area-inset-bottom, 0px)); }
+body { padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px)); }
+.modal-sheet { padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
+.fab-menu { bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
+
+/* 7) Giảm blur hàng loạt trên danh sách: cuộn mượt hơn hẳn trong WebView, thẻ chuyển sang nền đặc nhẹ */
+.tx-card, .stat-card, .cat-progress-card, .keyword-group-card {
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  background: rgba(30, 41, 59, 0.72);
+}
+body.theme-light .tx-card, body.theme-light .stat-card, body.theme-light .cat-progress-card, body.theme-light .keyword-group-card {
+  background: rgba(255, 255, 255, 0.82);
+}
+@media (prefers-color-scheme: light) {
+  body.theme-auto .tx-card, body.theme-auto .stat-card, body.theme-auto .cat-progress-card, body.theme-auto .keyword-group-card { background: rgba(255,255,255,0.82); }
+}
+
+/* 8) Hero: dòng so sánh có nền pill mờ để đọc rõ trên gradient, khoảng thở gọn hơn */
+#heroExpenseCompare span { background: rgba(255,255,255,0.16) !important; padding: 4px 10px !important; border-radius: 999px; display: inline-flex; align-items: center; }
+.hero-card { padding: 18px; }
+.section-title { font-size: 1.05rem; letter-spacing: 0.01em; }
+
+/* 9) Tôn trọng giảm chuyển động + vòng focus rõ khi chạm/bàn phím */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+button:focus-visible, .tx-card:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; }
