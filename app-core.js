@@ -333,3 +333,23 @@ async function fetchMonthData(month) {
         }
     } catch (e) {} return [];
 }
+
+// ============================================================================
+// REDESIGN (18/10/2026): bấm vào thẻ giao dịch = mở form sửa.
+// Giao diện mới ẩn nút sửa/xóa trên từng dòng cho thoáng (giống ảnh tham khảo);
+// tính năng CRUD giữ nguyên 100%: bấm vào thẻ kích hoạt đúng handler của nút
+// .edit-btn tương ứng (đã được gán trong các hàm render từng vùng).
+// Xóa vẫn có trong form sửa (nút Xóa của editModal).
+// ============================================================================
+(function initTxCardTapToEdit() {
+  document.addEventListener('click', function (e) {
+    const card = e.target && e.target.closest ? e.target.closest('.tx-card') : null;
+    if (!card) return;
+    // Bỏ qua khi bấm đúng vào cụm nút hành động (nếu có) hoặc link bên trong thẻ.
+    if (e.target.closest('.tx-actions, .tx-btn, a, button')) return;
+    const editBtn = card.querySelector('.edit-btn');
+    if (editBtn && typeof editBtn.onclick === 'function') {
+      try { editBtn.onclick.call(editBtn, e); } catch (err) {}
+    }
+  });
+})();
