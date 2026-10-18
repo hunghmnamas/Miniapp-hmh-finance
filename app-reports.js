@@ -181,7 +181,7 @@ async function getTransactionsInRange(startDate, endDate) {
                 if (!t || !t.date) return;
                 const dParts = t.date.split('/'); 
                 if(dParts.length !== 3) return;
-                const txDate = new Date(res.y, parseInt(dParts[1], 10) - 1, parseInt(dParts[0], 10)); 
+                const txDate = new Date(parseInt(dParts[2], 10), parseInt(dParts[1], 10) - 1, parseInt(dParts[0], 10)); 
                 if (txDate >= startDate && txDate <= endDate) txs.push(t); 
             }); 
         });
