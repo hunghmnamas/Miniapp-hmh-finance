@@ -285,6 +285,17 @@ function getCategoryIcon(cat) {
     return `<span style=\"font-weight: 900; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 0.9em; line-height: 1;\">${firstLetter}</span>`;
 }
 
+// Hàm dựng HTML 1 thẻ giao dịch (dùng chung: Tab 1, chi tiết ngày/danh mục, tìm kiếm).
+// Trước đây bị thiếu khi tách file nên app-reports.js gọi tới mà không có định nghĩa
+// -> lỗi "renderTxCard is not defined" mỗi khi tải danh sách giao dịch.
+// Mẫu HTML lấy đúng theo bản đang chạy tốt ở app-crud.js (displaySearchResults).
+function renderTxCard(item, stt) {
+    const tCls = item.type === 'Thu nhập' ? 'income' : 'expense';
+    const icon = getCategoryIcon(item.category);
+    const amtObj = formatCurrencyWithUnit(item.amount);
+    return `<div class="tx-icon-wrap ${tCls}">${icon}</div><div class="tx-body"><div class="tx-title">${escapeHTML(item.content)}</div><div class="tx-meta-row"><span class="tx-date">${escapeHTML(formatDate(item.date))}</span><span class="tx-badge tx-badge-neutral">${escapeHTML(item.type)}</span><span class="tx-badge ${tCls}">${escapeHTML(item.category)}</span></div>${item.note ? `<div class="tx-note"><i class="fas fa-tag tx-note-icon"></i>${escapeHTML(item.note)}</div>` : ''}<div class="tx-id-row"><span>STT: ${stt}</span> • <span>#${escapeHTML(item.id)}</span></div></div><div class="tx-right-col"><div class="tx-amount ${tCls}"><span>${item.type === 'Thu nhập' ? '+' : '−'}</span>${amtObj.val}<span>${amtObj.unit}</span></div><div class="tx-actions"><button class="tx-btn edit-btn" data-id="${escapeHTML(item.id)}"><i class="fas fa-pen"></i></button><button class="tx-btn delete-btn" data-id="${escapeHTML(item.id)}"><i class="fas fa-trash"></i></button></div></div>`;
+}
+
 function getCompareHTML(current, prev, type, text = 'so với kỳ trước') {
     let zeroObj = formatCurrencyWithUnit(0);
     if (prev === 0 && current === 0) return `<span style=\"color: var(--text-2); font-weight: 500;\">− ${zeroObj.val}${zeroObj.unit} ${escapeHTML(text)}</span>`;
