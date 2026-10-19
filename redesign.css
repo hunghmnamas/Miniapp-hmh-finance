@@ -497,3 +497,122 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 
 /* an toàn vùng tai thỏ cho tờ trắng tab1 khi cuộn */
 #tab1 > #transactionsContainer { border-radius: 0; }
+
+/* ==========================================================================
+   FIX ROUND 2 (19/10/2026) — theo feedback của Hùng trên iPhone
+   ========================================================================== */
+
+/* ---- F1: trạng thái rỗng LUÔN gọn, không bao giờ kéo giãn ---- */
+.empty-state {
+  padding: 16px 14px !important;
+  font-size: 13.5px !important;
+  line-height: 1.4 !important;
+  min-height: 0 !important;
+  flex: none !important;
+  margin: 10px 0 !important;
+  align-self: stretch !important;
+}
+
+/* ---- F3: menu FAB — 1 cột căn PHẢI gọn, icon cùng 1 mép phải ---- */
+/* FAB 60px căn giữa -> mép phải nút tại calc(50% - 30px); cột menu neo vào đó */
+.fab-menu {
+  right: calc(50% - 30px) !important;
+  left: auto !important;
+  transform: translateY(24px) scale(0.96) !important;
+  transform-origin: bottom right !important;
+  align-items: flex-end !important;
+  bottom: 108px !important;
+  gap: 12px !important;
+}
+.fab-menu.show { transform: translateY(0) scale(1) !important; }
+.fab-item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 10px !important;
+  width: auto !important;
+}
+.fab-item-label {
+  text-align: right !important;
+  white-space: nowrap !important;
+  padding: 9px 14px !important;
+  border-radius: 14px !important;
+  font-size: 0.85rem !important;
+}
+.fab-item-icon {
+  width: 48px !important;
+  height: 48px !important;
+  flex: 0 0 48px !important;
+  border-radius: 50% !important;
+}
+
+/* ---- F5a: thẻ giao dịch gọn lại ---- */
+.tx-card {
+  padding: 12px 14px !important;
+  gap: 12px !important;
+  margin-bottom: 10px !important;
+  border-radius: 20px !important;
+}
+.tx-card .tx-icon-wrap {
+  width: 44px !important; height: 44px !important; flex: 0 0 44px !important;
+  border-radius: 15px !important; font-size: 1.05rem !important;
+}
+.tx-card .tx-title { font-size: 15.5px !important; line-height: 1.35 !important; margin-bottom: 3px !important; }
+.tx-card .tx-meta-row { line-height: 1.35 !important; gap: 5px !important; margin-bottom: 0 !important; }
+.tx-card .tx-note { line-height: 1.35 !important; margin-top: 3px !important; font-size: 0.75rem !important; }
+.tx-card .tx-amount { font-size: 1.02rem !important; }
+
+/* ---- F5b: thẻ thống kê báo cáo cân đối hơn ---- */
+#tab2 .stat-card {
+  padding: 12px 10px !important;
+  border-radius: 20px !important;
+  min-height: 0 !important;
+}
+#tab2 .stat-card .stat-header { margin-bottom: 6px !important; }
+#tab2 .stat-card .stat-header .stat-tag { font-size: 0.72rem !important; }
+#tab2 .stat-num { font-size: 1.3rem !important; line-height: 1.25 !important; }
+#tab2 .stat-num span { font-size: 0.75rem !important; }
+#tab2 .stat-compare { font-size: 12px !important; line-height: 1.4 !important; margin-top: 3px !important; }
+#tab2 .privacy-toggle-btn { font-size: 20px !important; }
+
+/* ---- F5c: 2 thẻ tờ trắng Tab 1 gọn theo ---- */
+#tab1 .hero-sub .hero-stat { padding: 11px 14px !important; border-radius: 16px !important; }
+#tab1 .hero-stat-label { font-size: 0.7rem !important; margin-bottom: 4px !important; }
+#tab1 .hero-stat-val { font-size: 1.05rem !important; }
+
+/* ---- F5d: phân trang — bỏ dải trắng, nút nhỏ gọn ---- */
+.pagination-container {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+  margin-top: 6px !important;
+  padding: 0 !important;
+}
+.pagination-btn {
+  width: 36px !important; height: 36px !important;
+  min-width: 36px !important;
+  padding: 0 !important;
+  border-radius: 12px !important;
+  display: inline-flex !important; align-items: center !important; justify-content: center !important;
+}
+.pagination-info { font-size: 0.8rem !important; }
+
+/* ---- F2: chế độ năm — thanh nav kỳ hiện ở vùng điều khiển trên cùng ---- */
+#tab2.fix2-year #timeNavContainer {
+  display: flex !important;
+  background: #fff !important; border: 1px solid #EDEDF2 !important;
+  border-radius: 18px !important; box-shadow: 0 10px 24px rgba(124,58,237,0.06) !important;
+  backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
+  padding: 8px !important; margin-bottom: 14px !important;
+}
+#tab2.fix2-year #timeNavContainer .nav-arrow-btn {
+  background: #F4F4F8 !important; border: none !important; border-radius: 50% !important;
+  width: 40px !important; height: 40px !important; color: #8B5CF6 !important;
+}
+#tab2.fix2-year #currentPeriodLabel { font-weight: 800 !important; color: #14141A !important; }
+
+/* ---- F5 tinh chỉnh: thẻ giao dịch thấp hơn, số stat 21px ---- */
+.tx-card { padding: 11px 14px !important; }
+.tx-card .tx-title { margin-bottom: 2px !important; }
+#tab2 .stat-num { font-size: 21px !important; }
