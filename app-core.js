@@ -239,9 +239,27 @@ function processToastQueue() {
   setTimeout(() => { toast.classList.remove('show'); setTimeout(() => { toast.remove(); processToastQueue(); }, 400); }, 3000);
 }
 
+// R28: skeleton loading — spinner hiện ngay như cũ (giữ nguyên ID + hành vi
+// display block/none cho test); skeleton chỉ thay spinner khi tải quá 300ms
+// (không chớp khi tải nhanh). Tôn trọng prefers-reduced-motion qua CSS.
+const __skelTimers = {};
 function showLoading(show, tabId) {
-  const el = document.getElementById(`loading${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`);
-  if (el) el.style.display = show ? 'block' : 'none';
+  const key = `loading${tabId.charAt(0).toUpperCase() + tabId.slice(1)}`;
+  const el = document.getElementById(key);
+  if (!el) return;
+  if (show) {
+    el.classList.remove('skel-on');
+    el.style.display = 'block';
+    clearTimeout(__skelTimers[key]);
+    __skelTimers[key] = setTimeout(() => {
+      const e2 = document.getElementById(key);
+      if (e2 && e2.style.display === 'block') e2.classList.add('skel-on');
+    }, 300);
+  } else {
+    clearTimeout(__skelTimers[key]);
+    el.classList.remove('skel-on');
+    el.style.display = 'none';
+  }
 }
 
 function formatDate(dateStr) { const parts = dateStr.split('/'); if (parts.length !== 3) return dateStr; return `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`; }
