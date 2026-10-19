@@ -170,6 +170,8 @@ function updatePrivacyUI(syncSettings = false) {
     if (window.dChart) window.dChart.update();
     // R20-1: bật/tắt mask đổi text hiển thị -> co lại cỡ số cho đúng
     try { if (typeof window.fitStatAmounts === 'function') window.fitStatAmounts(); } catch (e) {}
+    // R21: co lại chữ % giữa vòng G6 khi bật/tắt mask
+    try { if (typeof window.fitG6Center === 'function') window.fitG6Center(); } catch (e) {}
 }
 
 function applyPrivacyMode() {
@@ -351,18 +353,39 @@ window.activateTab = function(targetTab) {
 // ============================================================================
 function fitAmountRow(ids) {
   var FLOOR = 12.8; // ≈0.8rem
+  // R21: đo rộng text thật bằng Range. scrollWidth không đủ vì (a) flex+
+  // overflow:hidden làm nó mù, (b) nó không lộ phần tràn vào padding-right
+  // (mắt privacy). Bỏ qua phần tử absolute (mắt).
+  function textW(el) {
+    var kids = [];
+    Array.prototype.forEach.call(el.childNodes, function (nd) {
+      if (nd.nodeType === 1 && window.getComputedStyle(nd).position === 'absolute') return;
+      kids.push(nd);
+    });
+    if (!kids.length) return el.scrollWidth;
+    try {
+      var r = document.createRange();
+      r.setStartBefore(kids[0]);
+      r.setEndAfter(kids[kids.length - 1]);
+      return r.getBoundingClientRect().width;
+    } catch (e) { return el.scrollWidth; }
+  }
   var fitted = [];
   ids.forEach(function (id) {
     var el = document.getElementById(id);
     if (!el) return;
     el.style.removeProperty('font-size'); // về cỡ CSS của viewport hiện tại
-    var avail = el.clientWidth;
+    var cs = window.getComputedStyle(el);
+    // trừ padding (mắt privacy chiếm padding-right) để text không đè mắt
+    var avail = el.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
     if (!(avail > 0)) return;
-    var size = parseFloat(window.getComputedStyle(el).fontSize) || 16;
+    var size = parseFloat(cs.fontSize) || 16;
     if (size < 8) return; // đang bị mask (privacy-on) — bỏ qua hàng này
     var guard = 60;
-    while (el.scrollWidth > avail + 0.5 && size > FLOOR && guard-- > 0) {
-      size -= 1;
+    while (textW(el) > avail + 0.5 && size > FLOOR && guard-- > 0) {
+      // R21: kẹp sàn — size -= 1 có thể lọt xuống dưới FLOOR rồi mới thoát
+      // vòng lặp (lộ ở panel G6 khi ô số hẹp hơn thẻ cũ).
+      size = Math.max(FLOOR, size - 1);
       el.style.setProperty('font-size', size + 'px', 'important');
     }
     fitted.push(size);
