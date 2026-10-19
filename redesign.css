@@ -346,7 +346,10 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 .bottom-nav .nav-spacer { flex: 0 0 76px; }
 /* nút + tròn nâng giữa thanh */
 #fabBtn {
-  position: absolute !important; left: 50% !important; transform: translateX(-50%) !important;
+  /* neo ngang vào VIEWPORT (50vw) thay vì 50% của .bottom-nav: tâm nút luôn
+     trùng tâm màn hình ở mọi webview, không phụ thuộc padding/max-width của nav.
+     Dọc vẫn neo vào nav (position:absolute -> bottom:30px giữ nguyên). */
+  position: absolute !important; left: 50vw !important; transform: translateX(-50%) !important;
   bottom: 30px !important; width: 60px !important; height: 60px !important;
   background: linear-gradient(135deg, #8B5CF6, #7C3AED) !important;
   border: none !important; border-radius: 50% !important; color: #fff !important;
@@ -616,3 +619,26 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 .tx-card { padding: 11px 14px !important; }
 .tx-card .tx-title { margin-bottom: 2px !important; }
 #tab2 .stat-num { font-size: 21px !important; }
+
+
+/* ==========================================================================
+   FIX ROUND 3 (19/10/2026) — menu FAB: icon TRÁI, chữ PHẢI, cột icon thẳng đứng
+   (thuần CSS: đảo thứ tự hiển thị của mỗi hàng + neo menu vào mép trái FAB)
+   ========================================================================== */
+/* FAB 60px căn giữa -> mép TRÁI nút tại calc(50% - 30px); cột icon neo vào đó,
+   nhãn trải sang phải, toàn bộ menu cân đối trên nút + */
+.fab-menu {
+  /* neo tường minh vào 50vw (menu là position:fixed -> đã tính theo viewport);
+     cột icon luôn trùng đúng mép trái nút FAB ở mọi webview */
+  left: calc(50vw - 30px) !important;
+  right: auto !important;
+  transform-origin: bottom left !important;
+  align-items: flex-start !important;
+}
+.fab-item {
+  /* DOM là [label][icon] -> hiển thị [icon][label] */
+  flex-direction: row-reverse !important;
+}
+.fab-item-label {
+  text-align: left !important;
+}
