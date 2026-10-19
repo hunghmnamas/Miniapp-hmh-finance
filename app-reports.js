@@ -109,14 +109,13 @@ function displayTransactions() {
   const headerTitle = document.querySelector('#tab1 .section-title');
   if(headerTitle) headerTitle.innerHTML = `Giao dịch trong ngày <span style="font-size: 0.75rem; color: var(--text-2); text-transform: none;">(Tổng: ${data.length})</span>`;
 
+  const tPages = Math.ceil(data.length / itemsPerPage);
   if (data.length === 0) {
     document.getElementById('placeholderTab1').style.display = 'block';
     document.getElementById('pagination').style.display = 'none'; return;
   }
   document.getElementById('placeholderTab1').style.display = 'none';
-  document.getElementById('pagination').style.display = 'flex';
-  
-  const tPages = Math.ceil(data.length / itemsPerPage);
+  document.getElementById('pagination').style.display = tPages > 1 ? 'flex' : 'none';
   const pData = data.slice((currentPageTab1 - 1) * itemsPerPage, currentPageTab1 * itemsPerPage);
 
   pData.forEach((item, index) => {
@@ -409,17 +408,17 @@ function processReportData(currentTx, prevTx, labels, incs, exps) {
     
     // Khi kỳ báo cáo KHÔNG có giao dịch nào -> ẩn 2 biểu đồ trống (Thu nhập & Chi tiêu +
     // Chi tiêu theo danh mục) và hiện dòng thông báo gọn gàng. Giữ nguyên các thẻ tổng & lịch.
-    const chartContainerEl = document.querySelector('#tab2 .chart-container');
+    const chartContainerEls = document.querySelectorAll('#tab2 .chart-container');
     const reportPlaceholderEl = document.getElementById('placeholderTab2');
     if (!currentTx || currentTx.length === 0) {
         if (window.mChart) { window.mChart.destroy(); window.mChart = null; }
         if (window.pChart) { window.pChart.destroy(); window.pChart = null; }
-        if (chartContainerEl) chartContainerEl.style.display = 'none';
+        chartContainerEls.forEach(function(el){ el.style.display = 'none'; });
         if (reportPlaceholderEl) { reportPlaceholderEl.textContent = 'Không có dữ liệu báo cáo'; reportPlaceholderEl.style.display = 'block'; }
         return;
     }
     if (reportPlaceholderEl) reportPlaceholderEl.style.display = 'none';
-    if (chartContainerEl) chartContainerEl.style.display = 'block';
+    chartContainerEls.forEach(function(el){ el.style.display = 'block'; });
     
     const ctx = document.getElementById('monthlyChart').getContext('2d');
     if (window.mChart) window.mChart.destroy();
@@ -635,7 +634,7 @@ window.closeDetailModal = function() {
 // ----- BÁO CÁO TUẦN -----
 async function loadWeeklyReport(weekStr) {
   showLoading(true, 'tab2');
-  document.querySelector('#tab2 .chart-container').style.display='none';
+  document.querySelectorAll('#tab2 .chart-container').forEach(function(el){ el.style.display='none'; });
   document.getElementById('placeholderTab2').style.display='none';
   try {
     const startDate = getDateFromWeekString(weekStr);
@@ -668,7 +667,7 @@ async function loadWeeklyReport(weekStr) {
 // ----- BÁO CÁO THÁNG -----
 async function loadMonthlyReport(monthStr) {
   showLoading(true, 'tab2');
-  document.querySelector('#tab2 .chart-container').style.display='none';
+  document.querySelectorAll('#tab2 .chart-container').forEach(function(el){ el.style.display='none'; });
   document.getElementById('placeholderTab2').style.display='none';
   try {
     const [year, month] = monthStr.split('-').map(Number);
@@ -691,7 +690,7 @@ async function loadMonthlyReport(monthStr) {
   } catch(e) { showToast(e.message, 'error'); }
   finally { showLoading(false, 'tab2'); }
 }
-async function loadCustomReport(startMonth, endMonth, year) { showLoading(true, 'tab2'); document.querySelector('#tab2 .chart-container').style.display='none'; document.getElementById('placeholderTab2').style.display='none'; try { const startDate = new Date(year, startMonth - 1, 1); const endDate = new Date(year, endMonth, 0); const prevStartDate = new Date(year - 1, startMonth - 1, 1); const prevEndDate = new Date(year - 1, endMonth, 0); const [currentTx, prevTx] = await Promise.all([ getTransactionsInRange(startDate, endDate), getTransactionsInRange(prevStartDate, prevEndDate) ]); document.getElementById('chartTitleTab2').textContent = (startMonth === 1 && endMonth === 12) ? `Thu nhập & Chi tiêu ${year}` : `Thu nhập & Chi tiêu (T${startMonth} - T${endMonth} / ${year})`; const labels = [], incs = [], exps = []; for(let m=startMonth; m<=endMonth; m++) { labels.push(`Tháng ${m}`); const mTx = currentTx.filter(t => parseInt(t.date.split('/')[1]) === m && parseInt(t.date.split('/')[2]) === year); let inc=0, exp=0; mTx.forEach(t => { if(t.type==='Thu nhập') inc+=t.amount; else exp+=t.amount; }); incs.push(inc); exps.push(exp); } document.getElementById('calendarStatbox').style.display = 'none'; processReportData(currentTx, prevTx, labels, incs, exps); cachedChartData = { mode: 'custom', txs: currentTx, periodStr: `${startMonth}-${endMonth}-${year}` }; } catch(e) { showToast(e.message, 'error'); } finally { showLoading(false, 'tab2'); } }
+async function loadCustomReport(startMonth, endMonth, year) { showLoading(true, 'tab2'); document.querySelectorAll('#tab2 .chart-container').forEach(function(el){ el.style.display='none'; }); document.getElementById('placeholderTab2').style.display='none'; try { const startDate = new Date(year, startMonth - 1, 1); const endDate = new Date(year, endMonth, 0); const prevStartDate = new Date(year - 1, startMonth - 1, 1); const prevEndDate = new Date(year - 1, endMonth, 0); const [currentTx, prevTx] = await Promise.all([ getTransactionsInRange(startDate, endDate), getTransactionsInRange(prevStartDate, prevEndDate) ]); document.getElementById('chartTitleTab2').textContent = (startMonth === 1 && endMonth === 12) ? `Thu nhập & Chi tiêu ${year}` : `Thu nhập & Chi tiêu (T${startMonth} - T${endMonth} / ${year})`; const labels = [], incs = [], exps = []; for(let m=startMonth; m<=endMonth; m++) { labels.push(`Tháng ${m}`); const mTx = currentTx.filter(t => parseInt(t.date.split('/')[1]) === m && parseInt(t.date.split('/')[2]) === year); let inc=0, exp=0; mTx.forEach(t => { if(t.type==='Thu nhập') inc+=t.amount; else exp+=t.amount; }); incs.push(inc); exps.push(exp); } document.getElementById('calendarStatbox').style.display = 'none'; processReportData(currentTx, prevTx, labels, incs, exps); cachedChartData = { mode: 'custom', txs: currentTx, periodStr: `${startMonth}-${endMonth}-${year}` }; } catch(e) { showToast(e.message, 'error'); } finally { showLoading(false, 'tab2'); } }
 
 function updateTimeNavUI() {
    const label = document.getElementById('currentPeriodLabel'); const weekP = document.getElementById('weekPicker'); const monthP = document.getElementById('monthPicker'); const timeNav = document.getElementById('timeNavContainer'); const customNav = document.getElementById('customFilterContainer');
