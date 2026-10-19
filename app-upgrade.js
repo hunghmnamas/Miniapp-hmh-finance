@@ -566,14 +566,14 @@
       // va hien dong thong bao \"Khong co du lieu bao cao\". KHONG dung toi du lieu.
       try {
         var __hasData = Array.isArray(currentTx) && currentTx.length > 0;
-        var __chartBox = document.querySelector('#tab2 .chart-container');
+        var __chartBoxes = document.querySelectorAll('#tab2 .chart-container');
         var __ph = document.getElementById('placeholderTab2');
         if (!__hasData) {
-          if (__chartBox) __chartBox.style.display = 'none';
+          __chartBoxes.forEach(function(el){ el.style.display = 'none'; });
           if (__ph) { __ph.textContent = 'Không có dữ liệu báo cáo'; __ph.style.display = 'block'; }
         } else {
           if (__ph) __ph.style.display = 'none';
-          if (__chartBox) __chartBox.style.display = 'block';
+          __chartBoxes.forEach(function(el){ el.style.display = 'block'; });
         }
       } catch (e) {}
       // [16] Dam bao bieu do va nut chuyen doi dung theo kieu da chon.
