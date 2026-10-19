@@ -1337,3 +1337,33 @@ body.privacy-on #detailModal #detailTotalIncome::after,
 body.privacy-on #detailModal #detailTotalExpense::after {
   color: #14141A !important; /* thắng `color: inherit` (transparent) của upgrade.css */
 }
+
+/* ==========================================================================
+   FIX ROUND 26 (Hùng 19/10: "Đồng bộ luôn cho Tab Giao dịch").
+   Vấn đề: giống hệt R25 — danh sách giao dịch Tab1 (#transactionsContainer)
+   render qua renderTxCard với .tx-amount; mask toàn cục
+   body.privacy-on .tx-amount của upgrade.css ĐÃ che số (font-size: 0) nhưng
+   ::after dùng `color: inherit` -> thừa hưởng transparent -> "***" VÔ HÌNH:
+   số tiền biến mất hẳn thay vì hiện "***" như mask hero/statbox Tab1 (R12),
+   panel Tab2 (R21-R24) và 2 modal (R25).
+   Sửa: scoped vào #tab1, ép ::after màu tối (#14141A) — sheet Tab1 nền trắng.
+   Cụ thể (1,2,1) thắng upgrade.css (0,2,1). KHÔNG đụng rule toàn cục;
+   #searchModal/#detailModal nằm ngoài #tab1 nên giữ nguyên R25.
+   Audit Tab1 (19/10): không có day-group money totals — tiền chỉ ở .tx-amount;
+   hero + statbox Tab1 đã có *** hiển thị từ R12 (xác nhận qua glyph checks).
+   ========================================================================== */
+body.privacy-on #tab1 .tx-amount::after {
+  color: #14141A !important;
+}
+
+/* R26-b (AUDIT TAB1, Hùng 19/10 "Trường hợp ẩn thì phải ẩn cả chứ"):
+   #heroExpenseCompare chứa tiền ("↑ Tăng 50,000 ₫ so với hôm qua") nhưng KHÔNG
+   có rule mask nào -> LỘ TIỀN khi privacy ON. Đồng bộ theo pattern R24:
+   che toàn bộ pill thành "***" (trắng trên nền hero tím), giữ nguyên bố cục.
+   Cụ thể (1,2,1) thắng rule gốc. */
+body.privacy-on #heroExpenseCompare { font-size: 0 !important; }
+body.privacy-on #heroExpenseCompare > span { display: none !important; }
+body.privacy-on #heroExpenseCompare::after {
+  content: '***'; visibility: visible; display: inline-flex; align-items: center; justify-content: center;
+  color: #fff !important; font-size: .75rem !important; line-height: 1;
+}
