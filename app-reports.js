@@ -541,6 +541,94 @@ window.fitG6Center = function () {
   });
 })();
 
+// ============================================================================
+// FIX ROUND 29 (UX gói 3): THẺ INSIGHT BÁO CÁO (Tab2).
+// Nằm dưới panel G6, trên nút xuất (markup #insightStrip trong index.html).
+// Nội dung suy từ CÙNG dữ liệu kỳ đang render (currentTx) — KHÔNG chạm vào
+// đường so sánh R27/R28 (app-upgrade.js giữ nguyên).
+// - Có chi tiêu: dòng 1 = danh mục chi nhiều nhất + tỉ trọng; dòng 2 = ngày /
+//   tháng chi cao nhất (+ trung bình ngày khi còn vừa ngân sách 2 dòng).
+// - Không chi tiêu: 1 dòng "Chưa phát sinh chi tiêu trong kỳ này."
+// - Privacy: mọi số tiền + % tỉ trọng -> "***"; vẽ lại khi bật/tắt ẩn số qua
+//   window.refreshInsightStrip() (hook trong updatePrivacyUI, app-core.js).
+// ============================================================================
+function renderInsightStrip(ctx) {
+  var strip = document.getElementById('insightStrip');
+  if (!strip) return;
+  var priv = (typeof isPrivacyActive !== 'undefined' && isPrivacyActive);
+  var money = function (n) { return priv ? '***' : (formatNumberWithCommas(String(Math.round(n))) + ' ₫'); };
+  var pctT = function (p) { return priv ? '***' : (p + '%'); };
+  var txs = (ctx && ctx.tx) || [];
+  var labels = (ctx && ctx.labels) || [];
+  var expTxs = txs.filter(function (t) { return t.type === 'Chi tiêu'; });
+  var lines = [];
+  if (!expTxs.length) {
+    lines.push('Chưa phát sinh chi tiêu trong kỳ này.');
+  } else {
+    var catMap = {}, dayMap = {}, tExp = 0;
+    expTxs.forEach(function (t) {
+      tExp += t.amount;
+      catMap[t.category] = (catMap[t.category] || 0) + t.amount;
+      dayMap[t.date] = (dayMap[t.date] || 0) + t.amount;
+    });
+    var topCat = null, topAmt = 0;
+    Object.keys(catMap).forEach(function (c) { if (catMap[c] > topAmt) { topAmt = catMap[c]; topCat = c; } });
+    var share = tExp > 0 ? (topAmt / tExp * 100).toFixed(1) : '0.0';
+    lines.push('Chi nhiều nhất cho ' + escapeHTML(topCat) + ' — ' + money(topAmt) + ' (' + pctT(share) + ' tổng chi)');
+    var mode = (typeof currentFilterMode !== 'undefined') ? currentFilterMode : 'monthly';
+    var wholeYear = (mode === 'yearly') || (mode === 'custom' && labels.length === 12 && labels[0] === 'Tháng 1');
+    var line2 = '';
+    if (wholeYear) {
+      var mMap = {};
+      expTxs.forEach(function (t) { var p = String(t.date || '').split('/'); if (p.length === 3) { var k = p[1] + '/' + p[2]; mMap[k] = (mMap[k] || 0) + t.amount; } });
+      var bk = null, bv = 0;
+      Object.keys(mMap).forEach(function (k) { if (mMap[k] > bv) { bv = mMap[k]; bk = k; } });
+      if (bk) { var mp = bk.split('/'); line2 = 'Tháng chi cao nhất: Tháng ' + parseInt(mp[0], 10) + '/' + mp[1] + ' — ' + money(bv); }
+    } else {
+      var bd = null, bdv = 0;
+      Object.keys(dayMap).forEach(function (k) { if (dayMap[k] > bdv) { bdv = dayMap[k]; bd = k; } });
+      if (bd) { var dp = bd.split('/'); line2 = 'Ngày chi cao nhất: ' + dp[0] + '/' + dp[1] + ' — ' + money(bdv); }
+      var avg = dailyAverageForMode(mode, tExp, labels, expTxs);
+      if (avg > 0 && (line2.length + 20) <= 56) line2 += ' · TB ' + money(Math.round(avg)) + '/ngày';
+    }
+    if (line2) lines.push(line2);
+  }
+  strip.innerHTML = '<span class="insight-ic"><i class="fas fa-lightbulb"></i></span><span class="insight-lines">' +
+    lines.map(function (l) { return '<span class="insight-line">' + l + '</span>'; }).join('') + '</span>';
+  strip.style.display = 'flex';
+  window.__insightCtx = ctx || null;
+}
+
+// Trung bình chi/ngày theo chế độ. Trả về 0 khi không tính được.
+function dailyAverageForMode(mode, tExp, labels, expTxs) {
+  try {
+    if (mode === 'weekly') return tExp / 7;
+    if (mode === 'monthly') {
+      var apd = (typeof activePeriodDate !== 'undefined') ? activePeriodDate : new Date();
+      var dim = new Date(apd.getFullYear(), apd.getMonth() + 1, 0).getDate();
+      return dim > 0 ? tExp / dim : 0;
+    }
+    if (mode === 'custom') {
+      var y = 0, months = [];
+      (labels || []).forEach(function (l) { var m = /^Tháng (\d{1,2})$/.exec(l); if (m) months.push(parseInt(m[1], 10)); });
+      (expTxs || []).forEach(function (t) { var p = String(t.date || '').split('/'); if (p.length === 3) y = parseInt(p[2], 10); });
+      if (y && months.length) {
+        var days = 0;
+        months.forEach(function (mm) { days += new Date(y, mm, 0).getDate(); });
+        return days > 0 ? tExp / days : 0;
+      }
+    }
+  } catch (e) {}
+  return 0;
+}
+
+// Vẽ lại thẻ insight khi bật/tắt ẩn số (giữ đúng kỳ đang xem).
+window.refreshInsightStrip = function () {
+  var strip = document.getElementById('insightStrip');
+  if (!strip || strip.style.display === 'none') return;
+  renderInsightStrip(window.__insightCtx);
+};
+
 function processReportData(currentTx, prevTx, labels, incs, exps) {
     let tInc = 0, tExp = 0; currentTx.forEach(i => { if(i.type==='Thu nhập') tInc += i.amount; else tExp += i.amount; });
     const tBal = tInc - tExp;
@@ -563,6 +651,7 @@ function processReportData(currentTx, prevTx, labels, incs, exps) {
         if (window.pChart) { window.pChart.destroy(); window.pChart = null; }
         chartContainerEls.forEach(function(el){ el.style.display = 'none'; });
         if (reportPlaceholderEl) { reportPlaceholderEl.textContent = 'Không có dữ liệu báo cáo'; reportPlaceholderEl.style.display = 'block'; }
+        renderInsightStrip(null); // R29: thẻ insight — trạng thái rỗng
         return;
     }
     if (reportPlaceholderEl) reportPlaceholderEl.style.display = 'none';
@@ -610,6 +699,8 @@ function processReportData(currentTx, prevTx, labels, incs, exps) {
 
     const catMap = {}; currentTx.forEach(t => { if(t.type==='Chi tiêu') catMap[t.category] = (catMap[t.category]||0)+t.amount; });
     drawMonthlyPieChart(Object.keys(catMap).map(k => ({category: k, amount: catMap[k]})));
+    // R29: thẻ insight báo cáo — cùng dữ liệu kỳ, dưới panel G6 trên nút xuất.
+    try { renderInsightStrip({ tx: currentTx, labels: labels, incs: incs, exps: exps }); } catch (e) {}
 }
 
 function drawMonthlyPieChart(data) {
