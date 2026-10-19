@@ -168,6 +168,8 @@ function updatePrivacyUI(syncSettings = false) {
     if (window.mChart) window.mChart.update();
     if (window.pChart) window.pChart.update();
     if (window.dChart) window.dChart.update();
+    // R20-1: bật/tắt mask đổi text hiển thị -> co lại cỡ số cho đúng
+    try { if (typeof window.fitStatAmounts === 'function') window.fitStatAmounts(); } catch (e) {}
 }
 
 function applyPrivacyMode() {
@@ -321,6 +323,77 @@ window.openTab = function(tabId) {
   const btn = document.querySelector(`.nav-btn[data-tab=\"${tabId}\"]`);
   if(btn) btn.classList.add('active');
 };
+
+// ============================================================================
+// FIX ROUND 20 (R20-2): MỘT điểm kích hoạt tab duy nhất cho cả bấm nav và
+// vuốt ngang. Trước đây vuốt chỉ gọi window.openTab (đổi class hiển thị) mà
+// KHÔNG chạy các bước kích hoạt của nút nav (fetchTransactions của Tab1 /
+// updateTimeNavUI tải báo cáo của Tab2) -> vuốt sang Báo cáo chỉ thấy "—".
+// Giờ cả onclick nút nav (app-init.js) và swipe (initTabSwipe bên dưới) DÙNG
+// CHUNG hàm này.
+// ============================================================================
+window.activateTab = function(targetTab) {
+  window.openTab(targetTab);
+  if (targetTab === 'tab1' && typeof window.fetchTransactions === 'function') window.fetchTransactions(false);
+  if (targetTab === 'tab2') {
+    if (tab2NeedsReload) { tab2NeedsReload = false; cachedChartData = null; }
+    if (typeof updateTimeNavUI === 'function') updateTimeNavUI();
+  }
+};
+
+// ============================================================================
+// FIX ROUND 20 (R20-1): co cỡ chữ số tiền cho vừa khít thẻ — không bao giờ
+// bị cắt (lỗi "−308,00…" ở máy 440pt: cỡ chữ mặc định to hơn lòng thẻ).
+// Chạy sau mỗi lần render + khi resize. Mỗi hàng dùng MỘT cỡ chữ chung =
+// cỡ nhỏ nhất vừa khít trong các thẻ của hàng. Sàn 0.8rem.
+// Lưu ý: font-size trong CSS dùng !important nên phải setProperty(...,important)
+// để thắng; khi masked (privacy-on) thì text thật font-size:0 -> bỏ qua.
+// ============================================================================
+function fitAmountRow(ids) {
+  var FLOOR = 12.8; // ≈0.8rem
+  var fitted = [];
+  ids.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.style.removeProperty('font-size'); // về cỡ CSS của viewport hiện tại
+    var avail = el.clientWidth;
+    if (!(avail > 0)) return;
+    var size = parseFloat(window.getComputedStyle(el).fontSize) || 16;
+    if (size < 8) return; // đang bị mask (privacy-on) — bỏ qua hàng này
+    var guard = 60;
+    while (el.scrollWidth > avail + 0.5 && size > FLOOR && guard-- > 0) {
+      size -= 1;
+      el.style.setProperty('font-size', size + 'px', 'important');
+    }
+    fitted.push(size);
+  });
+  if (!fitted.length) return;
+  var shared = Math.min.apply(null, fitted);
+  ids.forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) el.style.setProperty('font-size', shared + 'px', 'important');
+  });
+}
+
+window.fitStatAmounts = function () {
+  var ids = ['tab2Income', 'tab2Expense', 'tab2Balance', 'heroIncome', 'heroBalanceSub'];
+  if (document.body.classList.contains('privacy-on')) {
+    // mask thắng: gỡ inline font-size để CSS font-size:0 !important có hiệu lực
+    // (inline !important thắng stylesheet !important -> số không bị che)
+    ids.forEach(function (id) { var el = document.getElementById(id); if (el) el.style.removeProperty('font-size'); });
+    return; // "***" luôn vừa
+  }
+  fitAmountRow(['tab2Income', 'tab2Expense', 'tab2Balance']);
+  fitAmountRow(['heroIncome', 'heroBalanceSub']);
+};
+
+(function initStatAmountResize() {
+  var t = null;
+  window.addEventListener('resize', function () {
+    if (t) clearTimeout(t);
+    t = setTimeout(function () { try { window.fitStatAmounts(); } catch (e) {} }, 150);
+  });
+})();
 
 // Đọc dữ liệu tháng qua secureFetch (multi-user) + chuẩn hóa ngày DD/MM/YYYY
 async function fetchMonthData(month) {
@@ -689,17 +762,25 @@ async function fetchMonthData(month) {
       if (sm && sm.classList.contains('show') && typeof window.closeSearchModal === 'function') window.closeSearchModal();
       else if (sm) sm.classList.remove('show');
       if (sp && sp.classList.contains('show') && typeof window.closeFullscreen === 'function') window.closeFullscreen('settingsPage');
-      window.openTab(pos === 0 ? 'tab1' : 'tab2');
+      // R20-2: vuốt chạy ĐÚNG hàm kích hoạt của nút nav (tải dữ liệu),
+      // không còn đường "chỉ đổi class" như trước.
+      window.activateTab(pos === 0 ? 'tab1' : 'tab2');
     } else if (pos === 2) {
       if (sp && sp.classList.contains('show') && typeof window.closeFullscreen === 'function') window.closeFullscreen('settingsPage');
+      var sb = $('navSearchBtn');
       setNavActive('navSearchBtn');
-      if (typeof window.openSearchModal === 'function') window.openSearchModal();
+      if (sb && typeof sb.click === 'function') sb.click(); // = đúng onclick của nút Tìm kiếm
+      else if (typeof window.openSearchModal === 'function') window.openSearchModal();
       else if (sm) sm.classList.add('show');
     } else if (pos === 3) {
       if (sm && sm.classList.contains('show') && typeof window.closeSearchModal === 'function') window.closeSearchModal();
       else if (sm) sm.classList.remove('show');
-      setNavActive('navSettingsBtn');
-      if (typeof window.openFullscreen === 'function') window.openFullscreen('settingsPage');
+      var gb = $('navSettingsBtn');
+      if (gb && typeof gb.click === 'function') gb.click(); // = đúng onclick của nút Cài đặt (tự set active)
+      else {
+        setNavActive('navSettingsBtn');
+        if (typeof window.openFullscreen === 'function') window.openFullscreen('settingsPage');
+      }
     }
   }
 
