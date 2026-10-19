@@ -1030,11 +1030,103 @@ body.privacy-on #tab1 .hero-stat-val span { display: none !important; }
   position: absolute; inset: 0; width: 100%; height: 100%;
   border-radius: 50%; object-fit: cover;
 }
-#tab1 .hero-card .hero-avatar .hero-avatar-badge {
-  position: absolute; right: -2px; bottom: -2px; z-index: 3;
-  width: 18px; height: 18px; border-radius: 50%;
-  background: #fff !important; color: #7C3AED !important;
-  font-size: 10px; font-weight: 800; line-height: 1;
-  display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 2px 6px rgba(40,10,90,0.30) !important; cursor: pointer;
+/* R16: BỎ HOÀN TOÀN badge ✕ của R13 — phòng trường hợp markup cũ còn sót */
+#tab1 .hero-card .hero-avatar .hero-avatar-badge,
+#heroAvatarBadge { display: none !important; }
+
+/* ==========================================================================
+   FIX ROUND 16 (Hùng 19/10)
+   Avatar thẻ tím: BỎ badge ✕ (Hùng yêu cầu "không có chữ x ở góc").
+   Bấm avatar: chưa có ảnh -> mở picker luôn; đã có ảnh -> action sheet
+   (Đổi ảnh / Xóa ảnh / Hủy). Sau khi chọn file -> CROP EDITOR:
+   stage vuông, vòng tròn guide, vùng ngoài vòng mờ tối, kéo để pan
+   (pointer events), thanh trượt zoom 1x–3x, ảnh luôn cover vòng tròn.
+   ========================================================================== */
+/* ---- action sheet ---- */
+#avatarSheet { padding-bottom: 24px !important; }
+.avatar-sheet-row {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 15px 16px; margin: 0 0 10px; border: none; cursor: pointer;
+  background: #F4F4F8 !important; color: #14141A !important;
+  border-radius: 16px !important; font-size: 0.95rem; font-weight: 700; text-align: left;
 }
+.avatar-sheet-row:last-child { margin-bottom: 0; }
+.avatar-sheet-row i { color: #8B5CF6 !important; width: 22px; text-align: center; font-size: 1rem; }
+.avatar-sheet-row.avatar-sheet-danger { color: #F43F5E !important; }
+.avatar-sheet-row.avatar-sheet-danger i { color: #F43F5E !important; }
+.avatar-sheet-row:active { transform: scale(0.98); }
+/* ---- crop editor ---- */
+.avatar-crop-hint {
+  font-size: 0.78rem; color: #8E8E9A; text-align: center;
+  margin: -4px 0 12px; line-height: 1.5;
+}
+.avatar-crop-stage {
+  position: relative; width: min(78vw, 320px); height: min(78vw, 320px);
+  margin: 0 auto; overflow: hidden; background: #14141A;
+  border-radius: 12px; touch-action: none; cursor: grab; flex-shrink: 0;
+}
+.avatar-crop-stage:active { cursor: grabbing; }
+.avatar-crop-img {
+  position: absolute; left: 0; top: 0; max-width: none; max-height: none;
+  pointer-events: none; user-select: none; -webkit-user-drag: none; -webkit-user-select: none;
+}
+.avatar-crop-mask {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(circle closest-side at center,
+    rgba(0,0,0,0) 0, rgba(0,0,0,0) calc(100% - 1.5px),
+    rgba(10,10,20,0.55) 100%);
+}
+.avatar-crop-ring {
+  position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.15);
+}
+.avatar-crop-zoom {
+  display: flex; align-items: center; gap: 12px; margin: 14px 10px 6px; color: #8B5CF6;
+}
+.avatar-crop-zoom i { font-size: 0.95rem; }
+.avatar-crop-zoom input[type=range] { flex: 1; accent-color: #8B5CF6; cursor: pointer; }
+
+/* ==========================================================================
+   FIX ROUND 15 (Hùng 19/10)
+   R15-1: thẻ stat Tab2 gọn lại — khoảng giữa các hàng trong thẻ đang to
+          (đo: header→số 17px, số→so sánh 14px, do flex gap:10px của
+          styles.css cộng dồn với margin) → về 8px đều, card thấp hơn ~20px.
+          GIỮ hàng header 22px + hàng số 28px (R9) để 3 thẻ vẫn thẳng hàng,
+          và .stat-compare min-height 34px (2 dòng) để dòng so sánh không
+          nhảy khi thẻ bên cạnh xuống dòng.
+   R15-2a: chặn vuốt ngang làm xê dịch trang — #settingsPage và #aboutPage
+          (position:fixed + translateX(100%)) đậu ngoài viewport phải, làm
+          document rộng 475px ở viewport 390 (đo scrollWidth). Riêng
+          body{overflow-x:hidden} KHÔNG chặn được vuốt ngang trên iOS Safari
+          → phải chặn ở html. Dùng clip (fallback hidden cho trình duyệt cũ).
+   R15-3: KHÔI PHỤC 2 thẻ statbox Tab1 (nền #F4F4F8 + icon) — R12 (demo Mẫu A)
+          đã bỏ thẻ xám + ẩn icon nhãn (Hùng yêu cầu trả lại như ảnh mẫu cũ:
+          icon tay-cầm-tiền cho Thu nhập, icon ví cho Số dư — cùng icon Tab2).
+          Hero Mẫu A phía trên giữ nguyên; mask privacy (***) của R12 vẫn
+          nguyên trên các thẻ này (nền sáng, chữ *** #14141A đọc được).
+   ========================================================================== */
+
+/* ---- R15-1: stat card Tab2 gọn ---- */
+#tab2 .stat-card { gap: 0 !important; padding: 10px 12px !important; }
+#tab2 .stat-card .stat-header { margin-bottom: 8px !important; }
+#tab2 .stat-num { margin-bottom: 8px !important; }
+#tab2 .stat-compare { margin-top: 0 !important; }
+
+/* ---- R15-2a: không cho document tràn ngang ---- */
+html { overflow-x: hidden; overflow-x: clip; }
+
+/* ---- R15-3: 2 thẻ statbox Tab1 (nền + icon) ---- */
+#tab1 .hero-sub { gap: 12px !important; }
+#tab1 .hero-sub .hero-stat {
+  background: #F4F4F8 !important;
+  border-radius: 18px !important;
+  padding: 13px 14px !important;
+  text-align: left !important;
+}
+#tab1 .hero-sub .divider-v { display: none !important; }
+#tab1 .hero-stat-label {
+  justify-content: flex-start !important;
+  text-align: left !important;
+}
+#tab1 .hero-stat-label i { display: inline-block !important; }
+#tab1 .hero-stat-val { justify-content: flex-start !important; }
