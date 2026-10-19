@@ -904,10 +904,12 @@ body:has(#tab1.tab-content.active) {
 #settingsPage .settings-select {
   -webkit-appearance: none; appearance: none;
   background-color: #EFF0F7 !important;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238B5CF6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/polyline%3e%3c/svg%3e") !important;
+  /* FIX ROUND 13: URI cũ có </polyline> thừa sau thẻ tự đóng -> XML lỗi, ảnh không vẽ.
+     Dùng SVG hợp lệ đã kiểm chứng parse được, màu tím đậm #7C3AED cho rõ. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24'%3E%3Cpath d='M6 9l6 6 6-6' fill='none' stroke='%237C3AED' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
   background-repeat: no-repeat !important;
   background-position: right 10px center !important;
-  background-size: 12px !important;
+  background-size: 13px !important;
   border: 1px solid transparent !important;
   border-radius: 999px !important;
   height: 32px; width: 112px; flex: 0 0 112px;
@@ -991,3 +993,48 @@ body.privacy-on #tab1 .hero-stat-val {
 body.privacy-on #tab1 .hero-stat-val::after { color: #14141A !important; }
 /* đơn vị ₫ trong số phụ cũng phải ẩn (upgrade.css chỉ ẩn span của hero-balance/tx-amount) */
 body.privacy-on #tab1 .hero-stat-val span { display: none !important; }
+
+/* ==========================================================================
+   FIX ROUND 13 (Hùng 19/10)
+   R13-1: nút tròn trên thanh lịch (Tab2) thu nhỏ ~17% (36 -> 30px).
+   Chỉ áp cho #calCtrlBar — nút thu gọn biểu đồ (#barChartCollapseBtn) dùng
+   chung class .cal-ctrl-toggle nên KHÔNG được đụng tới.
+   ========================================================================== */
+#calCtrlBar .cal-ctrl-toggle, #calCtrlBar .cal-ctrl-arrow {
+  width: 30px !important; height: 30px !important; font-size: 0.72rem !important;
+  flex: 0 0 30px !important;
+}
+
+/* ==========================================================================
+   R13-3: avatar trên thẻ tím (Tab1). Vòng tròn 46px ở góc trái trên của thẻ,
+   absolute nên không xê dịch các hàng canh giữa Mẫu A. Mặc định là icon người;
+   có ảnh thì img phủ kín (object-fit: cover), badge ✕ xóa ở góc dưới-phải.
+   ========================================================================== */
+#tab1 .hero-card .hero-avatar {
+  position: absolute; top: 16px; left: 16px; z-index: 2;
+  width: 46px; height: 46px; padding: 0; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.55) !important;
+  background: rgba(255,255,255,0.18) !important;
+  box-shadow: 0 4px 12px rgba(40,10,90,0.22) !important;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; overflow: visible;
+}
+#tab1 .hero-card .hero-avatar .hero-avatar-ph {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; height: 100%; border-radius: 50%; overflow: hidden;
+}
+#tab1 .hero-card .hero-avatar .hero-avatar-ph i {
+  color: rgba(255,255,255,0.92) !important; font-size: 20px;
+}
+#tab1 .hero-card .hero-avatar .hero-avatar-img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  border-radius: 50%; object-fit: cover;
+}
+#tab1 .hero-card .hero-avatar .hero-avatar-badge {
+  position: absolute; right: -2px; bottom: -2px; z-index: 3;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: #fff !important; color: #7C3AED !important;
+  font-size: 10px; font-weight: 800; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 6px rgba(40,10,90,0.30) !important; cursor: pointer;
+}
