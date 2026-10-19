@@ -15,8 +15,8 @@
    overflow:hidden + label ellipsis => noi dung KHONG BAO GIO tran ra ngoai pill. */
 .nav-btn { flex: 1 1 0; min-width: 0; max-width: 100%; overflow: hidden; position: relative; z-index: 1; height: 62px; padding: 0 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; background: transparent; border: none; border-radius: 26px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 .nav-btn:active { transform: scale(0.94); }
-.nav-icon-wrap { width: 32px; height: 32px; min-width: 32px; min-height: 32px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; color: var(--text-2); background: transparent; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-.nav-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.65rem; font-weight: 700; color: var(--text-2); margin-top: -4px; transition: color 0.3s ease, font-size 0.2s ease; }
+.nav-icon-wrap { width: 32px; height: 32px; min-width: 32px; min-height: 32px; flex-shrink: 0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 17px; color: var(--text-2); background: transparent; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.nav-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10px; font-weight: 700; color: var(--text-2); margin-top: -4px; transition: color 0.3s ease, font-size 0.2s ease; }
 .nav-btn:hover .nav-icon-wrap { color: var(--primary-light); background: rgba(255,255,255,0.05); transform: translateY(-2px) scale(1.1); }
 .nav-btn:hover .nav-label { color: var(--primary-light); }
 
@@ -32,20 +32,20 @@
    Do theo be rong THUC TE cua .nav-tabs-group (container query), khong phai vw,
    nen icon + chu tu co lai vua khung o moi kich thuoc, khong tran ra ngoai pill. */
 @container (max-width: 340px) {
-  .nav-icon-wrap { width: 29px; height: 29px; min-width: 29px; min-height: 29px; font-size: 1.02rem; }
-  .nav-label { font-size: 0.6rem; }
+  .nav-icon-wrap { width: 29px; height: 29px; min-width: 29px; min-height: 29px; font-size: 15px; }
+  .nav-label { font-size: 10px; }
 }
 @container (max-width: 300px) {
-  .nav-icon-wrap { width: 26px; height: 26px; min-width: 26px; min-height: 26px; font-size: 0.94rem; }
-  .nav-label { font-size: 0.55rem; letter-spacing: -0.02em; }
+  .nav-icon-wrap { width: 26px; height: 26px; min-width: 26px; min-height: 26px; font-size: 14px; }
+  .nav-label { font-size: 9px; letter-spacing: -0.02em; }
 }
 @container (max-width: 268px) {
-  .nav-icon-wrap { width: 24px; height: 24px; min-width: 24px; min-height: 24px; font-size: 0.86rem; }
-  .nav-label { font-size: 0.5rem; }
+  .nav-icon-wrap { width: 24px; height: 24px; min-width: 24px; min-height: 24px; font-size: 13px; }
+  .nav-label { font-size: 8px; }
 }
 
 /* Nut FAB (+) tach rieng ben phai */
-.fab-btn { flex-shrink: 0; width: 58px; height: 58px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.35); background: var(--grad-primary); color: #fff; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 10px 30px rgba(6,182,212,0.45), inset 0 1px 1px rgba(255,255,255,0.2); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s ease; }
+.fab-btn { flex-shrink: 0; width: 58px; height: 58px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.35); background: var(--grad-primary); color: #fff; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 10px 30px rgba(6,182,212,0.45), inset 0 1px 1px rgba(255,255,255,0.2); transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s ease; }
 .fab-btn:hover { box-shadow: 0 12px 34px rgba(6,182,212,0.6); filter: brightness(1.05); }
 .fab-btn:active { transform: scale(0.92); }
 .fab-btn.active { transform: rotate(45deg); }
@@ -56,8 +56,8 @@
 .fab-menu { position: fixed; right: 22px; bottom: 100px; display: flex; flex-direction: column; align-items: flex-end; gap: 14px; opacity: 0; transform: translateY(24px) scale(0.96); transform-origin: bottom right; pointer-events: none; transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1); z-index: 1600; }
 .fab-menu.show { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
 .fab-item { display: flex; align-items: center; gap: 12px; background: transparent; border: none; cursor: pointer; padding: 0; }
-.fab-item-label { background: var(--bg-card); backdrop-filter: var(--glass-effect); -webkit-backdrop-filter: var(--glass-effect); padding: 8px 14px; border-radius: 12px; font-size: 0.85rem; font-weight: 700; color: var(--text-1); box-shadow: 0 4px 14px rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.15); white-space: nowrap; }
-.fab-item-icon { width: 46px; height: 46px; border-radius: 50%; background: var(--bg-surface); backdrop-filter: var(--glass-effect); -webkit-backdrop-filter: var(--glass-effect); display: flex; align-items: center; justify-content: center; color: var(--primary-light); font-size: 1.05rem; box-shadow: 0 4px 14px rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.18); transition: transform 0.2s ease; }
+.fab-item-label { background: var(--bg-card); backdrop-filter: var(--glass-effect); -webkit-backdrop-filter: var(--glass-effect); padding: 8px 14px; border-radius: 12px; font-size: 13px; font-weight: 700; color: var(--text-1); box-shadow: 0 4px 14px rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.15); white-space: nowrap; }
+.fab-item-icon { width: 46px; height: 46px; border-radius: 50%; background: var(--bg-surface); backdrop-filter: var(--glass-effect); -webkit-backdrop-filter: var(--glass-effect); display: flex; align-items: center; justify-content: center; color: var(--primary-light); font-size: 16px; box-shadow: 0 4px 14px rgba(0,0,0,0.18); border: 1px solid rgba(255,255,255,0.18); transition: transform 0.2s ease; }
 .fab-item:hover .fab-item-icon { transform: scale(1.08); }
 .fab-item:active .fab-item-icon { transform: scale(0.94); }
 .fab-item-icon.income { color: var(--income); }
@@ -83,23 +83,23 @@ body.fullscreen-open { overflow: hidden; }
 .fullscreen-page.show { transform: translateX(0); }
 .fs-inner { max-width: 430px; margin: 0 auto; }
 .fs-header { position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 16px 0 12px; margin-bottom: 6px; background: transparent; z-index: 2; }
-.fs-title { order: 1; font-size: 1.2rem; font-weight: 800; color: var(--text-1); text-transform: uppercase; letter-spacing: -0.01em; }
-.fs-back { order: 2; width: auto; min-height: 42px; padding: 8px 16px; border-radius: 22px; gap: 8px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-1); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 0.95rem; transition: all 0.2s ease; }
+.fs-title { order: 1; font-size: 18px; font-weight: 800; color: var(--text-1); text-transform: uppercase; letter-spacing: -0.01em; }
+.fs-back { order: 2; width: auto; min-height: 42px; padding: 8px 16px; border-radius: 22px; gap: 8px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-1); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; transition: all 0.2s ease; }
 .fs-back:hover { background: var(--bg-card2); color: var(--primary-light); }
 .fs-back:active { transform: scale(0.94); }
-.fs-back-label { font-size: 0.9rem; font-weight: 700; }
+.fs-back-label { font-size: 13px; font-weight: 700; }
 
 /* ---------- THANH DIEU KHIEN AN/HIEN LICH TAB 2 ---------- */
 #timeNavContainer { display: none !important; }
 .cal-ctrl-bar { display: none; align-items: center; justify-content: space-between; gap: 8px; background: var(--bg-card); backdrop-filter: var(--glass-effect); -webkit-backdrop-filter: var(--glass-effect); border: 1px solid rgba(255,255,255,0.15); border-radius: var(--radius-md); padding: 6px 10px; margin-bottom: 10px; }
 .cal-ctrl-left { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.cal-ctrl-icon { color: var(--primary-light); font-size: 0.95rem; flex-shrink: 0; }
-#calCtrlLabel { font-weight: 700; color: var(--text-1); font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cal-ctrl-icon { color: var(--primary-light); font-size: 14px; flex-shrink: 0; }
+#calCtrlLabel { font-weight: 700; color: var(--text-1); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .cal-ctrl-right { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 /* Nut caret + mui ten tien/lui: vong tron nho, mui ten chiem ty le lon; bong don gian.
    Ep len layer GPU rieng (translateZ + backface-visibility + will-change) de tranh
    loi iOS Safari lam box-shadow bi loang/chong khi nam trong vung backdrop-filter. */
-.cal-ctrl-arrow, .cal-ctrl-toggle { width: 24px; height: 24px; padding: 0; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; background: var(--bg-card2); border: 1px solid var(--border-color); color: var(--text-2); cursor: pointer; border-radius: 50%; font-size: 0.82rem; line-height: 1; box-shadow: 0 1px 2px rgba(0,0,0,0.22); transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.15s ease; -webkit-backface-visibility: hidden; backface-visibility: hidden; will-change: transform; transform: translateZ(0); }
+.cal-ctrl-arrow, .cal-ctrl-toggle { width: 24px; height: 24px; padding: 0; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; background: var(--bg-card2); border: 1px solid var(--border-color); color: var(--text-2); cursor: pointer; border-radius: 50%; font-size: 12px; line-height: 1; box-shadow: 0 1px 2px rgba(0,0,0,0.22); transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, transform 0.15s ease; -webkit-backface-visibility: hidden; backface-visibility: hidden; will-change: transform; transform: translateZ(0); }
 .cal-ctrl-arrow:hover, .cal-ctrl-toggle:hover { color: var(--primary-light); background: var(--primary-alpha); border-color: rgba(6,182,212,0.35); }
 .cal-ctrl-arrow:active, .cal-ctrl-toggle:active { transform: scale(0.9) translateZ(0); }
 .cal-ctrl-toggle { color: var(--primary-light); }
@@ -114,14 +114,14 @@ input[type="date"].date-native { color: transparent !important; text-align: left
 input[type="date"].date-native::-webkit-datetime-edit { color: transparent !important; }
 input[type="date"].date-native::-webkit-date-and-time-value { color: transparent !important; text-align: left !important; }
 .date-field-wrap { position: relative; }
-.date-display { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 0.95rem; font-weight: 500; color: var(--text-1); pointer-events: none; z-index: 1; }
+.date-display { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 14px; font-weight: 500; color: var(--text-1); pointer-events: none; z-index: 1; }
 
 /* ---------- TAB 1: o date goc trong suot phu len dong ngay ---------- */
 .hero-date-tap { position: relative; display: inline-flex; align-items: center; gap: 4px; }
 .hero-date-native { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: none; background: transparent; opacity: 0; -webkit-appearance: none; appearance: none; cursor: pointer; }
 
 /* ---------- NUT DONG X CHO MODAL TRUOT ---------- */
-.modal-close-x { position: absolute; top: 14px; right: 16px; width: 34px; height: 34px; border-radius: 50%; background: var(--bg-card2); border: 1px solid var(--border-color); color: var(--text-1); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 6; font-size: 0.95rem; transition: all 0.2s ease; }
+.modal-close-x { position: absolute; top: 14px; right: 16px; width: 34px; height: 34px; border-radius: 50%; background: var(--bg-card2); border: 1px solid var(--border-color); color: var(--text-1); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 6; font-size: 14px; transition: all 0.2s ease; }
 .modal-close-x:hover { background: var(--expense-bg); color: var(--expense); border-color: rgba(244,63,94,0.3); }
 .modal-close-x:active { transform: scale(0.9); }
 
@@ -172,16 +172,16 @@ body.privacy-on .hero-balance::after,
 body.privacy-on .hero-stat-val::after {
     color: white !important;
 }
-body.privacy-on .hero-balance::after { font-size: 2.2rem; transform: translateY(4px); }
-body.privacy-on .hero-stat-val::after { font-size: 1.05rem; }
-body.privacy-on .tx-amount::after { font-size: 1.1rem; }
-body.privacy-on .stat-num::after { font-size: 1.05rem; }
-body.privacy-on .cat-progress-amt::after { font-size: 0.95rem; }
+body.privacy-on .hero-balance::after { font-size: 45px; transform: translateY(4px); }
+body.privacy-on .hero-stat-val::after { font-size: 16px; }
+body.privacy-on .tx-amount::after { font-size: 15px; }
+body.privacy-on .stat-num::after { font-size: 21px; }
+body.privacy-on .cat-progress-amt::after { font-size: 14px; }
 body.privacy-on #detailTotalIncome::after,
 body.privacy-on #detailTotalExpense::after,
-body.privacy-on #detailTotalBalance::after { font-size: 1.1rem; }
-body.privacy-on .calendar-balance::after { font-size: 0.55rem; }
-body.privacy-on .legend-pct::after { font-size: 0.75rem; }
+body.privacy-on #detailTotalBalance::after { font-size: 17px; }
+body.privacy-on .calendar-balance::after { font-size: 9px; }
+body.privacy-on .legend-pct::after { font-size: 11px; }
 body.privacy-on #heroExpenseCompare,
 body.privacy-on .stat-compare {
     display: none !important;
@@ -213,5 +213,5 @@ body.privacy-on .stat-compare {
    So am nho, mo (text-3) o goc phai tren. Mung 1 hien "1/<thang am>", to dam.
    Ram (15) & mung 1 to mau TIM (khong trung mau do cua so tien) de de nhan biet. */
 .calendar-day { position: relative; }
-.calendar-lunar { position: absolute; top: 2px; right: 3px; font-size: 0.5rem; font-weight: 600; line-height: 1; color: var(--text-3); pointer-events: none; }
+.calendar-lunar { position: absolute; top: 2px; right: 3px; font-size: 8px; font-weight: 600; line-height: 1; color: var(--text-3); pointer-events: none; }
 .calendar-lunar.lunar-special { color: #A855F7; font-weight: 800; }
