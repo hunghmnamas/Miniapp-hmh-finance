@@ -110,7 +110,7 @@
 
     // --- Các đoạn văn (căn lề theo POPUP.align) ---
     var bodyHtml = (POPUP.body || []).map(function (p) {
-      return '<p style="margin:0 0 10px; color:#374151; font-size:0.9rem; line-height:1.6; text-align:' + ALIGN + '; text-justify:inter-word; hyphens:none;">' + p + '</p>';
+      return '<p style="margin:0 0 10px; color:#374151; font-size:13px; line-height:1.6; text-align:' + ALIGN + '; text-justify:inter-word; hyphens:none;">' + p + '</p>';
     }).join('');
 
     // --- Danh sách gạch đầu dòng ---
@@ -118,10 +118,10 @@
     var itemsHtml = items.map(function (u, i) {
       var border = (i === items.length - 1) ? '' : 'border-bottom:1px solid #eef0f2;';
       return '<div style="display:flex; gap:12px; align-items:flex-start; padding:11px 0; ' + border + '">' +
-               '<div style="font-size:1.35rem; line-height:1.35; flex-shrink:0;">' + (u.icon || '•') + '</div>' +
+               '<div style="font-size:20px; line-height:1.35; flex-shrink:0;">' + (u.icon || '•') + '</div>' +
                '<div style="flex:1;">' +
-                 '<div style="font-weight:700; color:#111827; font-size:0.95rem; margin-bottom:3px;">' + u.title + '</div>' +
-                 '<div style="color:#4b5563; font-size:0.84rem; line-height:1.5; text-align:' + ALIGN + '; hyphens:none;">' + u.desc + '</div>' +
+                 '<div style="font-weight:700; color:#111827; font-size:14px; margin-bottom:3px;">' + u.title + '</div>' +
+                 '<div style="color:#4b5563; font-size:13px; line-height:1.5; text-align:' + ALIGN + '; hyphens:none;">' + u.desc + '</div>' +
                '</div>' +
              '</div>';
     }).join('');
@@ -131,8 +131,8 @@
     if (POPUP.deadline && POPUP.deadline.date) {
       var d = daysLeft(POPUP.deadline.date);
       cdHtml = '<div style="margin:14px 0 4px; padding:11px 12px; border-radius:12px; background:' + T.soft + '; border:1px solid ' + T.line + '; text-align:center;">' +
-                 '<div style="font-size:0.78rem; color:' + T.dim + '; letter-spacing:.3px;">' + (POPUP.deadline.label || '') + '</div>' +
-                 '<div style="font-size:1.05rem; font-weight:800; color:' + T.strong + '; margin-top:2px;">' +
+                 '<div style="font-size:12px; color:' + T.dim + '; letter-spacing:.3px;">' + (POPUP.deadline.label || '') + '</div>' +
+                 '<div style="font-size:16px; font-weight:800; color:' + T.strong + '; margin-top:2px;">' +
                    (POPUP.deadline.display || POPUP.deadline.date) +
                    (d === null ? '' : (d > 0 ? ' &nbsp;·&nbsp; còn ' + d + ' ngày' : ' &nbsp;·&nbsp; đã đến hạn')) +
                  '</div>' +
@@ -143,35 +143,35 @@
     var c = POPUP.contacts || {};
     var contactBtns = '';
     if (c.telegram) {
-      contactBtns += '<button id="wnTelegramBtn" style="flex:1; padding:10px 0; border:none; border-radius:10px; background:#e8f2fe; color:#1c64c4; font-size:0.85rem; font-weight:700; cursor:pointer;">' +
+      contactBtns += '<button id="wnTelegramBtn" style="flex:1; padding:10px 0; border:none; border-radius:10px; background:#e8f2fe; color:#1c64c4; font-size:13px; font-weight:700; cursor:pointer;">' +
                        '<i class="fab fa-telegram" style="margin-right:6px;"></i>@' + c.telegram + '</button>';
     }
     if (c.facebook) {
-      contactBtns += '<button id="wnFacebookBtn" style="flex:1; padding:10px 0; border:none; border-radius:10px; background:#eef2ff; color:#3b5998; font-size:0.85rem; font-weight:700; cursor:pointer;">' +
+      contactBtns += '<button id="wnFacebookBtn" style="flex:1; padding:10px 0; border:none; border-radius:10px; background:#eef2ff; color:#3b5998; font-size:13px; font-weight:700; cursor:pointer;">' +
                        '<i class="fab fa-facebook" style="margin-right:6px;"></i>' + c.facebook + '</button>';
     }
     var contactHtml = contactBtns ?
       '<div style="margin-top:16px; padding-top:14px; border-top:1px dashed #e5e7eb;">' +
-        '<div style="font-size:0.85rem; font-weight:700; color:#111827; margin-bottom:9px;">Cần hỗ trợ xin liên hệ</div>' +
+        '<div style="font-size:13px; font-weight:700; color:#111827; margin-bottom:9px;">Cần hỗ trợ xin liên hệ</div>' +
         '<div style="display:flex; gap:9px;">' + contactBtns + '</div>' +
       '</div>' : '';
 
     // --- Checkbox (chỉ khi dismissible) ---
     var dismissHtml = POPUP.dismissible ?
-      '<label style="display:flex; align-items:center; gap:9px; cursor:pointer; margin-bottom:14px; color:#374151; font-size:0.85rem;">' +
+      '<label style="display:flex; align-items:center; gap:9px; cursor:pointer; margin-bottom:14px; color:#374151; font-size:13px;">' +
         '<input type="checkbox" id="whatsnewDontShow" style="width:18px; height:18px; accent-color:' + T.accent + '; flex-shrink:0;">' +
         '<span>' + POPUP.dismissText + '</span>' +
       '</label>' : '';
 
     var subtitleHtml = POPUP.subtitle ?
-      '<div style="font-size:0.84rem; color:rgba(255,255,255,0.95); margin-top:4px; line-height:1.45;">' + POPUP.subtitle + '</div>' : '';
+      '<div style="font-size:13px; color:rgba(255,255,255,0.95); margin-top:4px; line-height:1.45;">' + POPUP.subtitle + '</div>' : '';
 
     var dialog = document.createElement('div');
     dialog.style.cssText = 'background:#ffffff; width:100%; max-width:400px; max-height:85vh; display:flex; flex-direction:column; border-radius:20px; box-shadow:0 24px 70px rgba(0,0,0,0.45); overflow:hidden;';
     dialog.innerHTML =
       '<div style="padding:22px 20px 16px; text-align:center; background:' + T.grad + '; color:#fff;">' +
-        '<div style="font-size:1.9rem; margin-bottom:6px;">' + (POPUP.icon || '🔔') + '</div>' +
-        '<div style="font-size:1.2rem; font-weight:800; color:#fff;">' + POPUP.title + '</div>' +
+        '<div style="font-size:28px; margin-bottom:6px;">' + (POPUP.icon || '🔔') + '</div>' +
+        '<div style="font-size:18px; font-weight:800; color:#fff;">' + POPUP.title + '</div>' +
         subtitleHtml +
       '</div>' +
       '<div style="padding:18px 20px 14px; overflow-y:auto; -webkit-overflow-scrolling:touch; background:#ffffff;">' +
@@ -179,7 +179,7 @@
       '</div>' +
       '<div style="padding:14px 20px 18px; flex-shrink:0; border-top:1px solid #eef0f2; background:#ffffff;">' +
         dismissHtml +
-        '<button id="whatsnewCloseBtn" style="width:100%; margin:0; padding:13px 0; border:none; border-radius:12px; background:' + T.grad + '; color:#fff; font-size:0.95rem; font-weight:700; cursor:pointer;">' +
+        '<button id="whatsnewCloseBtn" style="width:100%; margin:0; padding:13px 0; border:none; border-radius:12px; background:' + T.grad + '; color:#fff; font-size:14px; font-weight:700; cursor:pointer;">' +
           '<i class="fas fa-check" style="margin-right:6px;"></i> ' + POPUP.buttonText +
         '</button>' +
       '</div>';
