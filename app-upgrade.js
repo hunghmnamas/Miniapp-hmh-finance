@@ -883,6 +883,20 @@
       localStorage.setItem('calCollapsed', c);
     };
 
+    /* R5-2: nút ẩn/hiện biểu đồ cột — mirror cơ chế lịch (không lưu trạng thái) */
+    var barSec = document.getElementById('barChartSection');
+    var barToggle = document.getElementById('barChartCollapseBtn');
+    if (barToggle) barToggle.onclick = function () {
+      triggerHaptic('light');
+      if (!barSec) return;
+      var collapsed = barSec.classList.toggle('bar-collapsed');
+      if (!collapsed) {
+        /* vừa mở lại: cho Chart.js vẽ đúng kích thước */
+        try { if (window.mChart && typeof window.mChart.resize === 'function') window.mChart.resize(); } catch (e) {}
+        try { window.dispatchEvent(new Event('resize')); } catch (e) {}
+      }
+    };
+
     setupDateDisplay('addDate', 'addDateDisplay');
     setupDateDisplay('editDate', 'editDateDisplay');
 
