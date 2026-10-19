@@ -353,3 +353,95 @@ async function fetchMonthData(month) {
     }
   });
 })();
+
+// ============================================================================
+// FIX ROUND 13 (19/10/2026): avatar trên thẻ tím (Tab1).
+// - Mặc định: icon người (fa-user) trong vòng tròn kính mờ ở góc trái thẻ tím.
+// - Bấm avatar -> mở chọn ảnh từ thư viện; ảnh được crop vuông giữa, resize
+//   192x192 JPEG 0.85, lưu data URL vào localStorage 'hmh_hero_avatar'.
+// - Có ảnh: bấm ảnh = đổi ảnh khác; badge ✕ ở góc dưới-phải avatar = xóa ảnh
+//   (stopPropagation để không mở picker). Hết quota -> thử 128px/0.8, vẫn
+//   lỗi thì giữ ảnh cho phiên hiện tại.
+// ============================================================================
+(function initHeroAvatar() {
+  var KEY = 'hmh_hero_avatar';
+  var btn, img, badge, input, ph;
+
+  function els() {
+    btn = document.getElementById('heroAvatar');
+    img = document.getElementById('heroAvatarImg');
+    badge = document.getElementById('heroAvatarBadge');
+    input = document.getElementById('heroAvatarInput');
+    ph = btn ? btn.querySelector('.hero-avatar-ph') : null;
+    return !!(btn && img && badge && input);
+  }
+
+  function render(url) {
+    if (url) {
+      img.src = url; img.style.display = 'block';
+      if (ph) ph.style.display = 'none';
+      badge.style.display = 'flex';
+    } else {
+      img.removeAttribute('src'); img.style.display = 'none';
+      if (ph) ph.style.display = 'flex';
+      badge.style.display = 'none';
+    }
+  }
+
+  function store(dataUrl) {
+    try { localStorage.setItem(KEY, dataUrl); return true; }
+    catch (e) { return false; }
+  }
+
+  function processFile(file) {
+    if (!file || !/^image\//.test(file.type)) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var im = new Image();
+      im.onload = function () {
+        var attempts = [{ s: 192, q: 0.85 }, { s: 128, q: 0.8 }];
+        for (var i = 0; i < attempts.length; i++) {
+          var side = Math.min(im.naturalWidth, im.naturalHeight) || 1;
+          var sx = Math.floor((im.naturalWidth - side) / 2);
+          var sy = Math.floor((im.naturalHeight - side) / 2);
+          var cv = document.createElement('canvas');
+          cv.width = attempts[i].s; cv.height = attempts[i].s;
+          var cx = cv.getContext('2d');
+          cx.drawImage(im, sx, sy, side, side, 0, 0, attempts[i].s, attempts[i].s);
+          var url = cv.toDataURL('image/jpeg', attempts[i].q);
+          render(url);
+          if (store(url)) return; // lưu được -> xong
+          // hết quota: vòng sau thử size nhỏ hơn; nếu vẫn lỗi, giữ ảnh phiên này
+        }
+      };
+      im.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function bind() {
+    btn.addEventListener('click', function () { input.click(); });
+    input.addEventListener('change', function () {
+      if (input.files && input.files[0]) processFile(input.files[0]);
+      input.value = '';
+    });
+    badge.addEventListener('click', function (e) {
+      e.stopPropagation();
+      try { localStorage.removeItem(KEY); } catch (err) {}
+      render(null);
+    });
+    // expose cho test harness
+    window.__heroAvatarTest = { processFile: processFile, render: render, key: KEY };
+  }
+
+  function start() {
+    if (!els()) return;
+    var saved = null;
+    try { saved = localStorage.getItem(KEY); } catch (e) {}
+    render(saved);
+    bind();
+  }
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
+  else start();
+})();
