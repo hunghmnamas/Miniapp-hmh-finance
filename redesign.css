@@ -684,24 +684,30 @@ body { background: #F7F7FA !important; color: #14141A !important; }
    FIX ROUND 5 (19/10/2026) — theo feedback của Hùng qua ảnh chụp
    ========================================================================== */
 
-/* ---- R5-1 (sửa vòng 6): tiêu đề "Giao dịch trong ngày" theo ẢNH 1 (giao diện xanh cũ) ----
+/* ---- R5-1 (sửa vòng 6) + R7: tiêu đề "Giao dịch trong ngày" ----
    UPPERCASE, đậm, canh GIỮA — ngoại lệ cho lệnh căn trái vòng 4 (dòng 680).
-   Hậu tố "(Tổng: n)" giữ chữ thường/nhỏ/xám nhờ inline style sẵn có.
-   Cỡ chữ 5vw ≈ 5% bề rộng màn hình: 19.5px @390, 21.5px @430 (ảnh mẫu cũ ≈22px @430). */
+   Hậu tố "(Tổng: n)" giữ chữ thường/nhỏ/xám (inline style + rule span dưới).
+   VÒNG 7 — forensics: KHÔNG có rule ẩn nào thắng cascade; rule cũ (5vw rồi
+   3.9vw) đều render đúng giá trị đặt — lỗi nằm ở GIÁ TRỊ mục tiêu copy tuyệt
+   đối từ ảnh mẫu. Theo đính chính của Hùng, cỡ chữ phải suy từ thang chữ CỦA
+   APP: tiêu đề này = đúng cỡ "Thu nhập & Chi tiêu" (Tab2, .chart-title 0.9rem),
+   in hoa + weight 700 + canh giữa + #1F2D3D. */
 #tab1 > .section-header { justify-content: center !important; }
 #tab1 .section-title {
   text-transform: uppercase !important;
   text-align: center !important;
-  font-size: 5vw !important;
-  font-weight: 800 !important;
-  color: #14141A !important;
+  font-size: 0.9rem !important;
+  font-weight: 700 !important;
+  color: #1F2D3D !important;
 }
-#tab1 .section-title span { font-size: 0.85rem !important; }
+#tab1 .section-title span { font-size: 0.7rem !important; }
 
 /* Dòng báo trống Tab1: xám nghiêng canh giữa, NẰM TRONG TỜ TRẮNG (cùng tờ với
-   tiêu đề + danh sách) — 4.4vw ≈ 4.4% bề rộng: 17.2px @390, 18.9px @430.
+   tiêu đề + danh sách). VÒNG 7: thang caption của app — 0.7rem (=10.5px, đúng
+   bằng .stat-label/.tx-date), tức 0.78× tiêu đề: đọc như một caption lặng,
+   rõ ràng nhỏ hơn tiêu đề. Màu #7C8DA6.
    Nền trắng + margin 0 (dùng padding) để tờ trắng liền mạch, không kẽ hở. */
-#placeholderTab1.empty-state { font-size: 4.4vw !important; }
+#placeholderTab1.empty-state { font-size: 0.7rem !important; color: #7C8DA6 !important; }
 #tab1 > #placeholderTab1 {
   background: #fff !important;
   margin: 0 -16px !important;
