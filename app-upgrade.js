@@ -613,7 +613,9 @@
   var _origLoadCustomReport = window.loadCustomReport;
   if (typeof _origLoadCustomReport === 'function') {
     window.loadCustomReport = function (startMonth, endMonth, year) {
-      try { window.__cmpText = 'so với năm ' + (year - 1); } catch (e) { window.__cmpText = null; }
+      // R27 (F2): chỉ chế độ NĂM (1-12) mới "so với năm trước"; khoảng tùy chọn
+      // so với KỲ NGAY TRƯỚC CÙNG ĐỘ DÀI -> nhãn trung thực "so với kỳ trước".
+      try { window.__cmpText = (startMonth === 1 && endMonth === 12) ? ('so với năm ' + (year - 1)) : 'so với kỳ trước'; } catch (e) { window.__cmpText = null; }
       return _origLoadCustomReport.apply(this, arguments);
     };
   }
