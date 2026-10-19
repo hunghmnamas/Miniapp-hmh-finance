@@ -401,7 +401,8 @@ function renderCalendar(txs, dateObj, mode) {
 var G6_INDIGO = '#6366F1', G6_ROSE = '#F43F5E', G6_TRACK = '#E9EBF1', G6_PAD = 9;
 
 function buildDonutSVG(inc, exp) {
-  var size = 160, sw = 21, r = (size - sw) / 2, cx = size / 2;
+  // R23: vòng 140px, nét 19 (tỉ lệ từ mẫu G7/G8 đã duyệt).
+  var size = 140, sw = 19, r = (size - sw) / 2, cx = size / 2;
   var total = inc + exp;
   function pt(deg) { var a = (deg - 90) * Math.PI / 180; return [cx + r * Math.cos(a), cx + r * Math.sin(a)]; }
   function arc(a0, a1) {
@@ -481,19 +482,19 @@ function renderG6StatsPanel(tInc, tExp, tBal, pInc, pExp, pBal, compareText) {
   var tBalObj = formatCurrencyWithUnit(Math.abs(tBal));
   var sign = tBal > 0 ? '+' : (tBal < 0 ? '−' : '');
   var eyeCls = (typeof isPrivacyActive !== 'undefined' && isPrivacyActive) ? 'fa-eye-slash' : 'fa-eye';
-  function amtHTML(inner, id, withEye) {
-    return '<div class="g6-amt stat-num" id="' + id + '">' + inner +
-      (withEye ? '<i class="fas ' + eyeCls + ' privacy-toggle-btn g6-eye" onclick="togglePrivacy()"></i>' : '') + '</div>';
+  // R23: mắt privacy KHÔNG còn nằm trong hàng số — về góc dưới-phải thẻ (G8-E).
+  function amtHTML(inner, id) {
+    return '<div class="g6-amt stat-num" id="' + id + '">' + inner + '</div>';
   }
   var rows = [
     { icon: 'fa-hand-holding-dollar', label: 'Thu nhập',
-      amt: amtHTML(tIncObj.val + '<span>' + tIncObj.unit + '</span>', 'tab2Income', false),
+      amt: amtHTML(tIncObj.val + '<span>' + tIncObj.unit + '</span>', 'tab2Income'),
       cmp: getCompareHTML(tInc, pInc, 'income', compareText), cmpId: 'tab2IncomeCompare' },
     { icon: 'fa-money-bill-transfer', label: 'Chi tiêu',
-      amt: amtHTML(tExpObj.val + '<span>' + tExpObj.unit + '</span>', 'tab2Expense', false),
+      amt: amtHTML(tExpObj.val + '<span>' + tExpObj.unit + '</span>', 'tab2Expense'),
       cmp: getCompareHTML(tExp, pExp, 'expense', compareText), cmpId: 'tab2ExpenseCompare' },
     { icon: 'fa-wallet', label: 'Số dư',
-      amt: amtHTML('<span>' + sign + '</span>' + tBalObj.val + '<span>' + tBalObj.unit + '</span>', 'tab2Balance', true),
+      amt: amtHTML('<span>' + sign + '</span>' + tBalObj.val + '<span>' + tBalObj.unit + '</span>', 'tab2Balance'),
       cmp: getCompareHTML(tBal, pBal, 'balance', compareText), cmpId: 'tab2BalanceCompare' }
   ];
   var ctr = g6CenterContent(tInc, tExp);
@@ -501,10 +502,16 @@ function renderG6StatsPanel(tInc, tExp, tBal, pInc, pExp, pBal, compareText) {
     '<div class="g6-donutwrap">' + buildDonutSVG(tInc, tExp) +
     '<div class="g6-center' + (ctr.zero ? ' zero' : '') + '"><b class="g6-centerpct">' + ctr.pct + '</b><span>' + ctr.lbl + '</span></div></div>' +
     '<div class="g6-legend">' + rows.map(function (r) {
-      return '<div class="g6-row"><span class="g6-ic"><i class="fas ' + r.icon + '"></i></span>' +
-        '<div class="g6-mid"><div class="g6-line1"><span class="g6-tag">' + r.label + '</span>' + r.amt + '</div>' +
-        '<div class="g6-cmp" id="' + r.cmpId + '">' + r.cmp + '</div></div></div>';
-    }).join('') + '</div></div>';
+      // R23: icon CÙNG hàng flex với nhãn (.g6-lft) — thẳng tâm icon với tâm chữ nhãn;
+      // so sánh thụt vào thẳng dưới nhãn (margin-left 28px trong CSS).
+      return '<div class="g6-row"><div class="g6-line1">' +
+        '<span class="g6-lft"><span class="g6-ic"><i class="fas ' + r.icon + '"></i></span>' +
+        '<span class="g6-tag">' + r.label + '</span></span>' + r.amt + '</div>' +
+        '<div class="g6-cmp" id="' + r.cmpId + '">' + r.cmp + '</div></div>';
+    }).join('') + '</div>' +
+    // R23: mắt góc dưới-phải thẻ — vẫn là nút privacy-toggle-btn nên
+    // togglePrivacy() lật eye/eye-slash qua updatePrivacyUI như cũ.
+    '<i class="fas ' + eyeCls + ' privacy-toggle-btn g6-eyecorner" onclick="togglePrivacy()"></i></div>';
   box.innerHTML = html;
   ['tab2IncomeCompare', 'tab2ExpenseCompare', 'tab2BalanceCompare'].forEach(function (id) {
     formatG6CompareCell(document.getElementById(id));
