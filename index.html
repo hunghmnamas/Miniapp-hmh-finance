@@ -135,6 +135,9 @@
             <!-- R21: panel G6 (vòng donut + 3 hàng chú thích) do JS dựng trong renderG6StatsPanel -->
           </div>
 
+          <!-- R29: thẻ insight báo cáo — do renderInsightStrip dựng, nằm dưới panel G6, trên nút xuất -->
+          <div id="insightStrip" class="insight-strip" style="display: none;" aria-live="polite"></div>
+
           <div class="field-group mb-3 flex-row-gap-10">
             <button class="btn-soft m-0 flex-1" onclick="exportToCSV()"><i class="fas fa-file-csv text-income-color"></i> Xuất dữ liệu CSV</button>
             <button class="btn-soft m-0 flex-1" onclick="exportToPDF()"><i class="fas fa-file-pdf text-expense-color"></i> Xuất báo cáo PDF</button>
