@@ -1188,26 +1188,27 @@ html { overflow-x: hidden; overflow-x: clip; }
 }
 
 /* ==========================================================================
-   FIX ROUND 21 (Hùng 19/10) — PANEL THỐNG KÊ G6 THAY 3 STAT-CARD (Tab2)
-   Vòng donut trái (kiểu ảnh mẫu: nét dày, khe trắng, đầu bo tròn) + 3 hàng
+   FIX ROUND 21→23 (Hùng 19/10) — PANEL THỐNG KÊ G6 THAY 3 STAT-CARD (Tab2)
+   R21: vòng donut trái (kiểu ảnh mẫu: nét dày, khe trắng, đầu bo tròn) + 3 hàng
    chú thích phải (icon tím app thật + nhãn + số tiền + so sánh 2 tầng).
+   R22: mắt privacy nằm giữa dải 32px dành riêng trong hàng SỐ DƯ.
+   R23 (Hùng duyệt G8-E): mắt về góc dưới-phải thẻ; panel siết gọn;
+   icon CÙNG dòng flex với nhãn (cột 22px cố định, tâm icon = tâm chữ nhãn).
    ========================================================================== */
 #tab2 #monthlyStatsContainer.stat-grid { display: block !important; }
 #tab2 .g6-panel {
-  background: #fff; border-radius: 20px; padding: 16px 14px;
+  position: relative; /* R23: neo mắt góc dưới-phải */
+  background: #fff; border-radius: 20px; padding: 12px;
   box-shadow: 0 4px 18px rgba(31,24,71,.06);
-  display: flex; align-items: center; gap: 14px; min-width: 0;
+  display: flex; align-items: center; gap: 12px; min-width: 0;
   margin-bottom: 16px;
 }
 /* ---- Vòng trái ---- */
-#tab2 .g6-donutwrap { position: relative; width: 160px; height: 160px; flex: 0 0 auto; }
-@media (max-width: 390px) {
-  #tab2 .g6-donutwrap { width: 150px; height: 150px; }
-}
+#tab2 .g6-donutwrap { position: relative; width: 140px; height: 140px; flex: 0 0 auto; }
 #tab2 .g6-donut { display: block; width: 100%; height: 100%; }
 #tab2 .g6-center {
   position: absolute; inset: 0; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; text-align: center; padding: 0 20px;
+  align-items: center; justify-content: center; text-align: center; padding: 0 18px;
 }
 #tab2 .g6-centerpct {
   font-size: 1.55rem; font-weight: 800; color: #1C1B22;
@@ -1216,47 +1217,50 @@ html { overflow-x: hidden; overflow-x: clip; }
 }
 #tab2 .g6-center span { font-size: .66rem; color: #9AA1B5; line-height: 1.35; margin-top: 2px; }
 #tab2 .g6-center.zero .g6-centerpct { font-size: 1.15rem; color: #9AA1B5; }
+/* ---- R23: mắt privacy ở góc dưới-phải thẻ (Hùng duyệt mẫu E) ---- */
+#tab2 .g6-eyecorner {
+  position: absolute; bottom: 4px; right: 4px; z-index: 2;
+  width: 32px; height: 32px; display: inline-flex;
+  align-items: center; justify-content: center;
+  cursor: pointer; color: #9AA1B5; font-size: 15px; line-height: 1; margin: 0; padding: 0;
+}
 /* ---- Chú thích phải: lưới thẳng ---- */
 #tab2 .g6-legend { flex: 1 1 auto; min-width: 0; }
-#tab2 .g6-row {
-  display: grid; grid-template-columns: 22px minmax(0, 1fr); column-gap: 8px;
-  align-items: start; min-width: 0; min-height: 64px;
-}
-@media (max-width: 390px) { #tab2 .g6-row { min-height: 62px; } }
+#tab2 .g6-row { min-height: 50px; min-width: 0; }
 #tab2 .g6-row + .g6-row { border-top: 1px solid #F1F2F7; }
-#tab2 .g6-ic { color: #8B5CF6; font-size: 1rem; line-height: 1; justify-self: center; align-self: start; margin-top: 3px; }
-#tab2 .g6-mid { min-width: 0; }
-#tab2 .g6-line1 { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+#tab2 .g6-line1 { display: flex; align-items: center; min-width: 0; }
+/* R23: icon CÙNG hàng flex với nhãn — cột 22px cố định, align-items:center nên
+   tâm glyph icon trùng tâm dòng chữ nhãn (kế thừa từ mẫu G7).
+   align-self:flex-end: cụm icon+nhãn ôm sát đáy dòng 1 -> gần khối so sánh
+   (gap glyph-to-glyph <= 4px), thay vì bị căn giữa trong dòng số cao. */
+#tab2 .g6-lft { display: flex; align-items: center; gap: 6px; flex: 0 0 auto; align-self: flex-end; }
+#tab2 .g6-ic {
+  width: 22px; flex: 0 0 22px; color: #8B5CF6; font-size: 1rem; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}
 #tab2 .g6-tag {
   flex: 0 0 auto; font-size: .68rem; font-weight: 600; text-transform: uppercase;
   letter-spacing: .02em; color: #8E8E9A; white-space: nowrap;
 }
 #tab2 .g6-amt {
-  flex: 1 1 0; min-width: 0; overflow: hidden;
+  flex: 1 1 auto; min-width: 0; overflow: hidden;
   text-overflow: clip !important; /* R21: chống kẹt ellipsis Blink (fitter bảo đảm vừa) */
   white-space: nowrap; width: auto !important; display: block !important;
-  /* R22: dải 32px bên phải dành RIÊNG cho mắt privacy trên mọi hàng — số tiền
-     các hàng cùng lề phải (Δ=0) và không bao giờ nằm dưới mắt.
-     (36px -> 32px: giữ khoảng cách mắt ≥6px nhưng vẫn đủ chỗ cho số dài 25 triệu
-     ở ô Thu nhập, vốn là ô hẹp nhất do nhãn dài.) */
-  text-align: right !important; position: relative; padding-right: 32px;
+  text-align: right !important;
   font-weight: 800; color: #1C1B22;
+  /* R23: vô hiệu hoá kế thừa .stat-num gây phình hàng:
+     R15 margin-bottom:8px, R7 height:30px/line-height:28px !important —
+     số tiền ôm sát khối so sánh (gap glyph-to-glyph <= 4px). */
+  margin-bottom: 0 !important; line-height: 1.15 !important; height: auto !important;
 }
-/* R21: ₫ (span nhỏ) tự canh baseline với số vì là phần tử inline —
-   không cần flex; white-space:nowrap bảo đảm không tách dòng. */
-#tab2 .g6-eye {
-  cursor: pointer; color: #9AA1B5; font-size: .95rem; line-height: 1;
-  /* R22: mắt nằm giữa dải 32px dành riêng (padding-right của .g6-amt):
-     khoảng cách từ số tiền tới mắt ~8px, vùng bấm 32×32px. */
-  position: absolute; right: 0; top: 50%; transform: translateY(-50%);
-  width: 32px; height: 32px; display: inline-flex;
-  align-items: center; justify-content: center; margin: 0;
-}
-/* So sánh 2 tầng: dòng 1 màu ngữ nghĩa production, dòng 2 "so với ..." xám */
-#tab2 .g6-cmp { font-size: .66rem; line-height: 1.4; margin-top: 2px; min-width: 0; }
+/* So sánh 2 tầng: dòng 1 màu ngữ nghĩa production, dòng 2 "so với ..." xám.
+   R23: margin-top 1px, thụt vào thẳng dưới nhãn (22px icon + 6px gap = 28px). */
+#tab2 .g6-cmp { font-size: .66rem; line-height: 1.3; margin-top: 1px; margin-left: 28px; min-width: 0; }
 #tab2 .g6-cmpline { font-weight: 600; }
-#tab2 .g6-cmpline2 { display: block; color: #9AA1B5; font-weight: 400; margin-top: 1px; }
+#tab2 .g6-cmpline2 { display: block; color: #9AA1B5; font-weight: 400; margin-top: 0; }
 #tab2 .g6-cmp .cmp-amt, #tab2 .g6-cmp .cmp-lbl, #tab2 .g6-cmp .nw { white-space: nowrap; }
+/* R23: hàng cuối (SỐ DƯ) chừa dải 40px cho mắt ở góc dưới-phải thẻ. */
+#tab2 .g6-row:last-child .g6-cmp { padding-right: 40px; }
 /* ---- Privacy: che số tiền các hàng + số % giữa vòng -> "***" (như mask Tab1) ---- */
 body.privacy-on #tab2 .g6-amt,
 body.privacy-on #tab2 .g6-centerpct {
@@ -1269,7 +1273,7 @@ body.privacy-on #tab2 .g6-centerpct::after {
   color: #1C1B22 !important; font-size: 1rem !important; line-height: 1.4;
 }
 
-/* R21: màn hẹp (<=390px) — xếp dọc: vòng trên, chú thích dưới full-width.
+/* R21/R23: màn hẹp (<=390px) — xếp dọc: vòng trên, chú thích dưới full-width.
    Side-by-side ở 360px bóp cột chú thích còn ~136px khiến số tiền không vừa
    thẻ dù đã co tới sàn; xếp dọc cho số tiền đủ chỗ và cân đối hơn.
    Đặt CUỐI file để thắng rule gốc cùng specificity. */
@@ -1277,5 +1281,5 @@ body.privacy-on #tab2 .g6-centerpct::after {
   #tab2 .g6-panel { flex-direction: column; align-items: stretch; }
   #tab2 .g6-donutwrap { margin: 0 auto; }
   #tab2 .g6-legend { width: 100%; }
-  #tab2 .g6-row { min-height: 64px; }
+  #tab2 .g6-row { min-height: 50px; }
 }
