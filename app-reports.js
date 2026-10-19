@@ -99,7 +99,7 @@ function displayTransactions() {
   const tBalObj = formatCurrencyWithUnit(Math.abs(tBal));
   const heroBalSub = document.getElementById('heroBalanceSub');
   if(heroBalSub) { 
-      let sign = tBal > 0 ? '+' : (tBal < 0 ? '−' : ''); 
+      let sign = tBal > 0 ? '+ ' : (tBal < 0 ? '− ' : ''); 
       heroBalSub.innerHTML = `<span>${sign}</span>${tBalObj.val}<span>${tBalObj.unit}</span>`; 
   }
   
@@ -110,7 +110,7 @@ function displayTransactions() {
   try { if (typeof window.fitStatAmounts === 'function') window.fitStatAmounts(); } catch (e) {}
   
   const headerTitle = document.querySelector('#tab1 .section-title');
-  if(headerTitle) headerTitle.innerHTML = `Giao dịch trong ngày <span style="font-size: 0.75rem; color: var(--text-2); text-transform: none;">(Tổng: ${data.length})</span>`;
+  if(headerTitle) headerTitle.innerHTML = `Giao dịch trong ngày <span style="font-size: 11px; color: var(--text-2); text-transform: none;">(Tổng: ${data.length})</span>`;
 
   const tPages = Math.ceil(data.length / itemsPerPage);
   if (data.length === 0) {
@@ -480,7 +480,7 @@ function renderG6StatsPanel(tInc, tExp, tBal, pInc, pExp, pBal, compareText) {
   var tIncObj = formatCurrencyWithUnit(tInc);
   var tExpObj = formatCurrencyWithUnit(tExp);
   var tBalObj = formatCurrencyWithUnit(Math.abs(tBal));
-  var sign = tBal > 0 ? '+' : (tBal < 0 ? '−' : '');
+  var sign = tBal > 0 ? '+ ' : (tBal < 0 ? '− ' : '');
   var eyeCls = (typeof isPrivacyActive !== 'undefined' && isPrivacyActive) ? 'fa-eye-slash' : 'fa-eye';
   // R23: mắt privacy KHÔNG còn nằm trong hàng số — về góc dưới-phải thẻ (G8-E).
   function amtHTML(inner, id) {
@@ -645,7 +645,7 @@ function drawMonthlyPieChart(data) {
     if (progList) { 
         const iAmtObj = formatCurrencyWithUnit(i.amount);
         const divProg = document.createElement('div'); divProg.className = 'cat-progress-card'; 
-        divProg.innerHTML = `<div class="cat-progress-header"><div class="cat-progress-info"><div class="cat-progress-icon" style="background:${c}22; color:${c};">${catIconHTML}</div><span class="cat-progress-title">${escapeHTML(i.category)}</span></div><div style="display:flex; flex-direction:column; align-items:flex-end; gap:3px;"><span class="cat-progress-amt" style="color:${c}">${iAmtObj.val}<span>${iAmtObj.unit}</span></span><span style="font-size: 0.65rem; color: var(--text-3); font-weight: 600;">${pct}% tổng chi</span></div></div><div class="cat-progress-bar-bg"><div class="cat-progress-bar-fill" style="width:${pct}%; background:${c}"></div></div>`; 
+        divProg.innerHTML = `<div class="cat-progress-header"><div class="cat-progress-info"><div class="cat-progress-icon" style="background:${c}22; color:${c};">${catIconHTML}</div><span class="cat-progress-title">${escapeHTML(i.category)}</span></div><div style="display:flex; flex-direction:column; align-items:flex-end; gap:3px;"><span class="cat-progress-amt" style="color:${c}">${iAmtObj.val}<span>${iAmtObj.unit}</span></span><span style="font-size: 10px; color: var(--text-3); font-weight: 600;">${pct}% tổng chi</span></div></div><div class="cat-progress-bar-bg"><div class="cat-progress-bar-fill" style="width:${pct}%; background:${c}"></div></div>`; 
         divProg.onclick = () => { triggerHaptic('light'); showCategoryDetail(i.category); }; 
         progList.appendChild(divProg); 
     }
@@ -689,9 +689,9 @@ function showCategoryDetail(cat) {
   txs.forEach(t => { if(t.type === 'Thu nhập') totalInc += t.amount; else totalExp += t.amount; });
   
   const incObj = formatCurrencyWithUnit(totalInc);
-  document.getElementById('detailTotalIncome').innerHTML = `<span>+</span>${incObj.val}<span>${incObj.unit}</span>`;
+  document.getElementById('detailTotalIncome').innerHTML = `<span>+ </span>${incObj.val}<span>${incObj.unit}</span>`;
   const expObj = formatCurrencyWithUnit(totalExp);
-  document.getElementById('detailTotalExpense').innerHTML = `<span>−</span>${expObj.val}<span>${expObj.unit}</span>`;
+  document.getElementById('detailTotalExpense').innerHTML = `<span>− </span>${expObj.val}<span>${expObj.unit}</span>`;
 
   const chartContainer = document.getElementById('detailChartContainer');
   if(chartContainer) chartContainer.style.display = 'none';
@@ -723,9 +723,9 @@ function openDailyDetailView(d, m, y, allTxs) {
     dayTxs.forEach(t => { if(t.type === 'Chi tiêu') totalExp += t.amount; else totalInc += t.amount; });
 
     const incObj = formatCurrencyWithUnit(totalInc);
-    document.getElementById('detailTotalIncome').innerHTML = `<span>+</span>${incObj.val}<span>${incObj.unit}</span>`;
+    document.getElementById('detailTotalIncome').innerHTML = `<span>+ </span>${incObj.val}<span>${incObj.unit}</span>`;
     const expObj = formatCurrencyWithUnit(totalExp);
-    document.getElementById('detailTotalExpense').innerHTML = `<span>−</span>${expObj.val}<span>${expObj.unit}</span>`;
+    document.getElementById('detailTotalExpense').innerHTML = `<span>− </span>${expObj.val}<span>${expObj.unit}</span>`;
 
     const chartContainer = document.getElementById('detailChartContainer');
     if(chartContainer) chartContainer.style.display = 'none';
