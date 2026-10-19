@@ -346,10 +346,12 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 .bottom-nav .nav-spacer { flex: 0 0 76px; }
 /* nút + tròn nâng giữa thanh */
 #fabBtn {
-  /* neo ngang vào VIEWPORT (50vw) thay vì 50% của .bottom-nav: tâm nút luôn
-     trùng tâm màn hình ở mọi webview, không phụ thuộc padding/max-width của nav.
-     Dọc vẫn neo vào nav (position:absolute -> bottom:30px giữ nguyên). */
-  position: absolute !important; left: 50vw !important; transform: translateX(-50%) !important;
+  /* VÒNG 9 (sửa đúng): left:50% của .bottom-nav — app đã có reset
+     *{box-sizing:border-box} nên padding-box = border-box, 50% luôn là tâm
+     nav thật ở mọi webview và mọi chiều rộng (không có "lệch padding" như
+     vòng 3 từng lo). absolute trong nav (nav có transform) nên KHÔNG dùng
+     50vw/fixed — cả hai đều tính từ mép trái nav, không phải viewport. */
+  position: absolute !important; left: 50% !important; transform: translateX(-50%) !important;
   bottom: 30px !important; width: 60px !important; height: 60px !important;
   background: linear-gradient(135deg, #8B5CF6, #7C3AED) !important;
   border: none !important; border-radius: 50% !important; color: #fff !important;
@@ -769,4 +771,69 @@ body { background: #F7F7FA !important; color: #14141A !important; }
   min-height: 100vh;
   min-height: 100dvh;
   background: #fff;
+}
+
+/* ==========================================================================
+   FIX ROUND 9 (Hùng 19/10 10:24)
+   R9-1: 3 thẻ stat Tab2 + 2 thẻ hero-stat Tab1 — hàng label / số tiền / dòng
+          so sánh CHIỀU CAO CỐ ĐỊNH → số tiền và dòng so sánh thẳng hàng tuyệt
+          đối ở mọi kỳ (tuần 0đ, tháng 0/308k/-308k, năm, tùy chọn). Nguyên nhân
+          lệch: icon mỗi thẻ cao khác nhau (mắt ẩn/hiện ở thẻ Số dư to nhất)
+          đẩy hàng số xuống không đều.
+   R9-2: dọn bóng nav — chỉ 1 bóng mềm duy nhất trên .bottom-nav, gỡ bóng nặng
+          40px của .nav-tabs-group (bóng -12px/32px lên trên chính là "dải xám"
+          phía trên thanh nav), bóng FAB gọn lại.
+   R9-3: thanh cuộn desktop (Chrome classic) mảnh 8px, track trong suốt →
+          hết dải xám mép phải app. (Đo trên ảnh Hùng: dải ~10px xám #E1E1E1
+          full-height sát mép phải = scrollbar track của trình duyệt desktop.)
+   R9-4: mọi tiêu đề trang/mục viết hoa toàn bộ (text-transform).
+   ========================================================================== */
+
+/* ---- R9-1: thẻ stat Tab2 — 3 hàng cố định ---- */
+#tab2 .stat-card { justify-content: flex-start !important; }
+#tab2 .stat-card .stat-header {
+  height: 22px !important; min-height: 22px !important;
+  display: flex !important; align-items: center !important;
+  margin-bottom: 6px !important;
+}
+#tab2 .stat-num {
+  height: 28px !important; line-height: 28px !important; margin: 0 !important;
+}
+#tab2 .stat-compare { min-height: 34px !important; margin-top: 4px !important; }
+
+/* ---- R9-1b: 2 thẻ hero-stat Tab1 — cùng kỷ luật ---- */
+#tab1 .hero-stat { justify-content: flex-start !important; }
+#tab1 .hero-stat-label {
+  height: 18px !important; display: flex !important; align-items: center !important;
+  margin-bottom: 4px !important;
+}
+#tab1 .hero-stat-val { height: 26px !important; line-height: 26px !important; margin: 0 !important; }
+
+/* ---- R9-2: bóng nav gọn ---- */
+.bottom-nav { box-shadow: 0 -6px 24px rgba(31,24,71,.10) !important; }
+.bottom-nav .nav-tabs-group { box-shadow: none !important; }
+#fabBtn { box-shadow: 0 10px 22px rgba(124,58,237,.35) !important; }
+#fabBtn:hover { box-shadow: 0 12px 26px rgba(124,58,237,.45) !important; }
+
+/* ---- R9-3: scrollbar desktop mảnh, track trong suốt ---- */
+html { scrollbar-width: thin; scrollbar-color: rgba(20,20,40,.28) transparent; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(20,20,40,.22); border-radius: 8px;
+  border: 2px solid transparent; background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(20,20,40,.35); background-clip: content-box; }
+
+/* ---- R9-4: mọi tiêu đề trang/mục viết hoa toàn bộ ---- */
+#tab2 .section-title,
+#tab2 #chartTitleTab2,
+#tab2 #pieChartTitleTab2,
+#tab3 .section-title,
+#settingsPage .fs-title,
+#aboutPage .fs-title,
+#aboutPage .chart-title,
+#searchModal .modal-title > span,
+#detailListTitle {
+  text-transform: uppercase !important;
 }
