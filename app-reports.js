@@ -436,15 +436,20 @@ function processReportData(currentTx, prevTx, labels, incs, exps) {
     if (window.currentChartType === 'line') {
         dsInc.tension = 0.4; dsInc.fill = true; dsInc.borderWidth = 2; dsInc.pointRadius = 4;
         dsExp.tension = 0.4; dsExp.fill = true; dsExp.borderWidth = 2; dsExp.pointRadius = 4;
+        if (currentFilterMode === 'monthly') { dsInc.pointRadius = 2; dsExp.pointRadius = 2; }
     }
 
     const appFont = applyAppFontToCharts();
+    const monthMode = currentFilterMode === 'monthly';
+    const xTicks = monthMode
+        ? { color: '#94A3B8', font: { size: 10, family: appFont }, autoSkip: true, maxTicksLimit: 10 }
+        : { color: '#94A3B8', font: { size: 10, family: appFont } };
     window.mChart = new Chart(ctx, { 
         type: window.currentChartType || 'bar', 
         data: { labels: labels, datasets: [ dsInc, dsExp ]}, 
         options: { 
             devicePixelRatio: 4, responsive: true, maintainAspectRatio: false, layout: { padding: { top: 20 } }, 
-            scales: { x: { grid: { display: false }, ticks: { color: '#94A3B8', font: { size: 10, family: appFont } } }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94A3B8', font: { size: 10, family: appFont }, callback: v => {
+            scales: { x: { grid: { display: false }, ticks: xTicks }, y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94A3B8', font: { size: 10, family: appFont }, callback: v => {
                 if (isPrivacyActive) return '***';
                 const vObj = formatCurrencyWithUnit(v); return vObj.val + vObj.unit;
             } } } }, 
@@ -666,6 +671,18 @@ async function loadWeeklyReport(weekStr) {
 }
 
 // ----- BÁO CÁO THÁNG -----
+// FIX ROUND 14 (Hùng 19/10): dữ liệu biểu đồ tháng vẽ theo từng ngày.
+function buildMonthlyChartData(currentTx, year, month) {
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const labels = [], incs = new Array(daysInMonth).fill(0), exps = new Array(daysInMonth).fill(0);
+    for (let d = 1; d <= daysInMonth; d++) labels.push(String(d));
+    (currentTx || []).forEach(t => {
+        const day = parseInt(String(t.date || '').split('/')[0], 10);
+        if (Number.isNaN(day) || day < 1 || day > daysInMonth) return;
+        if (t.type === 'Thu nhập') incs[day - 1] += t.amount; else exps[day - 1] += t.amount;
+    });
+    return { labels, incs, exps };
+}
 async function loadMonthlyReport(monthStr) {
   showLoading(true, 'tab2');
   document.querySelectorAll('#tab2 .chart-container').forEach(function(el){ el.style.display='none'; });
@@ -683,8 +700,8 @@ async function loadMonthlyReport(monthStr) {
       getTransactionsInRange(prevStartDate, prevEndDate)
     ]);
     document.getElementById('chartTitleTab2').textContent = `Thu nhập & Chi tiêu (Tháng ${month}/${year})`;
-    const labels = [`Tháng ${month}`], incs = [0], exps = [0];
-    currentTx.forEach(t => { if(t.type==='Thu nhập') incs[0]+=t.amount; else exps[0]+=t.amount; });
+    const mChartData = buildMonthlyChartData(currentTx, year, month);
+    const labels = mChartData.labels, incs = mChartData.incs, exps = mChartData.exps;
     renderCalendar(currentTx, startDate, 'monthly');
     processReportData(currentTx, prevTx, labels, incs, exps);
     cachedChartData = { mode: 'monthly', txs: currentTx, periodStr: monthStr };
