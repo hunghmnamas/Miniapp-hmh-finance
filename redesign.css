@@ -1130,3 +1130,20 @@ html { overflow-x: hidden; overflow-x: clip; }
 }
 #tab1 .hero-stat-label i { display: inline-block !important; }
 #tab1 .hero-stat-val { justify-content: flex-start !important; }
+
+/* ==========================================================================
+   FIX ROUND 17 (19/10)
+   R17-1 — Thẻ tím tràn đúng mép viewport trên điện thoại.
+   Đo thực tế (harness + ảnh máy Hùng): cột .content-wrapper max-width 430px
+   căn giữa → ở viewport 440px còn 5px nền body (trắng) lộ mỗi bên thẻ tím;
+   tờ trắng bên dưới là trắng-trên-trắng nên không lộ. Sửa: breakout theo
+   viewport bằng margin âm đối xứng calc(50% - 50vw) (không dùng width:100vw
+   để tránh lệch khi có scrollbar dọc). Chỉ áp dụng ≤480px (điện thoại);
+   desktop giữ nguyên cột 430 căn giữa.
+   ========================================================================== */
+@media (max-width: 480px) {
+  #tab1 .hero-card {
+    margin-left: calc(50% - 50vw) !important;
+    margin-right: calc(50% - 50vw) !important;
+  }
+}
