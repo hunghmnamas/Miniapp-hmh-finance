@@ -298,7 +298,11 @@ function renderTxCard(item, stt) {
 
 function getCompareHTML(current, prev, type, text = 'so với kỳ trước') {
     let zeroObj = formatCurrencyWithUnit(0);
-    if (prev === 0 && current === 0) return `<span style=\"color: var(--text-2); font-weight: 500;\">− ${zeroObj.val}${zeroObj.unit} ${escapeHTML(text)}</span>`;
+    // R18-1: cụm định danh kỳ ("tháng 9", "tuần 42", "ngày 17/10/2026") luôn nằm
+    // trên cùng một dòng — không bao giờ tách "tháng" / "9".
+    const cmpLabel = (t) => escapeHTML(t).replace(/(\S+\s+\S+)\s*$/, '<span class="cmp-lbl">$1</span>');
+    // R18-1: số tiền + ₫ phải ở cùng một dòng (không bao giờ ngắt giữa số và ₫).
+    if (prev === 0 && current === 0) return `<span style=\"color: var(--text-2); font-weight: 500;\">− <span class=\"cmp-amt\">${zeroObj.val}${zeroObj.unit}</span> ${cmpLabel(text)}</span>`;
     let diff = current - prev;
     if (diff === 0) return `<span style=\"color: var(--text-2); font-weight: 500;\">− Bằng ${escapeHTML(text)}</span>`;
     let isUp = diff > 0;
@@ -306,7 +310,7 @@ function getCompareHTML(current, prev, type, text = 'so với kỳ trước') {
     let arrowText = isUp ? (type === 'balance' ? 'Dư' : 'Tăng') : (type === 'balance' ? 'Âm' : 'Giảm');
     let colorVar = type === 'expense' ? (isUp ? 'var(--expense)' : 'var(--income)') : (isUp ? 'var(--income)' : 'var(--expense)');
     let diffObj = formatCurrencyWithUnit(Math.abs(diff));
-    return `<span style=\"color: ${colorVar}; font-weight: 600;\">${icon} ${arrowText} ${diffObj.val}${diffObj.unit} ${escapeHTML(text)}</span>`;
+    return `<span style=\"color: ${colorVar}; font-weight: 600;\">${icon} ${arrowText} <span class=\"cmp-amt\">${diffObj.val}${diffObj.unit}</span> ${cmpLabel(text)}</span>`;
 }
 
 window.openTab = function(tabId) {
@@ -491,6 +495,46 @@ async function fetchMonthData(month) {
       // hết quota: vòng sau thử size nhỏ hơn; vòng cuối vẫn lỗi -> giữ ảnh phiên này
     }
     window.closeAvatarCrop(false);
+    pushAvatarServer(lastSavedUrl());
+  }
+
+  // FIX ROUND 18 (R18-3): đồng bộ avatar lên máy chủ để đổi thiết bị vẫn thấy.
+  // Dùng đúng kênh secureFetch đã có (worker proxy Firebase): GET/PUT đường dẫn
+  // /users/<chatId>/profile/avatar.json — cùng cơ chế với keywords (app-core.js).
+  // - Lưu local trước rồi mới đẩy lên server (fire-and-forget); không có mạng →
+  //   vẫn giữ local, lần mở sau sẽ đẩy lại qua pull.
+  // - Xung đột: server thắng khi mở app; khi ghi, lần ghi sau cùng thắng.
+  function avatarServerPath() { return '/users/' + chatId + '/profile/avatar.json'; }
+  function serverSyncOK() {
+    return (typeof chatId !== 'undefined' && chatId) && (typeof window.secureFetch === 'function');
+  }
+  function lastSavedUrl() { return savedUrl; }
+  function pushAvatarServer(dataUrl) {
+    if (!serverSyncOK()) return;
+    try {
+      var p = window.secureFetch(avatarServerPath(), 'PUT', { avatar: dataUrl, updatedAt: Date.now() });
+      if (p && p.catch) p.catch(function () {});
+    } catch (e) {}
+  }
+  function pullAvatarServer() {
+    if (!serverSyncOK()) return;
+    try {
+      var p = window.secureFetch(avatarServerPath(), 'GET');
+      Promise.resolve(p).then(function (obj) {
+        if (!obj || typeof obj !== 'object' || !('avatar' in obj)) return;
+        var sv = obj.avatar; // string | null
+        var cur = null;
+        try { cur = localStorage.getItem(KEY); } catch (e) {}
+        if (sv === cur) return;
+        if (typeof sv === 'string' && sv) {
+          try { localStorage.setItem(KEY, sv); } catch (e) {}
+          render(sv);
+        } else {
+          try { localStorage.removeItem(KEY); } catch (e) {}
+          render(null);
+        }
+      }).catch(function () {});
+    } catch (e) {}
   }
 
   function handleFile(file) {
@@ -517,6 +561,7 @@ async function fetchMonthData(month) {
     if (rem) rem.addEventListener('click', function () {
       try { localStorage.removeItem(KEY); } catch (e) {}
       render(null); closeAvatarSheet();
+      pushAvatarServer(null); // R18-3: xóa trên server
     });
     if (can) can.addEventListener('click', closeAvatarSheet);
 
@@ -551,7 +596,10 @@ async function fetchMonthData(month) {
       getSaved: function () { return savedUrl; },
       openSheet: openAvatarSheet, closeSheet: closeAvatarSheet,
       isSheetOpen: function () { return !!(sheet && sheet.classList.contains('show')); },
-      isCropOpen: function () { return !!(cropModal && cropModal.classList.contains('show')); }
+      isCropOpen: function () { return !!(cropModal && cropModal.classList.contains('show')); },
+      // R18-3: đồng bộ server (cho test harness)
+      pushServer: pushAvatarServer, pullServer: pullAvatarServer,
+      serverPath: function () { return avatarServerPath(); }
     };
   }
 
@@ -561,6 +609,7 @@ async function fetchMonthData(month) {
     try { saved = localStorage.getItem(KEY); } catch (e) {}
     render(saved);
     bind();
+    pullAvatarServer(); // R18-3: local hiện ngay, server (nếu khác) cập nhật sau
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
