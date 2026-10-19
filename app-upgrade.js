@@ -513,7 +513,7 @@
       var title = document.getElementById('detailListTitle');
       if (title) {
         var n = (txs && txs.length) ? txs.length : 0;
-        title.innerHTML = 'Giao dịch chi tiết <span style=\"font-size:0.72rem; color:var(--text-2); text-transform:none; font-weight:600;\">(Tổng: ' + n + ')</span>';
+        title.innerHTML = 'Giao dịch chi tiết <span style=\"font-size:11px; color:var(--text-2); text-transform:none; font-weight:600;\">(Tổng: ' + n + ')</span>';
       }
       return r;
     };
@@ -535,7 +535,7 @@
         try { if (typeof cachedSearchResults !== 'undefined' && cachedSearchResults) n = cachedSearchResults.length; } catch (e) {}
         if (n > 0) {
           lbl.style.display = 'block';
-          lbl.innerHTML = 'Kết quả <span style=\"font-size:0.72rem; color:var(--text-2); text-transform:none; font-weight:600;\">(Tổng: ' + n + ')</span>';
+          lbl.innerHTML = 'Kết quả <span style=\"font-size:11px; color:var(--text-2); text-transform:none; font-weight:600;\">(Tổng: ' + n + ')</span>';
         } else {
           lbl.style.display = 'none';
         }
