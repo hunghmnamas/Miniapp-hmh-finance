@@ -8,23 +8,23 @@
 }
 
 /* 2) Cỡ chữ sàn: nâng các chữ quá nhỏ (0.55–0.65rem) lên mức đọc được */
-.nav-label { font-size: 0.72rem; }
-.tx-badge { font-size: 0.7rem; padding: 3px 9px; }
-.tx-date, .tx-note { font-size: 0.8rem; }
-.stat-tag { font-size: 0.7rem; }
-.stat-compare { font-size: 0.72rem; line-height: 1.45; }
-.cal-row-amt, .calendar-balance { font-size: 0.62rem; }
-.calendar-lunar { font-size: 0.55rem; }
-.field-label { font-size: 0.78rem; }
-.empty-state { font-size: 0.95rem; }
+.nav-label { font-size: 11px; }
+.tx-badge { font-size: 11px; padding: 3px 9px; }
+.tx-date, .tx-note { font-size: 12px; }
+.stat-tag { font-size: 11px; }
+.stat-compare { font-size: 11px; line-height: 1.45; }
+.cal-row-amt, .calendar-balance { font-size: 9px; }
+.calendar-lunar { font-size: 8px; }
+.field-label { font-size: 12px; }
+.empty-state { font-size: 14px; }
 
 /* 3) Tương phản chữ phụ ở nền tối: #475569 trên nền #0B1120 rất khó đọc (chỉ áp khi nền thực sự tối) */
 body.theme-dark { --text-3: #7C8DA6; }
 @media (prefers-color-scheme: dark) { body.theme-auto { --text-3: #7C8DA6; } }
 
 /* 4) Vùng bấm đạt tối thiểu ~40px (chuẩn ngón tay iOS là 44px) */
-.date-nav-btn { width: 36px; height: 36px; font-size: 0.8rem; }
-.cal-ctrl-arrow, .cal-ctrl-toggle { width: 36px; height: 36px; font-size: 0.9rem; }
+.date-nav-btn { width: 36px; height: 36px; font-size: 12px; }
+.cal-ctrl-arrow, .cal-ctrl-toggle { width: 36px; height: 36px; font-size: 13px; }
 .tx-btn { width: 38px; height: 38px; border-radius: 10px; }
 .chart-toggle-btn { width: 40px; height: 40px; }
 .pagination-btn { min-width: 44px; min-height: 44px; }
@@ -56,7 +56,7 @@ body.theme-light .tx-card, body.theme-light .stat-card, body.theme-light .cat-pr
 /* 8) Hero: dòng so sánh có nền pill mờ để đọc rõ trên gradient, khoảng thở gọn hơn */
 #heroExpenseCompare span { background: rgba(255,255,255,0.16) !important; padding: 4px 10px !important; border-radius: 999px; display: inline-flex; align-items: center; }
 .hero-card { padding: 18px; }
-.section-title { font-size: 1.05rem; letter-spacing: 0.01em; }
+.section-title { font-size: 16px; letter-spacing: 0.01em; }
 
 /* 9) Tôn trọng giảm chuyển động + vòng focus rõ khi chạm/bàn phím */
 @media (prefers-reduced-motion: reduce) {
