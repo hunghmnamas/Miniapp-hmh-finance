@@ -123,7 +123,7 @@
       wrap.innerHTML =
         '<div class="field-label">Nội dung hoặc số tiền</div>' +
         '<input type="text" id="searchQuery" class="field-input" placeholder="Nhập nội dung giao dịch hoặc số tiền">' +
-        '<div style="font-size:0.78rem; color:var(--text-2); margin-top:8px; line-height:1.45;">Tìm theo nội dung, ghi chú hoặc số tiền. Hỗ trợ nhập số tiền dạng đầy đủ (2.000.000) hoặc rút gọn (50k, 1tr5, 2m).</div>';
+        '<div style="font-size:12px; color:var(--text-2); margin-top:8px; line-height:1.45;">Tìm theo nội dung, ghi chú hoặc số tiền. Hỗ trợ nhập số tiền dạng đầy đủ (2.000.000) hoặc rút gọn (50k, 1tr5, 2m).</div>';
       contentGroup.parentNode.insertBefore(wrap, contentGroup);
     }
     // An cac o loc cu (khong con dung trong che do tim kiem hop nhat)
