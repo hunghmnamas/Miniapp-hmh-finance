@@ -161,18 +161,7 @@
             <button class="btn-soft m-0 flex-1" onclick="exportToPDF()"><i class="fas fa-file-pdf text-expense-color"></i> Xuất báo cáo PDF</button>
           </div>
 
-          <div class="chart-container" style="display: none;">
-            <div id="pieChartTitleTab2" class="chart-title text-left w-full">Chi tiêu theo danh mục</div>
-
-            <div class="chart-placeholder pie-layout-wrapper" style="margin-bottom: 12px;">
-              <div class="pie-chart-inner">
-                <canvas id="monthlyPieChart"></canvas>
-              </div>
-              <div id="monthlyCustomLegend" class="compact-legend"></div>
-            </div>
-
-            <div id="monthlyCategoryProgressList"></div>
-
+          <div class="chart-container" id="barChartSection" style="display: none;">
             <div id="chartTitleTab2" class="chart-title text-left w-full mb-2">Thu nhập & Chi tiêu</div>
 
             <div class="chart-placeholder w-full" style="position: relative;">
@@ -201,6 +190,19 @@
                </div>
                <div id="calendarGrid" class="calendar-grid"></div>
             </div>
+          </div>
+
+          <div class="chart-container" id="categorySection" style="display: none;">
+            <div id="pieChartTitleTab2" class="chart-title text-left w-full">Chi tiêu theo danh mục</div>
+
+            <div class="chart-placeholder pie-layout-wrapper" style="margin-bottom: 12px;">
+              <div class="pie-chart-inner">
+                <canvas id="monthlyPieChart"></canvas>
+              </div>
+              <div id="monthlyCustomLegend" class="compact-legend"></div>
+            </div>
+
+            <div id="monthlyCategoryProgressList"></div>
           </div>
 
           <div id="placeholderTab2" class="empty-state" style="display: none;">Dữ liệu báo cáo sẽ hiển thị ở đây</div>
