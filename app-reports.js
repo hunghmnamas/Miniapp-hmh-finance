@@ -110,11 +110,15 @@ function displayTransactions() {
   if(headerTitle) headerTitle.innerHTML = `Giao dịch trong ngày <span style="font-size: 0.75rem; color: var(--text-2); text-transform: none;">(Tổng: ${data.length})</span>`;
 
   const tPages = Math.ceil(data.length / itemsPerPage);
+  var tab1El = document.getElementById('tab1');
   if (data.length === 0) {
     document.getElementById('placeholderTab1').style.display = 'block';
-    document.getElementById('pagination').style.display = 'none'; return;
+    document.getElementById('pagination').style.display = 'none';
+    if (tab1El) tab1El.classList.add('tx-empty'); /* R5-1: ngày trống -> tiêu đề + dòng chữ nằm trên nền */
+    return;
   }
   document.getElementById('placeholderTab1').style.display = 'none';
+  if (tab1El) tab1El.classList.remove('tx-empty');
   document.getElementById('pagination').style.display = tPages > 1 ? 'flex' : 'none';
   const pData = data.slice((currentPageTab1 - 1) * itemsPerPage, currentPageTab1 * itemsPerPage);
 
