@@ -521,7 +521,16 @@ async function fetchMonthData(month) {
     try {
       var p = window.secureFetch(avatarServerPath(), 'GET');
       Promise.resolve(p).then(function (obj) {
-        if (!obj || typeof obj !== 'object' || !('avatar' in obj)) return;
+        if (!obj || typeof obj !== 'object' || !('avatar' in obj)) {
+          // R19: migration — server chưa có node avatar (ảnh đặt trước khi có đồng bộ
+          // không tự bay lên được), đẩy ảnh local hiện có lên để thiết bị khác thấy.
+          // Chỉ khi node KHÔNG tồn tại; tombstone avatar:null (key có mặt) vẫn đi
+          // nhánh dưới để xóa local, tuyệt đối không đẩy lại ở đây.
+          var local = null;
+          try { local = localStorage.getItem(KEY); } catch (e) {}
+          if (local) pushAvatarServer(local);
+          return;
+        }
         var sv = obj.avatar; // string | null
         var cur = null;
         try { cur = localStorage.getItem(KEY); } catch (e) {}
