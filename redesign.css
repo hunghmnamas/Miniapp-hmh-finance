@@ -642,3 +642,40 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 .fab-item-label {
   text-align: left !important;
 }
+
+/* ==========================================================================
+   FIX ROUND 4 (19/10/2026) — theo feedback của Hùng trên iPhone:
+   R4-1 bỏ hẳn hộp empty-state | R4-3 danh mục xuống cuối Tab2 |
+   R4-4 cân lề 16px + tiêu đề trái + thẻ donut ôm sát
+   ========================================================================== */
+
+/* R4-1 (sửa theo yêu cầu Hùng 19/10 08:20): empty-state = 1 DÒNG CHỮ XÁM NGHIÊNG,
+   KHÔNG hộp: không viền, không nền, không thẻ, padding tối thiểu.
+   (JS vẫn bật/tắt bằng display như cũ — CSS không ép display để khi có dữ
+   liệu dòng chữ vẫn ẩn đúng) */
+.empty-state {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 4px 0 !important;
+  margin: 12px 0 !important;
+  font-size: 13.5px !important;
+  font-style: italic !important;
+  color: #8A8FA3 !important;
+  text-align: center !important;
+  min-height: 0 !important;
+}
+
+/* R4-4: thẻ donut ôm sát nội dung, ring căn GIỮA.
+   (styles.css đặt justify-content: space-between cho .pie-layout-wrapper
+   khiến ring bị đẩy lên trên để lại khoảng trắng lớn bên dưới) */
+#tab2 .pie-layout-wrapper {
+  justify-content: center !important;
+  min-height: 0 !important;
+  padding: 18px 16px !important;
+}
+
+/* R4-4: tiêu đề các section căn TRÁI theo lề chung 16px */
+#tab1 > .section-header { justify-content: flex-start !important; }
+#tab2 #pieChartTitleTab2 { text-align: left !important; }
