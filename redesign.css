@@ -53,7 +53,7 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 .tab-content { padding-bottom: 132px !important; }
 .tab-content.active { color: #14141A; }
 .app-branding { color: #C6C6D2 !important; }
-.section-title { text-align: left !important; text-transform: none !important; color: #14141A !important; font-size: 1.05rem !important; letter-spacing: 0 !important; font-weight: 800 !important; }
+.section-title { text-align: left !important; text-transform: none !important; color: #14141A !important; font-size: 16px !important; letter-spacing: 0 !important; font-weight: 800 !important; }
 .section-header { margin-bottom: 10px !important; }
 
 /* ==========================================================================
@@ -89,15 +89,15 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 #tab1 .hero-date-nav { justify-content: center; margin-bottom: 10px; position: relative; z-index: 1; }
 #tab1 .date-nav-btn {
   background: rgba(255,255,255,0.22) !important; color: #fff !important;
-  width: 32px; height: 32px; font-size: 0.72rem; border: none !important; border-radius: 50% !important;
+  width: 32px; height: 32px; font-size: 11px; border: none !important; border-radius: 50% !important;
 }
 #tab1 .hero-date-tap { position: relative; display: inline-flex; align-items: center; }
 #tab1 .hero-date {
   background: rgba(255,255,255,0.20); color: #fff; font-weight: 600;
-  padding: 7px 16px; border-radius: 999px; font-size: 0.8rem; margin: 0 4px;
+  padding: 7px 16px; border-radius: 999px; font-size: 12px; margin: 0 4px;
 }
 #tab1 .hero-date-nav .fa-caret-down { color: rgba(255,255,255,0.7) !important; }
-#tab1 .hero-label { color: rgba(255,255,255,0.85) !important; justify-content: center; font-size: 0.75rem; position: relative; z-index: 1; }
+#tab1 .hero-label { color: rgba(255,255,255,0.85) !important; justify-content: center; font-size: 11px; position: relative; z-index: 1; }
 #tab1 .hero-label .privacy-toggle-btn { color: rgba(255,255,255,0.85) !important; }
 /* số lớn trắng */
 #heroExpenseMain {
@@ -111,7 +111,7 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 #heroExpenseCompare > span {
   background: rgba(255,255,255,0.22) !important; color: #fff !important;
   padding: 7px 16px !important; border-radius: 999px !important;
-  box-shadow: none !important; font-size: 0.75rem !important; font-weight: 600 !important;
+  box-shadow: none !important; font-size: 11px !important; font-weight: 600 !important;
   /* R18-1: các chunk (icon/từ/số/nhãn) là flex item riêng sau khi thêm
      .cmp-amt/.cmp-lbl — giữ khoảng cách bằng gap, cho wrap giữa các chunk */
   gap: 4px !important; flex-wrap: wrap !important; justify-content: center;
@@ -131,10 +131,10 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 #tab1 .hero-sub .hero-stat {
   flex: 1; background: #F4F4F8; border-radius: 18px; padding: 13px 14px;
 }
-#tab1 .hero-stat-label { color: #6D6D76 !important; font-size: 0.72rem !important; margin-bottom: 5px !important; font-weight: 600; }
+#tab1 .hero-stat-label { color: #6D6D76 !important; font-size: 11px !important; margin-bottom: 5px !important; font-weight: 600; }
 #tab1 .hero-stat-label i { color: #8B5CF6; margin-right: 5px; }
-#tab1 .hero-stat-val { color: #14141A !important; font-size: 1.12rem !important; font-weight: 800 !important; }
-#tab1 .hero-stat-val span { font-size: 0.8rem !important; font-weight: 700 !important; color: #6D6D76 !important; }
+#tab1 .hero-stat-val { color: #14141A !important; font-size: 17px !important; font-weight: 800 !important; }
+#tab1 .hero-stat-val span { font-size: 12px !important; font-weight: 700 !important; color: #6D6D76 !important; }
 #tab1 .hero-sub .divider-v { display: none !important; }
 /* tờ trắng nối dài xuống danh sách */
 #tab1 > .section-header,
@@ -163,7 +163,7 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 .tx-date, .tx-note { color: #6D6D76 !important; }
 .tx-amount.expense { color: #D73752 !important; font-weight: 800 !important; }
 .tx-amount.income { color: #0B855D !important; font-weight: 800 !important; }
-.tx-badge { border-radius: 999px !important; font-size: 0.68rem !important; padding: 3px 10px !important; font-weight: 600 !important; }
+.tx-badge { border-radius: 999px !important; font-size: 10px !important; padding: 3px 10px !important; font-weight: 600 !important; }
 .tx-badge-neutral, .tx-badge.tx-badge-neutral { background: #F4F4F8 !important; color: #5B5B66 !important; }
 .tx-badge.expense { background: rgba(244,63,94,0.10) !important; color: #D73752 !important; }
 .tx-badge.income { background: rgba(16,185,129,0.12) !important; color: #0B855D !important; }
@@ -181,7 +181,7 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 }
 #tab2 .period-pill {
   flex: 1 1 0; text-align: center; border-radius: 999px !important;
-  color: #6D6D76 !important; font-weight: 700 !important; font-size: 0.8rem !important;
+  color: #6D6D76 !important; font-weight: 700 !important; font-size: 12px !important;
   padding: 10px 2px !important; background: transparent !important; border: none !important;
   white-space: nowrap; overflow: hidden; min-width: 0;
 }
@@ -197,17 +197,17 @@ body { background: #F7F7FA !important; color: #14141A !important; }
   -webkit-backdrop-filter: none !important; padding: 14px 12px !important;
 }
 #tab2 .stat-card:hover { transform: none !important; }
-#tab2 .stat-num { color: #14141A !important; font-size: 1.02rem !important; font-weight: 800 !important; }
-#tab2 .stat-num span { color: #6D6D76 !important; font-size: 0.72rem !important; }
-#tab2 .stat-compare { color: #6D6D76 !important; font-size: 0.68rem !important; }
+#tab2 .stat-num { color: #14141A !important; font-size: 15px !important; font-weight: 800 !important; }
+#tab2 .stat-num span { color: #6D6D76 !important; font-size: 11px !important; }
+#tab2 .stat-compare { color: #6D6D76 !important; font-size: 10px !important; }
 #tab2 .stat-header .stat-tag { color: #6D6D76 !important; font-weight: 600 !important; }
 #tab2 .stat-header i { color: #8B5CF6 !important; }
 /* nút xuất */
 #tab2 .btn-soft {
   background: #fff !important; border: 1px solid #EDEDF2 !important;
-  border-radius: 18px !important; box-shadow: 0 6px 16px rgba(124,58,237,0.05) !important;
+  border-radius: 18px !important; box-shadow: 0 6px 16px rgba(124,58,237,0.06) !important;
   color: #14141A !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
-  padding: 11px 6px !important; font-size: 0.85rem !important; font-weight: 700 !important;
+  padding: 11px 6px !important; font-size: 13px !important; font-weight: 700 !important;
 }
 /* thẻ biểu đồ */
 #tab2 .chart-container { margin-bottom: 16px; }
@@ -237,7 +237,7 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 #monthlyCategoryProgressList { margin-top: 4px; }
 #monthlyCategoryProgressList .cat-progress-card {
   background: #fff !important; border: 1px solid #EDEDF2 !important;
-  box-shadow: 0 8px 20px rgba(124,58,237,0.05) !important;
+  box-shadow: 0 8px 20px rgba(124,58,237,0.06) !important;
   border-radius: 20px !important; backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important; padding: 11px 16px !important; margin-bottom: 10px !important;
   cursor: pointer;
@@ -246,13 +246,13 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 #monthlyCategoryProgressList .cat-progress-icon { border-radius: 14px !important; width: 40px !important; height: 40px !important; font-size: 1rem !important; }
 #monthlyCategoryProgressList .cat-progress-title { color: #14141A !important; font-weight: 700 !important; }
 #monthlyCategoryProgressList .cat-progress-amt { font-weight: 800 !important; }
-#monthlyCategoryProgressList .cat-progress-amt span { font-size: 0.72rem !important; font-weight: 700 !important; }
+#monthlyCategoryProgressList .cat-progress-amt span { font-size: 11px !important; font-weight: 700 !important; }
 #monthlyCategoryProgressList .cat-progress-bar-bg { background: #F1F1F6 !important; height: 6px !important; border-radius: 4px !important; margin-top: 8px !important; }
 #monthlyCategoryProgressList .cat-progress-bar-fill { border-radius: 4px !important; }
 /* ---------- Lịch ---------- */
 #calendarWidget .cal-ctrl-bar {
   background: #fff !important; border: 1px solid #EDEDF2 !important;
-  box-shadow: 0 6px 16px rgba(124,58,237,0.05) !important;
+  box-shadow: 0 6px 16px rgba(124,58,237,0.06) !important;
   backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
   border-radius: 16px !important;
 }
@@ -270,7 +270,7 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 #calendarWidget .calendar-day { border-color: #F3F3F7 !important; background: #fff !important; border-radius: 12px !important; }
 #calendarWidget .calendar-day .calendar-date { color: #14141A !important; font-weight: 700 !important; }
 #calendarWidget .calendar-day .calendar-lunar { color: #6D6D74 !important; }
-#calendarWidget .calendar-day .cal-amt-col .calendar-balance { font-size: 0.6rem !important; font-weight: 700 !important; }
+#calendarWidget .calendar-day .cal-amt-col .calendar-balance { font-size: 9px !important; font-weight: 700 !important; }
 #calendarWidget .calendar-day .cal-amt-col .calendar-balance.negative { color: #D73752 !important; }
 #calendarWidget .calendar-day .cal-amt-col .calendar-balance.positive { color: #0B855D !important; }
 #calendarWidget .calendar-day.selected-day { background: #fff !important; outline: none !important; }
@@ -290,7 +290,7 @@ body { background: #F7F7FA !important; color: #14141A !important; }
   background: #fff !important; border: 1px solid #EDEDF2 !important;
   border-radius: 16px !important; box-shadow: none !important;
   backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
-  color: #14141A !important; font-size: 0.95rem !important;
+  color: #14141A !important; font-size: 14px !important;
 }
 #tab3 .field-input:focus { border-color: #8B5CF6 !important; box-shadow: 0 0 0 3px rgba(139,92,246,0.12) !important; }
 #addKeywordBtn {
@@ -344,8 +344,8 @@ body { background: #F7F7FA !important; color: #14141A !important; }
   justify-content: space-around !important; container-type: normal !important;
 }
 .bottom-nav .nav-btn { height: auto !important; padding: 4px 2px !important; flex: 0 1 auto !important; min-width: 64px; }
-.bottom-nav .nav-icon-wrap { color: #6D6D74 !important; background: transparent !important; font-size: 1.15rem !important; width: auto !important; height: auto !important; min-width: 0 !important; min-height: 0 !important; }
-.bottom-nav .nav-label { color: #6D6D74 !important; font-size: 0.68rem !important; margin-top: 2px !important; font-weight: 600; }
+.bottom-nav .nav-icon-wrap { color: #6D6D74 !important; background: transparent !important; font-size: 17px !important; width: auto !important; height: auto !important; min-width: 0 !important; min-height: 0 !important; }
+.bottom-nav .nav-label { color: #6D6D74 !important; font-size: 10px !important; margin-top: 2px !important; font-weight: 600; }
 .bottom-nav .nav-btn:hover .nav-icon-wrap { color: #8B5CF6 !important; background: transparent !important; transform: none !important; }
 .bottom-nav .nav-btn:hover .nav-label { color: #8B5CF6 !important; }
 .bottom-nav .nav-btn.active { background: transparent !important; }
@@ -363,7 +363,7 @@ body { background: #F7F7FA !important; color: #14141A !important; }
   bottom: 30px !important; width: 60px !important; height: 60px !important;
   background: linear-gradient(135deg, #8256E7, #7C3AED) !important;
   border: none !important; border-radius: 50% !important; color: #fff !important;
-  font-size: 1.35rem !important;
+  font-size: 20px !important;
   box-shadow: 0 14px 30px rgba(124,58,237,0.45), inset 0 1px 1px rgba(255,255,255,0.3) !important;
   z-index: 1001 !important; flex-shrink: 0 !important;
 }
@@ -417,7 +417,7 @@ body { background: #F7F7FA !important; color: #14141A !important; }
   background: #F4F4F8 !important; border: 1px solid transparent !important;
   border-radius: 16px !important; color: #14141A !important;
   box-shadow: none !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important;
-  font-size: 0.95rem !important;
+  font-size: 14px !important;
 }
 .field-input:focus, .settings-select:focus { border-color: #8B5CF6 !important; box-shadow: 0 0 0 3px rgba(139,92,246,0.12) !important; outline: none !important; }
 .field-input::placeholder { color: #6D6D74 !important; }
@@ -471,7 +471,7 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 .settings-group-title { color: #14141A !important; }
 .settings-card {
   background: #fff !important; border: 1px solid #EDEDF2 !important;
-  box-shadow: 0 10px 24px rgba(124,58,237,0.06) !important; border-radius: 22px !important;
+  box-shadow: 0 10px 24px rgba(124,58,237,0.06) !important; border-radius: 20px !important;
 }
 .settings-info { color: #14141A !important; }
 .settings-info i { color: #8B5CF6 !important; }
@@ -523,7 +523,7 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 /* ---- F1: trạng thái rỗng LUÔN gọn, không bao giờ kéo giãn ---- */
 .empty-state {
   padding: 16px 14px !important;
-  font-size: 13.5px !important;
+  font-size: 13px !important;
   line-height: 1.4 !important;
   min-height: 0 !important;
   flex: none !important;
@@ -555,7 +555,7 @@ body { background: #F7F7FA !important; color: #14141A !important; }
   white-space: nowrap !important;
   padding: 9px 14px !important;
   border-radius: 14px !important;
-  font-size: 0.85rem !important;
+  font-size: 13px !important;
 }
 .fab-item-icon {
   width: 48px !important;
@@ -573,12 +573,12 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 }
 .tx-card .tx-icon-wrap {
   width: 44px !important; height: 44px !important; flex: 0 0 44px !important;
-  border-radius: 15px !important; font-size: 1.05rem !important;
+  border-radius: 15px !important; font-size: 16px !important;
 }
-.tx-card .tx-title { font-size: 15.5px !important; line-height: 1.35 !important; margin-bottom: 3px !important; }
+.tx-card .tx-title { font-size: 15px !important; line-height: 1.35 !important; margin-bottom: 3px !important; }
 .tx-card .tx-meta-row { line-height: 1.35 !important; gap: 5px !important; margin-bottom: 0 !important; }
-.tx-card .tx-note { line-height: 1.35 !important; margin-top: 3px !important; font-size: 0.75rem !important; }
-.tx-card .tx-amount { font-size: 1.02rem !important; }
+.tx-card .tx-note { line-height: 1.35 !important; margin-top: 3px !important; font-size: 11px !important; }
+.tx-card .tx-amount { font-size: 15px !important; }
 
 /* ---- F5b: thẻ thống kê báo cáo cân đối hơn ---- */
 #tab2 .stat-card {
@@ -587,16 +587,16 @@ body { background: #F7F7FA !important; color: #14141A !important; }
   min-height: 0 !important;
 }
 #tab2 .stat-card .stat-header { margin-bottom: 6px !important; }
-#tab2 .stat-card .stat-header .stat-tag { font-size: 0.72rem !important; }
+#tab2 .stat-card .stat-header .stat-tag { font-size: 11px !important; }
 #tab2 .stat-num { font-size: 1.3rem !important; line-height: 1.25 !important; }
-#tab2 .stat-num span { font-size: 0.75rem !important; }
+#tab2 .stat-num span { font-size: 11px !important; }
 #tab2 .stat-compare { font-size: 12px !important; line-height: 1.4 !important; margin-top: 3px !important; }
 #tab2 .privacy-toggle-btn { font-size: 20px !important; }
 
 /* ---- F5c: 2 thẻ tờ trắng Tab 1 gọn theo ---- */
 #tab1 .hero-sub .hero-stat { padding: 11px 14px !important; border-radius: 16px !important; }
-#tab1 .hero-stat-label { font-size: 0.7rem !important; margin-bottom: 4px !important; }
-#tab1 .hero-stat-val { font-size: 1.05rem !important; }
+#tab1 .hero-stat-label { font-size: 11px !important; margin-bottom: 4px !important; }
+#tab1 .hero-stat-val { font-size: 16px !important; }
 
 /* ---- F5d: phân trang — bỏ dải trắng, nút nhỏ gọn ---- */
 .pagination-container {
@@ -614,7 +614,7 @@ body { background: #F7F7FA !important; color: #14141A !important; }
   border-radius: 12px !important;
   display: inline-flex !important; align-items: center !important; justify-content: center !important;
 }
-.pagination-info { font-size: 0.8rem !important; }
+.pagination-info { font-size: 12px !important; }
 
 /* ---- F2: chế độ năm — thanh nav kỳ hiện ở vùng điều khiển trên cùng ---- */
 #tab2.fix2-year #timeNavContainer {
@@ -675,7 +675,7 @@ body { background: #F7F7FA !important; color: #14141A !important; }
   box-shadow: none !important;
   padding: 4px 0 !important;
   margin: 12px 0 !important;
-  font-size: 13.5px !important;
+  font-size: 13px !important;
   font-style: italic !important;
   color: #6A6D7D !important;
   text-align: center !important;
@@ -711,18 +711,18 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 #tab1 .section-title {
   text-transform: uppercase !important;
   text-align: center !important;
-  font-size: 0.9rem !important;
+  font-size: 13px !important;
   font-weight: 700 !important;
   color: #1F2D3D !important;
 }
-#tab1 .section-title span { font-size: 0.7rem !important; }
+#tab1 .section-title span { font-size: 11px !important; }
 
 /* Dòng báo trống Tab1: xám nghiêng canh giữa, NẰM TRONG TỜ TRẮNG (cùng tờ với
    tiêu đề + danh sách). VÒNG 7: thang caption của app — 0.7rem (=10.5px, đúng
    bằng .stat-label/.tx-date), tức 0.78× tiêu đề: đọc như một caption lặng,
    rõ ràng nhỏ hơn tiêu đề. Màu #6A6D7D (R27: #7C8DA6 chỉ 3.38:1 -> 4.59:1).
    Nền trắng + margin 0 (dùng padding) để tờ trắng liền mạch, không kẽ hở. */
-#placeholderTab1.empty-state { font-size: 0.7rem !important; color: #6A6D7D !important; }
+#placeholderTab1.empty-state { font-size: 11px !important; color: #6A6D7D !important; }
 #tab1 > #placeholderTab1 {
   background: #fff !important;
   margin: 0 -16px !important;
@@ -759,7 +759,7 @@ body { background: #F7F7FA !important; color: #14141A !important; }
   font-size: inherit !important; color: inherit !important; font-weight: 800 !important;
 }
 /* đơn vị ₫ giữ nhỏ */
-#tab2 .stat-num > span:last-child { font-size: 0.75rem !important; color: #6D6D76 !important; }
+#tab2 .stat-num > span:last-child { font-size: 11px !important; color: #6D6D76 !important; }
 
 /* thống nhất tương tự cho 2 thẻ Thu nhập / Số dư trên tờ trắng Tab1 */
 #tab1 .hero-stat-val {
@@ -770,7 +770,7 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 #tab1 .hero-stat-val > span:first-child:not(:last-child) {
   font-size: inherit !important; color: inherit !important; font-weight: 800 !important;
 }
-#tab1 .hero-stat-val > span:last-child { font-size: 0.8rem !important; color: #6D6D76 !important; }
+#tab1 .hero-stat-val > span:last-child { font-size: 12px !important; color: #6D6D76 !important; }
 
 /* ==========================================================================
    FIX ROUND 8 — Tờ trắng Tab1 tràn hết màn hình (Hùng: "Trắng cả chứ")
@@ -1009,7 +1009,7 @@ body.privacy-on #tab1 .hero-stat-val span { display: none !important; }
    chung class .cal-ctrl-toggle nên KHÔNG được đụng tới.
    ========================================================================== */
 #calCtrlBar .cal-ctrl-toggle, #calCtrlBar .cal-ctrl-arrow {
-  width: 30px !important; height: 30px !important; font-size: 0.72rem !important;
+  width: 30px !important; height: 30px !important; font-size: 11px !important;
   flex: 0 0 30px !important;
 }
 
@@ -1056,7 +1056,7 @@ body.privacy-on #tab1 .hero-stat-val span { display: none !important; }
   display: flex; align-items: center; gap: 12px; width: 100%;
   padding: 15px 16px; margin: 0 0 10px; border: none; cursor: pointer;
   background: #F4F4F8 !important; color: #14141A !important;
-  border-radius: 16px !important; font-size: 0.95rem; font-weight: 700; text-align: left;
+  border-radius: 16px !important; font-size: 14px; font-weight: 700; text-align: left;
 }
 .avatar-sheet-row:last-child { margin-bottom: 0; }
 .avatar-sheet-row i { color: #8B5CF6 !important; width: 22px; text-align: center; font-size: 1rem; }
@@ -1065,7 +1065,7 @@ body.privacy-on #tab1 .hero-stat-val span { display: none !important; }
 .avatar-sheet-row:active { transform: scale(0.98); }
 /* ---- crop editor ---- */
 .avatar-crop-hint {
-  font-size: 0.78rem; color: #6D6D76; text-align: center;
+  font-size: 12px; color: #6D6D76; text-align: center;
   margin: -4px 0 12px; line-height: 1.5;
 }
 .avatar-crop-stage {
@@ -1184,7 +1184,7 @@ html { overflow-x: hidden; overflow-x: clip; }
    vẫn hiện đầy đủ trong thẻ 1/3 (không ellipsis, không phá vỡ hàng đều) */
 @media (max-width: 390px) {
   #tab2 .stat-card { padding: 10px 10px !important; }
-  #tab2 .stat-num { font-size: 1.05rem !important; }
+  #tab2 .stat-num { font-size: 16px !important; }
 }
 
 /* ==========================================================================
@@ -1211,12 +1211,12 @@ html { overflow-x: hidden; overflow-x: clip; }
   align-items: center; justify-content: center; text-align: center; padding: 0 18px;
 }
 #tab2 .g6-centerpct {
-  font-size: 1.55rem; font-weight: 800; color: #1C1B22;
+  font-size: 24px; font-weight: 800; color: #1C1B22;
   white-space: nowrap; line-height: 1.15;
   overflow: hidden; text-overflow: clip !important; /* R21: chống kẹt ellipsis Blink */
 }
-#tab2 .g6-center span { font-size: .66rem; color: #676D7B; line-height: 1.35; margin-top: 2px; }
-#tab2 .g6-center.zero .g6-centerpct { font-size: 1.15rem; color: #676D7B; }
+#tab2 .g6-center span { font-size: 10px; color: #676D7B; line-height: 1.35; margin-top: 2px; }
+#tab2 .g6-center.zero .g6-centerpct { font-size: 17px; color: #676D7B; }
 /* ---- R23: mắt privacy ở góc dưới-phải thẻ (Hùng duyệt mẫu E) ---- */
 #tab2 .g6-eyecorner {
   position: absolute; bottom: 4px; right: 4px; z-index: 2;
@@ -1239,7 +1239,7 @@ html { overflow-x: hidden; overflow-x: clip; }
   display: flex; align-items: center; justify-content: center;
 }
 #tab2 .g6-tag {
-  flex: 0 0 auto; font-size: .68rem; font-weight: 600; text-transform: uppercase;
+  flex: 0 0 auto; font-size: 10px; font-weight: 600; text-transform: uppercase;
   letter-spacing: .02em; color: #6D6D76; white-space: nowrap;
 }
 #tab2 .g6-amt {
@@ -1255,7 +1255,7 @@ html { overflow-x: hidden; overflow-x: clip; }
 }
 /* So sánh 2 tầng: dòng 1 màu ngữ nghĩa production, dòng 2 "so với ..." xám.
    R23: margin-top 1px, thụt vào thẳng dưới nhãn (22px icon + 6px gap = 28px). */
-#tab2 .g6-cmp { font-size: .66rem; line-height: 1.3; margin-top: 1px; margin-left: 28px; min-width: 0; }
+#tab2 .g6-cmp { font-size: 10px; line-height: 1.3; margin-top: 1px; margin-left: 28px; min-width: 0; }
 #tab2 .g6-cmpline { font-weight: 600; }
 #tab2 .g6-cmpline2 { display: block; color: #676D7B; font-weight: 400; margin-top: 0; }
 #tab2 .g6-cmp .cmp-amt, #tab2 .g6-cmp .cmp-lbl, #tab2 .g6-cmp .nw { white-space: nowrap; }
@@ -1284,7 +1284,7 @@ body.privacy-on #tab2 .g6-cmpline i,
 body.privacy-on #tab2 .g6-cmpline span { display: none !important; }
 body.privacy-on #tab2 .g6-cmpline::after {
   content: '***'; display: inline-block; visibility: visible;
-  color: #1C1B22 !important; font-size: .66rem !important; line-height: 1.3; font-weight: 600;
+  color: #1C1B22 !important; font-size: 10px !important; line-height: 1.3; font-weight: 600;
 }
 /* Số tiền theo danh mục trong khung "CHI TIÊU THEO DANH MỤC" (.cat-progress-amt). */
 body.privacy-on #tab2 .cat-progress-amt {
@@ -1303,7 +1303,7 @@ body.privacy-on #tab2 #calendarWidget .cal-row-amt {
 }
 body.privacy-on #tab2 #calendarWidget .cal-row-amt::after {
   content: '***'; display: inline-block; visibility: visible;
-  color: #1C1B22 !important; font-size: .6rem !important; line-height: 1.2;
+  color: #1C1B22 !important; font-size: 9px !important; line-height: 1.2;
 }
 
 /* R21/R23: màn hẹp (<=390px) — xếp dọc: vòng trên, chú thích dưới full-width.
@@ -1365,7 +1365,7 @@ body.privacy-on #heroExpenseCompare { font-size: 0 !important; }
 body.privacy-on #heroExpenseCompare > span { display: none !important; }
 body.privacy-on #heroExpenseCompare::after {
   content: '***'; visibility: visible; display: inline-flex; align-items: center; justify-content: center;
-  color: #fff !important; font-size: .75rem !important; line-height: 1;
+  color: #fff !important; font-size: 11px !important; line-height: 1;
 }
 
 /* ==========================================================================
@@ -1386,7 +1386,7 @@ body.privacy-on .hero-card #heroExpenseCompare::after {
   content: '***'; display: inline-flex !important; align-items: center; justify-content: center;
   background: rgba(255,255,255,0.22) !important; color: #fff !important;
   padding: 7px 16px !important; border-radius: 999px !important;
-  font-size: .75rem !important; font-weight: 600 !important; line-height: 1 !important;
+  font-size: 11px !important; font-weight: 600 !important; line-height: 1 !important;
   visibility: visible !important;
 }
 
@@ -1405,3 +1405,80 @@ body.privacy-on .hero-card #heroExpenseCompare::after {
 #settingsPage #backupTelegramBtn { min-height: 44px !important; }
 .modal-close-x { width: 44px !important; height: 44px !important; }
 .btn-cancel, .btn-save, .btn-full { min-height: 44px !important; }
+
+/* ==========================================================================
+   FIX ROUND 28 (19/10/2026) — UX PACKAGE 2: system consistency
+   (a) Thang chữ cố định · (b) ₫ DISPLAY ~55% / INLINE 100% · (c) tabular-nums
+   (d) Skeleton loading Tab1/Tab2 · (e) CTA trạng thái rỗng · (f) F7 parked pages
+   ========================================================================== */
+
+/* ---- R28-1: THANG CHỮ CỐ ĐỊNH (đã quy toàn bộ CSS về các bước này) ----
+   Root 15px. 8 = micro (lunar); 9 = micro (số tiền ngày trong lịch);
+   10 = badge/meta/nhãn nhỏ; 11 = nhãn nhỏ; 12 = text phụ; 13 = body nhỏ;
+   14 = body; 15 = body lớn / số tiền giao dịch; 16 = tiêu đề mục nhỏ;
+   17 = tiêu đề modal/section; 18 = phụ đề trang; 20 = icon FAB;
+   21 = số tiền G6; 24 = % giữa donut; 45 = số hero chính.
+   Các rem lẻ (13.2/13.5/15.3/15.8/10.5/10.8/11.3/11.7/9.3/9.8...) đã quy về
+   bước gần nhất — mỗi phần tử lệch tối đa ~1px, phân cấp không đổi.
+   Chỉ giữ rem lẻ cho: glyph icon FA (không phải chữ) và rule cũ bị override
+   (không ảnh hưởng computed). */
+
+/* ---- R28-2: QUY TẮC ₫ — số DISPLAY giữ ₫ nhỏ ~55%, số INLINE giữ ₫ 100% ----
+   DISPLAY: số hero chính, số hero phụ, số tiền panel G6.
+   INLINE (100%): số tiền thẻ giao dịch, hàng tìm kiếm, tổng modal chi tiết,
+   số tiền theo danh mục, dòng so sánh — các rule này vốn đã 100% (kế thừa),
+   chỉ .cat-progress-amt span cần ép lại từ 76% về 100%. */
+#heroExpenseMain > span:last-child { font-size: 0.55em !important; }
+#tab1 .hero-stat-val > span:last-child { font-size: 0.55em !important; }
+#tab2 .g6-amt > span:last-child { font-size: 0.55em !important; }
+#monthlyCategoryProgressList .cat-progress-amt > span:last-child { font-size: 1em !important; }
+
+/* ---- R28-3: số tabular — cột số thẳng hàng, không nhảy khi đổi chữ số ---- */
+.tx-amount, .g6-amt, #heroExpenseMain, #tab1 .hero-stat-val, .cat-progress-amt,
+.cal-row-amt, .calendar-balance, #detailTotalIncome, #detailTotalExpense,
+#tab2 .stat-num, .hero-balance, .g6-cmpline, #heroExpenseCompare, .stat-compare,
+#detailModal .tx-amount, #searchModal .tx-amount { font-variant-numeric: tabular-nums; }
+
+/* ---- R28-5: SKELETON LOADING — hiện khi tải >300ms, không chớp khi tải nhanh.
+   #loadingTab1/#loadingTab2 giữ nguyên ID + hành vi display block/none;
+   spinner vẫn hiện ngay, skeleton chỉ thay sau 300ms (class skel-on do JS gắn). */
+.skel-wrap { display: none; }
+.loading-spinner.skel-on > i.fa-spinner { display: none !important; }
+.loading-spinner.skel-on .skel-wrap { display: block !important; }
+.skel-block {
+  border-radius: 14px; margin-bottom: 10px;
+  background: linear-gradient(90deg, #ECECF1 25%, #F7F7FA 50%, #ECECF1 75%);
+  background-size: 200% 100%;
+  animation: r28-skel 1.2s ease-in-out infinite;
+}
+.skel-row { height: 76px; }
+.skel-panel { height: 180px; border-radius: 20px; }
+.skel-chart { height: 200px; border-radius: 18px; }
+@keyframes r28-skel {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skel-block { animation: none !important; }
+}
+
+/* ---- R28-6: CTA dưới trạng thái rỗng — nút chữ tím lặng, vùng bấm ≥44px ---- */
+.empty-cta {
+  display: block; margin: 8px auto 0; min-height: 44px; padding: 10px 22px;
+  background: transparent; border: none; border-radius: 12px;
+  color: #7C3AED; font-size: 15px; font-weight: 700; cursor: pointer;
+  font-family: var(--app-font);
+}
+.empty-cta:active { opacity: 0.55; }
+
+/* ---- R28-7 (F7): trang toàn màn hình đang parked không phình body.scrollWidth.
+   visibility ẩn khi parked, hiện ngay khi mở — animation trượt vào/ra giữ nguyên
+   nhờ transition visibility có delay 0.3s khi đóng. */
+.fullscreen-page {
+  visibility: hidden;
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), visibility 0s linear 0.3s;
+}
+.fullscreen-page.show {
+  visibility: visible;
+  transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), visibility 0s;
+}
