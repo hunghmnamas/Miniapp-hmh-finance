@@ -756,3 +756,17 @@ body { background: #F7F7FA !important; color: #14141A !important; }
   font-size: inherit !important; color: inherit !important; font-weight: 800 !important;
 }
 #tab1 .hero-stat-val > span:last-child { font-size: 0.8rem !important; color: #8E8E9A !important; }
+
+/* ==========================================================================
+   FIX ROUND 8 — Tờ trắng Tab1 tràn hết màn hình (Hùng: "Trắng cả chứ")
+   Trên ngày ít/không có giao dịch, #tab1 chỉ cao bằng nội dung → nền xám
+   #F7F7FA hở ra nửa dưới màn hình. Ép #tab1 cao tối thiểu bằng viewport và
+   nền trắng: tờ trắng phủ tới tận thanh điều hướng. Khi nội dung dài hơn
+   viewport, khối tự cao thêm và cuộn như cũ. Phạm vi CHỈ #tab1 (Tab2 giữ
+   nền xám + thẻ trắng theo thiết kế).
+   ========================================================================== */
+#tab1.tab-content.active {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #fff;
+}
