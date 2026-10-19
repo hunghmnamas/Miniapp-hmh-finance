@@ -46,11 +46,11 @@
     <div id="tab1" class="tab-content active">
       <input type="date" id="transactionDate" style="display:none;">
       <div class="hero-card">
-        <!-- FIX ROUND 13: avatar trên thẻ tím (tab1) — bấm để đổi ảnh từ thư viện -->
+        <!-- FIX ROUND 16: avatar trên thẻ tím (tab1) — bấm để đổi ảnh từ thư viện.
+             Không còn badge ✕ (R13); thay ảnh có crop editor, xóa ảnh qua action sheet. -->
         <button id="heroAvatar" class="hero-avatar" type="button" title="Đổi ảnh đại diện" aria-label="Đổi ảnh đại diện">
           <span class="hero-avatar-ph"><i class="fas fa-user"></i></span>
           <img id="heroAvatarImg" class="hero-avatar-img" alt="Ảnh đại diện" style="display:none">
-          <span id="heroAvatarBadge" class="hero-avatar-badge" title="Xóa ảnh đại diện" style="display:none">✕</span>
         </button>
         <input type="file" id="heroAvatarInput" accept="image/*" hidden>
         <div class="hero-date-nav">
@@ -559,6 +559,35 @@
           <button class="btn-danger-outline flex-shrink-0 m-0" id="deleteCategoryBtn" style="display: none; padding: 14px 0; border-radius: 12px; flex-basis: 44px;"><i class="fas fa-trash"></i></button>
           <button class="btn-cancel m-0 flex-1" onclick="closeIconPickerModal()"><i class="fas fa-times"></i> Đóng</button>
           <button class="btn-save m-0 flex-1" id="saveIconPickerBtn"><i class="fas fa-save"></i> Lưu thay đổi</button>
+      </div>
+    </div>
+
+    <!-- FIX ROUND 16: action sheet + crop editor cho avatar thẻ tím -->
+    <div id="avatarSheet" class="modal-sheet" style="display: flex; flex-direction: column;">
+      <div class="modal-handle" onclick="closeAvatarSheet()"></div>
+      <div class="modal-title" style="margin-bottom: 12px;"><i class="fas fa-user-circle" style="color: var(--primary); margin-right: 8px;"></i> ẢNH ĐẠI DIỆN</div>
+      <button type="button" class="avatar-sheet-row" id="avatarSheetChange"><i class="fas fa-image"></i> Đổi ảnh</button>
+      <button type="button" class="avatar-sheet-row avatar-sheet-danger" id="avatarSheetRemove"><i class="fas fa-trash-alt"></i> Xóa ảnh</button>
+      <button type="button" class="avatar-sheet-row" id="avatarSheetCancel"><i class="fas fa-times"></i> Hủy</button>
+    </div>
+
+    <div id="avatarCropModal" class="modal-sheet" style="display: flex; flex-direction: column;">
+      <div class="modal-handle" onclick="closeAvatarCrop(true)"></div>
+      <div class="modal-title" style="margin-bottom: 8px;"><i class="fas fa-crop-alt" style="color: var(--primary); margin-right: 8px;"></i> CẮT ẢNH ĐẠI DIỆN</div>
+      <div class="avatar-crop-hint">Kéo để di chuyển · trượt thanh để phóng to — vùng trong vòng tròn là ảnh sẽ lưu</div>
+      <div id="avatarCropStage" class="avatar-crop-stage">
+        <img id="avatarCropImg" class="avatar-crop-img" alt="Cắt ảnh đại diện" draggable="false">
+        <div class="avatar-crop-mask"></div>
+        <div class="avatar-crop-ring"></div>
+      </div>
+      <div class="avatar-crop-zoom">
+        <i class="fas fa-search-minus"></i>
+        <input type="range" id="avatarCropZoom" min="1" max="3" step="0.01" value="1" aria-label="Phóng to ảnh">
+        <i class="fas fa-search-plus"></i>
+      </div>
+      <div class="modal-actions m-0 pt-3" style="border-top: 1px solid var(--border-color); flex-shrink: 0;">
+        <button class="btn-cancel w-full m-0 flex-1" onclick="closeAvatarCrop(true)"><i class="fas fa-times"></i> Hủy</button>
+        <button class="btn-save w-full m-0 flex-1" id="avatarCropSave"><i class="fas fa-check"></i> Lưu ảnh</button>
       </div>
     </div>
 
