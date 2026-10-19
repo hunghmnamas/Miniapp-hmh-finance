@@ -679,3 +679,71 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 /* R4-4: tiêu đề các section căn TRÁI theo lề chung 16px */
 #tab1 > .section-header { justify-content: flex-start !important; }
 #tab2 #pieChartTitleTab2 { text-align: left !important; }
+
+/* ==========================================================================
+   FIX ROUND 5 (19/10/2026) — theo feedback của Hùng qua ảnh chụp
+   ========================================================================== */
+
+/* ---- R5-1: tiêu đề "Giao dịch trong ngày" theo ẢNH 1 (giao diện xanh cũ) ----
+   UPPERCASE, đậm, canh GIỮA — ngoại lệ cho lệnh căn trái vòng 4 (dòng 680).
+   Hậu tố "(Tổng: n)" giữ chữ thường/nhỏ/xám nhờ inline style sẵn có. */
+#tab1 > .section-header { justify-content: center !important; }
+#tab1 .section-title {
+  text-transform: uppercase !important;
+  text-align: center !important;
+  font-size: 1.32rem !important;
+  font-weight: 800 !important;
+  color: #14141A !important;
+}
+#tab1 .section-title span { font-size: 0.85rem !important; }
+
+/* Dòng báo trống Tab1: 19px như ảnh 1 (ghi đè 13.5px vòng 4) */
+#placeholderTab1.empty-state { font-size: 19px !important; }
+
+/* Ngày trống: tiêu đề + dòng chữ nằm TRỰC TIẾP trên nền trang, không tờ trắng.
+   (JS thêm/xóa class .tx-empty trên #tab1 trong displayTransactions) */
+#tab1.tx-empty > .section-header,
+#tab1.tx-empty > #placeholderTab1,
+#tab1.tx-empty > #transactionsContainer,
+#tab1.tx-empty > #pagination { background: transparent !important; }
+/* tờ trắng ôm gọn thành thẻ bo tròn khi không có danh sách bên dưới */
+#tab1.tx-empty .hero-sub { border-radius: 28px !important; }
+
+/* ---- R5-2: nút ẩn/hiện biểu đồ cột — cùng ngôn ngữ với nút ẩn/hiện lịch ---- */
+#barChartSection .chart-head-row {
+  display: flex !important; align-items: center !important;
+  justify-content: space-between !important; gap: 8px !important;
+  margin-bottom: 8px !important;
+}
+#barChartSection .chart-head-row .chart-title {
+  flex: 1 1 auto !important; width: auto !important; margin-bottom: 0 !important;
+}
+#barChartSection.bar-collapsed .chart-placeholder { display: none !important; }
+#barChartSection.bar-collapsed #barChartCollapseBtn i { transform: rotate(180deg); }
+
+/* ---- R5-3: 3 số tiền thống kê CÙNG cỡ chữ + cùng baseline ----
+   (đo thực tế: 21px là cỡ lớn nhất mà "25,000,000 ₫" vừa khít thẻ) */
+#tab2 .stat-num {
+  font-size: 21px !important;
+  line-height: 1.25 !important;
+  height: 30px !important;
+  display: flex !important;
+  align-items: baseline !important;
+}
+/* dấu +/- là MỘT PHẦN của con số: cùng cỡ, cùng màu (không còn dash nhỏ lệch) */
+#tab2 .stat-num > span:first-child:not(:last-child) {
+  font-size: inherit !important; color: inherit !important; font-weight: 800 !important;
+}
+/* đơn vị ₫ giữ nhỏ */
+#tab2 .stat-num > span:last-child { font-size: 0.75rem !important; color: #8E8E9A !important; }
+
+/* thống nhất tương tự cho 2 thẻ Thu nhập / Số dư trên tờ trắng Tab1 */
+#tab1 .hero-stat-val {
+  height: 24px !important;
+  display: flex !important;
+  align-items: baseline !important;
+}
+#tab1 .hero-stat-val > span:first-child:not(:last-child) {
+  font-size: inherit !important; color: inherit !important; font-weight: 800 !important;
+}
+#tab1 .hero-stat-val > span:last-child { font-size: 0.8rem !important; color: #8E8E9A !important; }
