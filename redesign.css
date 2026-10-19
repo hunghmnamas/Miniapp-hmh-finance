@@ -1316,3 +1316,24 @@ body.privacy-on #tab2 #calendarWidget .cal-row-amt::after {
   #tab2 .g6-legend { width: 100%; }
   #tab2 .g6-row { min-height: 50px; }
 }
+
+/* ==========================================================================
+   FIX ROUND 25 (Hùng 19/10: "Che luôn cả modal chi tiết + tìm kiếm").
+   Vấn đề: trong #detailModal (chi tiết danh mục / chi tiết ngày) và
+   #searchModal (kết quả tìm kiếm), mask toàn cục
+   body.privacy-on .tx-amount của upgrade.css ĐÃ che số (font-size: 0) nhưng
+   ::after của nó dùng `color: inherit` -> thừa hưởng transparent -> "***"
+   VÔ HÌNH: số tiền biến mất hẳn thay vì hiện "***" như mask panel Tab2 (R24)
+   và số hero (R12). Người dùng không thấy dấu hiệu "đang ẩn".
+   Sửa: scoped vào 2 modal, ép ::after màu tối (#14141A) vì sheet nền sáng.
+   KHÔNG đụng rule toàn cục -> danh sách giao dịch Tab1 giữ nguyên hành vi.
+   (Patch R17-UNPUSHED cho Tab2 stat-card đã lỗi thời: R21 thay stat-card
+   bằng panel G6 và R21-R24 đã che toàn diện Tab2; phần còn đúng của R17
+   (search .tx-amount bị che) được giữ và nâng cấp hiển thị ở đây.)
+   ========================================================================== */
+body.privacy-on #detailModal .tx-amount::after,
+body.privacy-on #searchModal .tx-amount::after,
+body.privacy-on #detailModal #detailTotalIncome::after,
+body.privacy-on #detailModal #detailTotalExpense::after {
+  color: #14141A !important; /* thắng `color: inherit` (transparent) của upgrade.css */
+}
