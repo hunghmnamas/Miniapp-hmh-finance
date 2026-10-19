@@ -355,36 +355,51 @@ async function fetchMonthData(month) {
 })();
 
 // ============================================================================
-// FIX ROUND 13 (19/10/2026): avatar trên thẻ tím (Tab1).
-// - Mặc định: icon người (fa-user) trong vòng tròn kính mờ ở góc trái thẻ tím.
-// - Bấm avatar -> mở chọn ảnh từ thư viện; ảnh được crop vuông giữa, resize
-//   192x192 JPEG 0.85, lưu data URL vào localStorage 'hmh_hero_avatar'.
-// - Có ảnh: bấm ảnh = đổi ảnh khác; badge ✕ ở góc dưới-phải avatar = xóa ảnh
-//   (stopPropagation để không mở picker). Hết quota -> thử 128px/0.8, vẫn
-//   lỗi thì giữ ảnh cho phiên hiện tại.
+// FIX ROUND 16 (19/10/2026): avatar trên thẻ tím (Tab1) + CROP EDITOR (nâng cấp R13).
+// - Vòng tròn 46px ở góc trái thẻ tím: mặc định icon người (fa-user), có ảnh
+//   thì img phủ kín (object-fit: cover). BỎ HOÀN TOÀN badge ✕ của R13.
+// - Bấm avatar: chưa có ảnh -> mở picker chọn ảnh; đã có ảnh -> mở action
+//   sheet (Đổi ảnh / Xóa ảnh / Hủy).
+// - Sau khi chọn file -> mở CROP EDITOR (modal-sheet): stage vuông
+//   min(78vw,320px), vòng tròn guide trắng + vùng ngoài vòng mờ tối, kéo để
+//   pan (pointer events: chuột + touch), thanh trượt zoom 1x–3x, ảnh luôn
+//   cover vòng tròn (clamp pan). "Lưu ảnh": render vùng tròn về canvas
+//   192x192 JPEG 0.85 -> localStorage 'hmh_hero_avatar'. "Hủy": bỏ thay đổi.
+// - Toán pan: ảnh vẽ ở scale = baseZoom * zoom (baseZoom = cover-fit);
+//   tâm ảnh đặt tại (S/2 + tx, S/2 + ty); cover -> |tx| <= (imgW - S)/2
+//   (tương tự ty). Save: góc trái-trên ảnh trong hệ stage = (S/2+tx-imgW/2),
+//   vùng vuông nội tiếp = ((0-x0)/sc, (0-y0)/sc, S/sc) trong tọa độ ảnh gốc.
+// - Hết quota -> thử 128px/0.8, vẫn lỗi thì giữ ảnh cho phiên hiện tại.
 // ============================================================================
 (function initHeroAvatar() {
   var KEY = 'hmh_hero_avatar';
-  var btn, img, badge, input, ph;
+  var btn, img, input, ph;
+  var sheet, cropModal, cropStage, cropImg, cropZoom, cropSave;
+  var savedUrl = null;
+  var crop = { imgEl: null, iw: 0, ih: 0, S: 0, zoom: 1, tx: 0, ty: 0 };
 
   function els() {
     btn = document.getElementById('heroAvatar');
     img = document.getElementById('heroAvatarImg');
-    badge = document.getElementById('heroAvatarBadge');
     input = document.getElementById('heroAvatarInput');
     ph = btn ? btn.querySelector('.hero-avatar-ph') : null;
-    return !!(btn && img && badge && input);
+    sheet = document.getElementById('avatarSheet');
+    cropModal = document.getElementById('avatarCropModal');
+    cropStage = document.getElementById('avatarCropStage');
+    cropImg = document.getElementById('avatarCropImg');
+    cropZoom = document.getElementById('avatarCropZoom');
+    cropSave = document.getElementById('avatarCropSave');
+    return !!(btn && img && input);
   }
 
   function render(url) {
+    savedUrl = url || null;
     if (url) {
       img.src = url; img.style.display = 'block';
       if (ph) ph.style.display = 'none';
-      badge.style.display = 'flex';
     } else {
       img.removeAttribute('src'); img.style.display = 'none';
       if (ph) ph.style.display = 'flex';
-      badge.style.display = 'none';
     }
   }
 
@@ -393,45 +408,151 @@ async function fetchMonthData(month) {
     catch (e) { return false; }
   }
 
-  function processFile(file) {
+  function overlayShow(on) {
+    var ov = document.getElementById('modalOverlay');
+    if (ov) ov.classList.toggle('show', !!on);
+  }
+
+  /* ---------------- action sheet ---------------- */
+  function openAvatarSheet() {
+    if (sheet) sheet.classList.add('show');
+    overlayShow(true);
+  }
+  function closeAvatarSheet() {
+    if (sheet) sheet.classList.remove('show');
+    if (!cropModal || !cropModal.classList.contains('show')) overlayShow(false);
+  }
+  window.closeAvatarSheet = function () { closeAvatarSheet(); };
+
+  /* ---------------- crop editor ---------------- */
+  function coverScale() {
+    if (!crop.iw || !crop.ih || !crop.S) return 1;
+    return Math.max(crop.S / crop.iw, crop.S / crop.ih);
+  }
+  function clampPan() {
+    var sc = coverScale() * crop.zoom;
+    var mx = Math.max(0, (crop.iw * sc - crop.S) / 2);
+    var my = Math.max(0, (crop.ih * sc - crop.S) / 2);
+    crop.tx = Math.max(-mx, Math.min(mx, crop.tx));
+    crop.ty = Math.max(-my, Math.min(my, crop.ty));
+  }
+  function applyTransform() {
+    clampPan();
+    var sc = coverScale() * crop.zoom;
+    var w = crop.iw * sc, h = crop.ih * sc;
+    cropImg.style.width = w + 'px';
+    cropImg.style.height = h + 'px';
+    // đặt tâm ảnh tại (S/2 + tx, S/2 + ty)
+    cropImg.style.transform = 'translate(' + (crop.S / 2 + crop.tx - w / 2) + 'px,' +
+      (crop.S / 2 + crop.ty - h / 2) + 'px)';
+  }
+
+  function openCrop(dataUrl) {
+    closeAvatarSheet();
+    var im = new Image();
+    im.onload = function () {
+      crop.iw = im.naturalWidth || im.width || 0;
+      crop.ih = im.naturalHeight || im.height || 0;
+      if (!crop.iw || !crop.ih) return;
+      crop.S = (cropStage && cropStage.clientWidth) || Math.min(window.innerWidth * 0.78, 320);
+      crop.zoom = 1; crop.tx = 0; crop.ty = 0;
+      if (cropZoom) cropZoom.value = 1;
+      cropImg.src = dataUrl;
+      crop.imgEl = im;
+      applyTransform();
+      if (cropModal) cropModal.classList.add('show');
+      overlayShow(true);
+    };
+    im.src = dataUrl;
+  }
+
+  function closeCrop() {
+    if (cropModal) cropModal.classList.remove('show');
+    overlayShow(false);
+  }
+  window.closeAvatarCrop = function (/* cancel */) { closeCrop(); };
+
+  function saveCrop() {
+    var im = crop.imgEl; if (!im) return;
+    var sc = coverScale() * crop.zoom;
+    var x0 = crop.S / 2 + crop.tx - (crop.iw * sc) / 2; // góc trái ảnh (px stage)
+    var y0 = crop.S / 2 + crop.ty - (crop.ih * sc) / 2; // góc trên ảnh (px stage)
+    // vùng vuông nội tiếp vòng tròn -> tọa độ trong ảnh gốc
+    var sx = (0 - x0) / sc, sy = (0 - y0) / sc, sw = crop.S / sc;
+    var attempts = [{ s: 192, q: 0.85 }, { s: 128, q: 0.8 }];
+    for (var i = 0; i < attempts.length; i++) {
+      var cv = document.createElement('canvas');
+      cv.width = attempts[i].s; cv.height = attempts[i].s;
+      var cx = cv.getContext('2d');
+      cx.drawImage(im, sx, sy, sw, sw, 0, 0, attempts[i].s, attempts[i].s);
+      var u = cv.toDataURL('image/jpeg', attempts[i].q);
+      render(u);
+      if (store(u)) break; // lưu được -> thoát vòng, đóng editor bên dưới
+      // hết quota: vòng sau thử size nhỏ hơn; vòng cuối vẫn lỗi -> giữ ảnh phiên này
+    }
+    window.closeAvatarCrop(false);
+  }
+
+  function handleFile(file) {
     if (!file || !/^image\//.test(file.type)) return;
     var reader = new FileReader();
-    reader.onload = function () {
-      var im = new Image();
-      im.onload = function () {
-        var attempts = [{ s: 192, q: 0.85 }, { s: 128, q: 0.8 }];
-        for (var i = 0; i < attempts.length; i++) {
-          var side = Math.min(im.naturalWidth, im.naturalHeight) || 1;
-          var sx = Math.floor((im.naturalWidth - side) / 2);
-          var sy = Math.floor((im.naturalHeight - side) / 2);
-          var cv = document.createElement('canvas');
-          cv.width = attempts[i].s; cv.height = attempts[i].s;
-          var cx = cv.getContext('2d');
-          cx.drawImage(im, sx, sy, side, side, 0, 0, attempts[i].s, attempts[i].s);
-          var url = cv.toDataURL('image/jpeg', attempts[i].q);
-          render(url);
-          if (store(url)) return; // lưu được -> xong
-          // hết quota: vòng sau thử size nhỏ hơn; nếu vẫn lỗi, giữ ảnh phiên này
-        }
-      };
-      im.src = reader.result;
-    };
+    reader.onload = function () { openCrop(reader.result); };
     reader.readAsDataURL(file);
   }
 
   function bind() {
-    btn.addEventListener('click', function () { input.click(); });
+    btn.addEventListener('click', function () {
+      if (savedUrl) openAvatarSheet();
+      else input.click();
+    });
     input.addEventListener('change', function () {
-      if (input.files && input.files[0]) processFile(input.files[0]);
+      if (input.files && input.files[0]) handleFile(input.files[0]);
       input.value = '';
     });
-    badge.addEventListener('click', function (e) {
-      e.stopPropagation();
-      try { localStorage.removeItem(KEY); } catch (err) {}
-      render(null);
+
+    var chg = document.getElementById('avatarSheetChange');
+    var rem = document.getElementById('avatarSheetRemove');
+    var can = document.getElementById('avatarSheetCancel');
+    if (chg) chg.addEventListener('click', function () { closeAvatarSheet(); input.click(); });
+    if (rem) rem.addEventListener('click', function () {
+      try { localStorage.removeItem(KEY); } catch (e) {}
+      render(null); closeAvatarSheet();
     });
+    if (can) can.addEventListener('click', closeAvatarSheet);
+
+    // drag pan: pointer events (chuột + touch); stage có touch-action:none
+    var dragging = false, lx = 0, ly = 0;
+    if (cropStage) {
+      cropStage.addEventListener('pointerdown', function (e) {
+        dragging = true; lx = e.clientX; ly = e.clientY;
+        try { cropStage.setPointerCapture(e.pointerId); } catch (err) {}
+        e.preventDefault();
+      });
+      cropStage.addEventListener('pointermove', function (e) {
+        if (!dragging) return;
+        crop.tx += (e.clientX - lx); crop.ty += (e.clientY - ly);
+        lx = e.clientX; ly = e.clientY;
+        applyTransform();
+      });
+      var endDrag = function () { dragging = false; };
+      cropStage.addEventListener('pointerup', endDrag);
+      cropStage.addEventListener('pointercancel', endDrag);
+    }
+    if (cropZoom) cropZoom.addEventListener('input', function () {
+      crop.zoom = parseFloat(cropZoom.value) || 1;
+      applyTransform();
+    });
+    if (cropSave) cropSave.addEventListener('click', saveCrop);
+
     // expose cho test harness
-    window.__heroAvatarTest = { processFile: processFile, render: render, key: KEY };
+    window.__heroAvatarTest = {
+      openCrop: openCrop, saveCrop: saveCrop, crop: crop, key: KEY,
+      render: render, handleFile: handleFile,
+      getSaved: function () { return savedUrl; },
+      openSheet: openAvatarSheet, closeSheet: closeAvatarSheet,
+      isSheetOpen: function () { return !!(sheet && sheet.classList.contains('show')); },
+      isCropOpen: function () { return !!(cropModal && cropModal.classList.contains('show')); }
+    };
   }
 
   function start() {
@@ -444,4 +565,138 @@ async function fetchMonthData(month) {
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start);
   else start();
+})();
+
+/* ==========================================================================
+   FIX ROUND 15 (R15-2b): khôi phục thao tác vuốt ngang để chuyển tab
+   (chức năng của app cũ). Vuốt ngang dứt khoát (|dx| >= 56px và
+   |dx| > 1.4*|dy|) trên nội dung tab sẽ chuyển sang tab kề theo thứ tự
+   nav: Giao dịch -> Báo cáo -> Tìm kiếm -> Cài đặt (vuốt trái = tiếp,
+   vuốt phải = lùi, kẹp ở 2 đầu). KHÔNG kích hoạt khi: menu FAB / modal
+   khác đang mở, bắt đầu trên phần tử cuộn ngang được, trên input/select/
+   textarea, hoặc khi đang cuộn dọc. Chỉ quan sát touch event (không
+   preventDefault) nên không ảnh hưởng cuộn dọc.
+   ========================================================================== */
+(function initTabSwipe() {
+  var ORDER = ['tab1', 'tab2', 'search', 'settings'];
+  var MIN_DX = 56, RATIO = 1.4;
+  var sx = 0, sy = 0, st = null, tracking = false;
+
+  function $(id) { return document.getElementById(id); }
+
+  function isShown(el) {
+    if (!el) return false;
+    var b = el.getBoundingClientRect();
+    return b.width > 0.5 && b.height > 0.5;
+  }
+
+  function blockingOverlayOpen() {
+    var fm = $('fabMenu');
+    if (fm && fm.classList.contains('show')) return true;
+    var sheets = document.querySelectorAll('.modal-sheet.show');
+    for (var i = 0; i < sheets.length; i++) {
+      // NOTE: #confirmDeleteModal .confirm-dialog mang class show trong markup
+      // nhưng parent display:none -> rect 0x0, không tính là đang mở
+      if (sheets[i].id !== 'searchModal' && isShown(sheets[i])) return true;
+    }
+    var fps = document.querySelectorAll('.fullscreen-page.show');
+    for (var j = 0; j < fps.length; j++) {
+      if (fps[j].id !== 'settingsPage') return true;
+    }
+    return false;
+  }
+
+  function currentPos() {
+    if (blockingOverlayOpen()) return -1;
+    var sm = $('searchModal'), sp = $('settingsPage');
+    if (sm && sm.classList.contains('show')) return 2;
+    if (sp && sp.classList.contains('show')) return 3;
+    var active = document.querySelector('.tab-content.active');
+    if (!active) return -1;
+    if (active.id === 'tab1') return 0;
+    if (active.id === 'tab2') return 1;
+    return -1; // tab3 (từ khóa) và các view khác: không vuốt
+  }
+
+  function setNavActive(btnId) {
+    document.querySelectorAll('.nav-btn').forEach(function (b) { b.classList.remove('active'); });
+    var b = btnId ? $(btnId) : null;
+    if (b) b.classList.add('active');
+  }
+
+  function goTo(pos) {
+    try { triggerHaptic('light'); } catch (e) {}
+    var sm = $('searchModal'), sp = $('settingsPage');
+    if (pos === 0 || pos === 1) {
+      if (sm && sm.classList.contains('show') && typeof window.closeSearchModal === 'function') window.closeSearchModal();
+      else if (sm) sm.classList.remove('show');
+      if (sp && sp.classList.contains('show') && typeof window.closeFullscreen === 'function') window.closeFullscreen('settingsPage');
+      window.openTab(pos === 0 ? 'tab1' : 'tab2');
+    } else if (pos === 2) {
+      if (sp && sp.classList.contains('show') && typeof window.closeFullscreen === 'function') window.closeFullscreen('settingsPage');
+      setNavActive('navSearchBtn');
+      if (typeof window.openSearchModal === 'function') window.openSearchModal();
+      else if (sm) sm.classList.add('show');
+    } else if (pos === 3) {
+      if (sm && sm.classList.contains('show') && typeof window.closeSearchModal === 'function') window.closeSearchModal();
+      else if (sm) sm.classList.remove('show');
+      setNavActive('navSettingsBtn');
+      if (typeof window.openFullscreen === 'function') window.openFullscreen('settingsPage');
+    }
+  }
+
+  // Chỉ tính phần tử CUỘN NGANG ĐƯỢC THẬT (overflow-x auto/scroll) — ví dụ
+  // dải lịch tuần nếu cuộn. Không tính block thường bị tràn layout
+  // (VD: #tab1 báo scrollWidth 475 do quirk margin âm, nhưng không cuộn được).
+  function horizontallyScrollable(el, stop) {
+    var n = el;
+    while (n && n !== stop && n !== document.body && n !== document.documentElement) {
+      var cs = null;
+      try { cs = getComputedStyle(n); } catch (e) {}
+      if (cs && (cs.overflowX === 'auto' || cs.overflowX === 'scroll') &&
+          n.scrollWidth > n.clientWidth + 4) return true;
+      n = n.parentElement;
+    }
+    return false;
+  }
+
+  function positionContainer(pos) {
+    if (pos === 0) return $('tab1');
+    if (pos === 1) return $('tab2');
+    if (pos === 2) return $('searchModal');
+    if (pos === 3) return $('settingsPage');
+    return null;
+  }
+
+  document.addEventListener('touchstart', function (e) {
+    if (!e.touches || e.touches.length !== 1) { tracking = false; return; }
+    var t = e.touches[0];
+    sx = t.clientX; sy = t.clientY; st = t.target; tracking = true;
+  }, { passive: true });
+
+  document.addEventListener('touchend', function (e) {
+    if (!tracking) return;
+    tracking = false;
+    if (!e.changedTouches || !e.changedTouches.length) return;
+    var t = e.changedTouches[0];
+    var dx = t.clientX - sx, dy = t.clientY - sy;
+    if (Math.abs(dx) < MIN_DX) return;
+    if (Math.abs(dx) <= RATIO * Math.abs(dy)) return; // cuộn dọc / chéo: bỏ qua
+    if (!st) return;
+    var el = (st.nodeType === 1) ? st : st.parentElement;
+    if (!el) return;
+    if (el.closest && el.closest('input, select, textarea')) return;
+    var pos = currentPos();
+    if (pos < 0) return;
+    var box = positionContainer(pos);
+    if (!box || !box.contains(el)) return;
+    if (horizontallyScrollable(el, box)) return;
+    var next = dx < 0 ? Math.min(3, pos + 1) : Math.max(0, pos - 1);
+    if (next === pos) return; // kẹp ở 2 đầu
+    goTo(next);
+    // expose cho test harness
+    window.__lastSwipe = { from: ORDER[pos], to: ORDER[next], dx: Math.round(dx) };
+  }, { passive: true });
+
+  window.__tabSwipeTest = { currentPos: currentPos, goTo: goTo, ORDER: ORDER };
 })();
