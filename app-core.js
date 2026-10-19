@@ -131,14 +131,32 @@ for (let emoji in EMOJI_TO_FA_MAP) {
 }
 
 // ---------------- UTILITIES & LẮNG NGHE MẮT THẦN ----------------
-function triggerHaptic(style = 'light') { 
-    if (localStorage.getItem('settingHaptic') === 'false') return;
-    if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) Telegram.WebApp.HapticFeedback.impactOccurred(style); 
+// FIX ROUND 29 (UX gói 3): haptic Telegram đầy đủ + tường lửa.
+// - settingHaptic === 'false' -> tắt hẳn (mặc định BẬT khi chưa set).
+// - Ngoài Telegram / thiếu HapticFeedback -> im lặng, không vỡ UI.
+function hapticEnabled() { return localStorage.getItem('settingHaptic') !== 'false'; }
+function hapticHandle() { try { return (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) || null; } catch (e) { return null; } }
+function triggerHaptic(style = 'light') {
+    if (!hapticEnabled()) return;
+    var hf = hapticHandle(); if (!hf) return;
+    try { hf.impactOccurred(style); } catch (e) {}
 }
-function triggerHapticNotification(type = 'success') { 
-    if (localStorage.getItem('settingHaptic') === 'false') return;
-    if (window.Telegram && Telegram.WebApp && Telegram.WebApp.HapticFeedback) Telegram.WebApp.HapticFeedback.notificationOccurred(type); 
+function triggerHapticNotification(type = 'success') {
+    if (!hapticEnabled()) return;
+    var hf = hapticHandle(); if (!hf) return;
+    try { hf.notificationOccurred(type); } catch (e) {}
 }
+function triggerHapticSelection() {
+    if (!hapticEnabled()) return;
+    var hf = hapticHandle(); if (!hf) return;
+    try { hf.selectionChanged(); } catch (e) {}
+}
+// Cổng gọi chung: hmhHaptic('selection' | 'impact' | 'notification', arg)
+window.hmhHaptic = function (kind, arg) {
+    if (kind === 'selection') triggerHapticSelection();
+    else if (kind === 'notification') triggerHapticNotification(arg || 'success');
+    else triggerHaptic(arg || 'light');
+};
 
 // Chạm vào mắt ngoài màn hình -> Chỉ đổi tạm thời cho phiên làm việc hiện tại
 window.togglePrivacy = function() {
@@ -172,6 +190,8 @@ function updatePrivacyUI(syncSettings = false) {
     try { if (typeof window.fitStatAmounts === 'function') window.fitStatAmounts(); } catch (e) {}
     // R21: co lại chữ % giữa vòng G6 khi bật/tắt mask
     try { if (typeof window.fitG6Center === 'function') window.fitG6Center(); } catch (e) {}
+    // R29: vẽ lại thẻ insight (mask *** theo privacy)
+    try { if (typeof window.refreshInsightStrip === 'function') window.refreshInsightStrip(); } catch (e) {}
 }
 
 function applyPrivacyMode() {
@@ -336,7 +356,8 @@ function getCompareHTML(current, prev, type, text = 'so với kỳ trước') {
 }
 
 window.openTab = function(tabId) {
-  triggerHaptic('light');
+  // R29: không rung ở đây nữa — tab chuyển do người dùng đi qua activateTab
+  // (selection); mở app lần đầu (boot) im lặng.
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById(tabId).classList.add('active');
@@ -353,6 +374,8 @@ window.openTab = function(tabId) {
 // CHUNG hàm này.
 // ============================================================================
 window.activateTab = function(targetTab) {
+  // R29: chuyển tab do người dùng (bấm nav / vuốt) -> selectionChanged.
+  try { triggerHapticSelection(); } catch (e) {}
   window.openTab(targetTab);
   if (targetTab === 'tab1' && typeof window.fetchTransactions === 'function') window.fetchTransactions(false);
   if (targetTab === 'tab2') {
@@ -797,7 +820,8 @@ async function fetchMonthData(month) {
   }
 
   function goTo(pos) {
-    try { triggerHaptic('light'); } catch (e) {}
+    // R29: vuốt sang tab 0/1 -> selection (activateTab lo); sang Tìm kiếm/Cài đặt -> light.
+    try { if (pos === 0 || pos === 1) triggerHapticSelection(); else triggerHaptic('light'); } catch (e) {}
     var sm = $('searchModal'), sp = $('settingsPage');
     if (pos === 0 || pos === 1) {
       if (sm && sm.classList.contains('show') && typeof window.closeSearchModal === 'function') window.closeSearchModal();
