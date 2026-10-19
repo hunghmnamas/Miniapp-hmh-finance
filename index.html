@@ -46,6 +46,13 @@
     <div id="tab1" class="tab-content active">
       <input type="date" id="transactionDate" style="display:none;">
       <div class="hero-card">
+        <!-- FIX ROUND 13: avatar trên thẻ tím (tab1) — bấm để đổi ảnh từ thư viện -->
+        <button id="heroAvatar" class="hero-avatar" type="button" title="Đổi ảnh đại diện" aria-label="Đổi ảnh đại diện">
+          <span class="hero-avatar-ph"><i class="fas fa-user"></i></span>
+          <img id="heroAvatarImg" class="hero-avatar-img" alt="Ảnh đại diện" style="display:none">
+          <span id="heroAvatarBadge" class="hero-avatar-badge" title="Xóa ảnh đại diện" style="display:none">✕</span>
+        </button>
+        <input type="file" id="heroAvatarInput" accept="image/*" hidden>
         <div class="hero-date-nav">
           <button id="prevDayBtn" class="date-nav-btn"><i class="fas fa-chevron-left"></i></button>
           <div class="hero-date" id="displayCurrentDate">Hôm nay, ...</div>
