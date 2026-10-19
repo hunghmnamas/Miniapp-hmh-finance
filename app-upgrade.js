@@ -133,6 +133,7 @@
       });
     }
     var group = document.querySelector('.nav-tabs-group');
+    var spacer = group ? group.querySelector('.nav-spacer') : null;
     if (group && !document.getElementById('navSearchBtn')) {
       var btn = document.createElement('button');
       btn.id = 'navSearchBtn';
@@ -140,7 +141,23 @@
       btn.type = 'button';
       btn.innerHTML = '<div class=\"nav-icon-wrap\"><i class=\"fas fa-search\"></i></div><span class=\"nav-label\">Tìm kiếm</span>';
       btn.onclick = function () { triggerHaptic('light'); if (typeof window.openSearchModal === 'function') window.openSearchModal(); };
-      group.appendChild(btn);
+      if (spacer && spacer.nextSibling) group.insertBefore(btn, spacer.nextSibling);
+      else group.appendChild(btn);
+    }
+    /* F4 (19/10): Cài đặt ra thanh nav, đứng sau Tìm kiếm (Từ khóa rời nav) */
+    if (group && !document.getElementById('navSettingsBtn')) {
+      var sbtn = document.createElement('button');
+      sbtn.id = 'navSettingsBtn';
+      sbtn.className = 'nav-btn';
+      sbtn.type = 'button';
+      sbtn.innerHTML = '<div class=\"nav-icon-wrap\"><i class=\"fas fa-cog\"></i></div><span class=\"nav-label\">Cài đặt</span>';
+      sbtn.onclick = function () {
+        triggerHaptic('light');
+        document.querySelectorAll('.nav-btn').forEach(function (b) { b.classList.remove('active'); });
+        sbtn.classList.add('active');
+        if (typeof window.openFullscreen === 'function') window.openFullscreen('settingsPage');
+      };
+      group.appendChild(sbtn);
     }
   }
 
@@ -606,10 +623,12 @@
   // ------------------------------------------------------------------
   var _origUpdateTimeNavUI = window.updateTimeNavUI;
   window.updateTimeNavUI = function () {
+    var __tab2 = document.getElementById('tab2');
     if (typeof currentFilterMode !== 'undefined' && currentFilterMode === 'yearly') {
+      if (__tab2) __tab2.classList.add('fix2-year');
       var timeNav = document.getElementById('timeNavContainer');
       var customNav = document.getElementById('customFilterContainer');
-      if (timeNav) timeNav.style.display = 'none';
+      if (timeNav) timeNav.style.display = 'flex';
       if (customNav) customNav.style.display = 'none';
       var lbl = document.getElementById('currentPeriodLabel');
       if (lbl) lbl.textContent = 'Năm ' + activePeriodDate.getFullYear();
@@ -620,6 +639,7 @@
       try { refreshNavArrows(); } catch (e) {}
       return;
     }
+    if (__tab2) __tab2.classList.remove('fix2-year');
     var r = (typeof _origUpdateTimeNavUI === 'function') ? _origUpdateTimeNavUI.apply(this, arguments) : undefined;
     try { syncCalendarControlBar(); } catch (e) {}
     try { refreshNavArrows(); } catch (e) {}
@@ -632,7 +652,7 @@
     var mode = (typeof currentFilterMode !== 'undefined') ? currentFilterMode : '';
     var isCal = (mode === 'weekly' || mode === 'monthly');
     var isYear = (mode === 'yearly');
-    bar.style.display = (isCal || isYear) ? 'flex' : 'none';
+    bar.style.display = isCal ? 'flex' : 'none';
     var toggle = document.getElementById('calToggleBtn');
     if (toggle) toggle.style.display = isYear ? 'none' : '';
     var label = document.getElementById('calCtrlLabel');
@@ -797,6 +817,26 @@
   window.fabAddExpense = function () { closeFabMenu(); window.openAddForm('Chi tiêu'); };
   window.fabSearch = function () { closeFabMenu(); if (typeof window.openSearchModal === 'function') window.openSearchModal(); };
   window.fabSettings = function () { closeFabMenu(); openFullscreen('settingsPage'); };
+  /* F4 (19/10): mở Quản lý từ khóa (tab3) — nav highlight Cài đặt */
+  window.fabKeywords = function () {
+    closeFabMenu();
+    if (typeof window.closeFullscreen === 'function') window.closeFullscreen('settingsPage');
+    if (typeof window.loadKeywords === 'function') window.loadKeywords(false);
+    if (typeof window.openTab === 'function') window.openTab('tab3');
+    document.querySelectorAll('.nav-btn').forEach(function (b) { b.classList.remove('active'); });
+    var s = document.getElementById('navSettingsBtn');
+    if (s) s.classList.add('active');
+  };
+  function syncNavToActiveTab() {
+    document.querySelectorAll('.nav-btn').forEach(function (b) { b.classList.remove('active'); });
+    var act = document.querySelector('.tab-content.active');
+    if (act) {
+      var b = document.querySelector('.nav-btn[data-tab="' + act.id + '"]');
+      if (!b && act.id === 'tab3') b = document.getElementById('navSettingsBtn'); /* tu khoa -> cai dat */
+      if (b) b.classList.add('active');
+    }
+  }
+  window.__syncNavToActiveTab = syncNavToActiveTab;
   window.fabAbout = function () { closeFabMenu(); openFullscreen('aboutPage'); };
 
   // ------------------------------------------------------------------
@@ -813,6 +853,7 @@
     var el = document.getElementById(id);
     if (el) el.classList.remove('show');
     if (!document.querySelector('.fullscreen-page.show')) document.body.classList.remove('fullscreen-open');
+    if (id === 'settingsPage') { try { syncNavToActiveTab(); } catch (e) {} }
   };
 
   // ------------------------------------------------------------------
