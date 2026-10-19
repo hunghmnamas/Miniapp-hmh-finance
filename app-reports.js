@@ -105,6 +105,9 @@ function displayTransactions() {
   
   const heroExpCompare = document.getElementById('heroExpenseCompare');
   if(heroExpCompare) heroExpCompare.innerHTML = getCompareHTML(tExp, pExp, 'expense', compSuffix);
+
+  // R20-1: co cỡ số tiền cho vừa thẻ (sau mỗi lần render)
+  try { if (typeof window.fitStatAmounts === 'function') window.fitStatAmounts(); } catch (e) {}
   
   const headerTitle = document.querySelector('#tab1 .section-title');
   if(headerTitle) headerTitle.innerHTML = `Giao dịch trong ngày <span style="font-size: 0.75rem; color: var(--text-2); text-transform: none;">(Tổng: ${data.length})</span>`;
@@ -406,6 +409,9 @@ function processReportData(currentTx, prevTx, labels, incs, exps) {
     document.getElementById('tab2IncomeCompare').innerHTML = getCompareHTML(tInc, pInc, 'income', compareText);
     document.getElementById('tab2ExpenseCompare').innerHTML = getCompareHTML(tExp, pExp, 'expense', compareText);
     document.getElementById('tab2BalanceCompare').innerHTML = getCompareHTML(tBal, pBal, 'balance', compareText);
+
+    // R20-1: co cỡ số tiền cho vừa thẻ (sau mỗi lần render)
+    try { if (typeof window.fitStatAmounts === 'function') window.fitStatAmounts(); } catch (e) {}
     
     // Khi kỳ báo cáo KHÔNG có giao dịch nào -> ẩn 2 biểu đồ trống (Thu nhập & Chi tiêu +
     // Chi tiêu theo danh mục) và hiện dòng thông báo gọn gàng. Giữ nguyên các thẻ tổng & lịch.
@@ -720,7 +726,8 @@ function updateTimeNavUI() {
 
 // ---------------- TÌM KIẾM MODAL ----------------
 window.openSearchModal = function() { triggerHaptic('light'); document.getElementById('modalOverlay').classList.add('show'); setTimeout(() => document.getElementById('searchModal').classList.add('show'), 10); };
-window.closeSearchModal = function() { triggerHaptic('light'); document.getElementById('searchModal').classList.remove('show'); setTimeout(() => document.getElementById('modalOverlay').classList.remove('show'), 300); };
+window.closeSearchModal = function() { triggerHaptic('light'); document.getElementById('searchModal').classList.remove('show'); setTimeout(() => document.getElementById('modalOverlay').classList.remove('show'), 300); // R20-2: đóng modal Tìm kiếm -> nav highlight phải quay về tab đang hiển thị (trước đây kẹt ở "Tìm kiếm")
+  try { if (typeof window.__syncNavToActiveTab === 'function') window.__syncNavToActiveTab(); } catch (e) {} };
 
 function displaySearchResults() {
     const list = document.getElementById('searchResultsContainer'); list.innerHTML=''; const data = cachedSearchResults;
