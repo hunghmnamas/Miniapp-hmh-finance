@@ -1740,3 +1740,24 @@ body.hmh-fs.hmh-on-tab1:not(.fullscreen-open) #tab1 .hero-card .hero-avatar {
 .pp-week-row.selected { background: #7C3AED; color: #fff; }
 .pp-week-row.selected .pp-week-range { color: rgba(255, 255, 255, 0.85); }
 .pp-week-row:disabled { opacity: 0.35; cursor: default; }
+
+/* ==========================================================================
+   FIX ROUND 36 — CÁCH A (Hùng chốt sau khi BÁC flex-row của R34 vì làm
+   cụm ngày lệch khỏi trục giữa hero): thu hẹp CỤM NGÀY Tab 1 ở bề ngang
+   ≤400px, KHÔNG đụng cấu trúc hero.
+   - Avatar giữ nguyên absolute (top/left 16px, 46px); cụm ‹ pill › giữ
+     nguyên canh giữa theo TOÀN bề ngang hero (tâm cụm == tâm hero).
+   - >400px: khối này không áp -> hình học y hệt R35 (đã assert Δ=0).
+   - ≤400px, chỉ co phần TRONG cụm: ẩn caret ▾, đệm ngang pill 16->6px,
+     margin pill 4->0, gap cụm 12->6px, cỡ chữ pill 12->11px (co chữ
+     trong pill — vẫn là co cụm, theo tiền lệ fitCalendarAmounts R28).
+     Nút ‹ › giữ nguyên 44x44px (rule chạm ở khối trên không đổi).
+   - Vẫn chưa đủ ở ≤370px: nhãn chuyển dạng rút gọn "dd/mm/yyyy" (bỏ
+     tiền tố "Hôm nay, "/"Hôm qua, "/"Ngày mai, "/"Ngày ") — phần render
+     ở app-reports.js (renderHeroDateLabel), ngưỡng innerWidth <= 370.
+   ========================================================================== */
+@media (max-width: 400px) {
+  #tab1 .hero-date-nav { gap: 6px; }
+  #tab1 .hero-date { padding: 7px 6px; margin: 0; font-size: 11px; }
+  #tab1 .hero-date-nav .fa-caret-down { display: none !important; }
+}
