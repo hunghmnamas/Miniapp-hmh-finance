@@ -37,6 +37,15 @@ if (window.Telegram && window.Telegram.WebApp) {
     try {
         var tg = (window.Telegram && window.Telegram.WebApp) || null;
         if (!tg) return;
+        // FIX ROUND 38: đánh dấu client DESKTOP (tdesktop / macos / weba /
+        // webk / unigram) bằng body.hmh-desktop. Cách A (R36: co cụm ngày
+        // hero ở màn ≤400px + nhãn rút gọn ≤370px) CHỈ dành cho di động —
+        // trên máy tính pill ngày phải luôn nguyên cỡ (nhãn đầy đủ + caret
+        // ▾) ở MỌI bề ngang cửa sổ, nên redesign.css + renderHeroDateLabel
+        // dùng lớp này (kèm điều kiện pointer: coarse) để loại desktop ra.
+        var isDesktopPlatform = ['tdesktop', 'macos', 'weba', 'webk', 'unigram'].indexOf(tg.platform) >= 0;
+        window.__hmhIsDesktop = isDesktopPlatform;
+        try { if (document.body) document.body.classList.toggle('hmh-desktop', isDesktopPlatform); } catch (e) {}
         function applySafeArea() {
             var sat = 0;
             try {
