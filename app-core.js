@@ -23,6 +23,16 @@ if (window.Telegram && window.Telegram.WebApp) {
 // redesign.css (khối FIX ROUND 31) chừa khoảng trống trên cùng cho app +
 // sơn dải tím phủ vùng nút nổi (Cách B). Không fullscreen -> --hmh-sat =
 // 0px -> bố cục y hệt như trước vòng này.
+// FIX ROUND 33: BỎ cổng tg.isFullscreen khi tính inset. Telegram báo
+// contentSafeAreaInset.top > 0 NGAY CẢ TRƯỚC khi fullscreen kích hoạt
+// (trạng thái chờ: app đã expand, nút nổi đã phủ lên nội dung) — cổng cũ
+// ép sat = 0 trong suốt cửa sổ chờ đó (không dải, không đệm, hero bị nút
+// nổi đè), rồi mọi thứ nhảy vị trí khi fullscreen tới. Nay inset lấy
+// đúng số Telegram báo ở MỌI trạng thái (chờ / fullscreen / chuyển đổi)
+// và body.hmh-fs mang nghĩa "dải đang hoạt động" (sat > 0); 3 sự kiện
+// safeAreaChanged / contentSafeAreaChanged / fullscreenChanged đã đăng
+// ký sẵn sẽ tự tính lại, không cần tải lại trang. Client báo inset 0
+// (desktop / ngoài Telegram) -> sat = 0 -> bố cục y hệt cũ.
 (function hmhFullscreenSetup() {
     try {
         var tg = (window.Telegram && window.Telegram.WebApp) || null;
@@ -30,16 +40,15 @@ if (window.Telegram && window.Telegram.WebApp) {
         function applySafeArea() {
             var sat = 0;
             try {
-                if (tg.isFullscreen) {
-                    var sa = tg.safeAreaInset || {}, ca = tg.contentSafeAreaInset || {};
-                    sat = (Number(sa.top) || 0) + (Number(ca.top) || 0);
-                }
+                var sa = tg.safeAreaInset || {}, ca = tg.contentSafeAreaInset || {};
+                sat = (Number(sa.top) || 0) + (Number(ca.top) || 0);
             } catch (e) {}
             document.documentElement.style.setProperty('--hmh-sat', sat + 'px');
-            // body.hmh-fs bật khi fullscreen CÓ inset thật (> 0) — CSS dùng
-            // nó để dựng dải tím phủ vùng status/nút nổi (Cách B) + áp đệm
-            // trên cho mọi trang. sat = 0 (ngoài fullscreen, hoặc fullscreen
-            // desktop không inset) thì không lớp, không dải, bố cục y hệt cũ.
+            // body.hmh-fs bật khi inset thật > 0 ở BẤT KỲ trạng thái nào
+            // (R33 — không còn đồng nghĩa "đang fullscreen") — CSS dùng
+            // nó để dựng dải tím phủ vùng status/nút nổi (Cách B) + áp
+            // đệm trên cho mọi trang + xóa vết cắt Tab 1. sat = 0 thì
+            // không lớp, không dải, bố cục y hệt cũ.
             try {
                 if (document.body) document.body.classList.toggle('hmh-fs', sat > 0);
             } catch (e) {}
@@ -57,7 +66,14 @@ if (window.Telegram && window.Telegram.WebApp) {
             try { tg.setHeaderColor('#7C3AED'); } catch (e) {}
         }
         applySafeArea();
-        var canFullscreen = typeof tg.requestFullscreen === 'function' &&
+        // FIX ROUND 33-B: chỉ TỰ xin fullscreen trên DI ĐỘNG (platform
+        // 'ios' / 'android'). Trên Telegram Desktop/Web (tdesktop /
+        // macos / weba / webk / ...) Hùng muốn app mở trong cửa sổ
+        // thường của Telegram như cửa sổ BotFather — KHÔNG gọi
+        // requestFullscreen. expand() + setHeaderColor giữ nguyên;
+        // client desktop báo inset 0 nên dải/đệm không thay đổi.
+        var isMobilePlatform = tg.platform === 'ios' || tg.platform === 'android';
+        var canFullscreen = isMobilePlatform && typeof tg.requestFullscreen === 'function' &&
             (typeof tg.isVersionAtLeast !== 'function' || tg.isVersionAtLeast('8.0'));
         if (canFullscreen && !window.__hmhFsRequested) {
             window.__hmhFsRequested = true;
@@ -453,6 +469,11 @@ window.openTab = function(tabId) {
   // (selection); mở app lần đầu (boot) im lặng.
   // R31 (port 3j bản cá nhân): duy trì cờ Tab 1 trên body — CSS khối R31
   // dùng body.hmh-fs.hmh-on-tab1 để xóa vết cắt dải tím/hero khi fullscreen.
+  // R33: index.html MANG SẴN lớp này trên <body> vì Tab 1 là tab hiển thị
+  // mặc định trong markup — trước R33 lớp chỉ xuất hiện khi boot() gọi
+  // openTab SAU await fetch(get_user_info), để lại cả cửa sổ chờ tải
+  // trong tình trạng dải đã sơn nhưng rule xóa vết cắt chưa áp (vết cắt
+  // trong ảnh máy thật của Hùng). openTab vẫn duy trì lớp khi đổi tab.
   document.body.classList.toggle('hmh-on-tab1', tabId === 'tab1');
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
