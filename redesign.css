@@ -161,8 +161,11 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 .tx-icon-wrap { border-radius: 16px !important; width: 46px; height: 46px; }
 .tx-title { color: #14141A !important; font-weight: 700 !important; }
 .tx-date, .tx-note { color: #6D6D76 !important; }
-.tx-amount.expense { color: #D73752 !important; font-weight: 800 !important; }
-.tx-amount.income { color: #0B855D !important; font-weight: 800 !important; }
+/* FIX ROUND 31 (port bản cá nhân 3d — Hùng: số tiền tươi lên): hồng tươi
+   #E11D48 (tương phản 4,70 trên trắng) thay #D73752; xanh lá tươi #098D5D
+   (4,22) thay #0B855D. */
+.tx-amount.expense { color: #E11D48 !important; font-weight: 800 !important; }
+.tx-amount.income { color: #098D5D !important; font-weight: 800 !important; }
 .tx-badge { border-radius: 999px !important; font-size: 10px !important; padding: 3px 10px !important; font-weight: 600 !important; }
 .tx-badge-neutral, .tx-badge.tx-badge-neutral { background: #F4F4F8 !important; color: #5B5B66 !important; }
 .tx-badge.expense { background: rgba(244,63,94,0.10) !important; color: #D73752 !important; }
@@ -1495,4 +1498,182 @@ body.privacy-on .hero-card #heroExpenseCompare::after {
 .fullscreen-page.show {
   visibility: visible;
   transition: transform 0.3s cubic-bezier(0.4,0,0.2,1), visibility 0s;
+}
+
+/* ==========================================================================
+   FIX ROUND 31 (20/10) — PORT TRẠNG THÁI CUỐI BẢN CÁ NHÂN (vòng 3d–3j)
+   Hùng duyệt trên bản cá nhân rồi chốt "Áp dụng cho bản kia luôn nhé".
+   Production không có personal-compat.css nên toàn bộ override của các
+   vòng 3d–3j nằm ở CUỐI redesign.css này (stylesheet nạp cuối cùng) —
+   thắng các rule cũ cùng specificity nhờ thứ tự, như personal-compat.css
+   từng thắng redesign.css ở bản cá nhân.
+   ========================================================================== */
+
+/* ---------- 31-A) MÀU NGỮ NGHĨA TƯƠI (port 3d/3e/3f) ----------
+   - Chip icon + pill danh mục trên thẻ giao dịch (.cat-tint trong
+     renderTxCard): nền = màu danh mục 14% alpha, glyph/chữ = cùng hex
+     (biến --cat-bg/--cat-fg truyền từ JS vì danh mục động). Thắng
+     .tx-badge.income/.expense !important ở trên nhờ specificity + nạp sau.
+   - 2 số statbox Tab1: Thu nhập #0B855D (icon nhãn #10B981), Số dư tím
+     #7C3AED; bọc body:not(.privacy-on) cho mask privacy không tranh chấp.
+   - Panel G6: số tiền + icon từng hàng theo class .g6-inc/.g6-exp/.g6-bal
+     do renderG6StatsPanel gắn. Specificity (1,3,0) thắng #tab2 .stat-num
+     (1,1,0) ở trên; mask privacy của R24 (font-size:0 + ::after) không
+     phụ thuộc màu nên vẫn che "***" như cũ, cộng thêm rule transparent
+     dưới đây cho chắc.
+   - Bóng đèn insight: chàm -> hổ phách tươi #F59E0B. */
+.tx-card .tx-icon-wrap.cat-tint {
+  background: var(--cat-bg) !important;
+  color: var(--cat-fg) !important;
+}
+.tx-card .tx-badge.cat-tint {
+  background: var(--cat-bg) !important;
+  color: var(--cat-fg) !important;
+  border-color: transparent !important;
+}
+body:not(.privacy-on) #tab1 #heroIncome { color: #0B855D !important; }
+body:not(.privacy-on) #tab1 #heroBalanceSub { color: #7C3AED !important; }
+#tab2 .g6-row.g6-inc .g6-amt { color: #098D5D !important; }
+#tab2 .g6-row.g6-exp .g6-amt { color: #E11D48 !important; }
+#tab2 .g6-row.g6-bal .g6-amt { color: #7C3AED !important; }
+#tab2 .g6-row.g6-inc .g6-ic { color: #10B981 !important; }
+#tab2 .g6-row.g6-exp .g6-ic { color: #E11D48 !important; }
+#tab2 .g6-row.g6-bal .g6-ic { color: #7C3AED !important; }
+body.privacy-on #tab2 .g6-row.g6-inc .g6-amt,
+body.privacy-on #tab2 .g6-row.g6-exp .g6-amt,
+body.privacy-on #tab2 .g6-row.g6-bal .g6-amt { color: transparent !important; }
+#tab1 .hero-sub .hero-stat:nth-child(1) .hero-stat-label i { color: #10B981 !important; }
+#tab1 .hero-sub .hero-stat:nth-child(3) .hero-stat-label i { color: #7C3AED !important; }
+#tab2 .insight-strip .insight-ic { color: #F59E0B !important; }
+
+/* ---------- 31-B) ICON 2 NÚT XUẤT DỮ LIỆU TƯƠI (port 3e) ----------
+   Glyph mượn .text-income-color / .text-expense-color = var(--income)
+   #0B855D / var(--expense) #D73752 (bản trầm) -> bản TƯƠI cùng họ:
+   CSV xanh lá #12D990, PDF đỏ #EE113D. 2 biến CSS KHÔNG đổi (còn nuôi
+   chữ/badge cần tương phản ở nơi khác). */
+button[onclick="exportToCSV()"] .fa-file-csv { color: #12D990 !important; }
+button[onclick="exportToPDF()"] .fa-file-pdf { color: #EE113D !important; }
+
+/* ---------- 31-C) SỐ DƯ ÂM + NAV ACTIVE TÍM (port 3f) ----------
+   (a) Số dư ÂM -> hồng tươi #E11D48 (số + icon), dương/0 giữ tím
+   #7C3AED. Panel: class .g6-balneg do renderG6StatsPanel gắn khi
+   tBal < 0 (nằm SAU rule .g6-bal ở 31-A nên thắng khi có cả 2 class).
+   Statbox Tab1: class .bal-neg trên thẻ .hero-stat (displayTransactions
+   gắn) — vẫn bọc body:not(.privacy-on) cho số; icon nhãn chêm .hero-sub.
+   (b) TAB ĐANG KÍCH HOẠT sáng TÍM #7C3AED (icon + nhãn): ghi đè rule
+   active = #14141A ở trên (cùng specificity (0,4,0), nằm sau nên thắng);
+   áp cho cả 4 nút nav — kể cả navSearchBtn/navSettingsBtn do
+   app-upgrade.js bơm vào và trạng thái trang Từ khóa làm sáng Cài đặt
+   (cùng cơ chế .nav-btn.active). Nút không active giữ nguyên. */
+#tab2 .g6-row.g6-balneg .g6-amt { color: #E11D48 !important; }
+#tab2 .g6-row.g6-balneg .g6-ic { color: #E11D48 !important; }
+body:not(.privacy-on) #tab1 .hero-stat.bal-neg #heroBalanceSub { color: #E11D48 !important; }
+#tab1 .hero-sub .hero-stat.bal-neg .hero-stat-label i { color: #E11D48 !important; }
+.bottom-nav .nav-btn.active .nav-icon-wrap { color: #7C3AED !important; }
+.bottom-nav .nav-btn.active .nav-label { color: #7C3AED !important; }
+
+/* ---------- 31-D) PRIVACY cho dòng % thẻ danh mục ----------
+   Từ vòng này span "% tổng chi" (.cat-progress-pct trong
+   drawMonthlyPieChart) mang MÀU DANH MỤC thay vì xám — theo quy tắc
+   "ẩn thì phải ẩn cả" (kể cả %), mask nó như .cat-progress-amt ở R24:
+   chữ thật font-size:0 + ::after "***". */
+body.privacy-on #tab2 .cat-progress-pct {
+  font-size: 0 !important; letter-spacing: 0 !important; color: transparent !important;
+}
+body.privacy-on #tab2 .cat-progress-pct::after {
+  content: '***'; display: inline-block; visibility: visible;
+  color: #1C1B22 !important; font-size: 10px !important; font-weight: 600; line-height: 1.4;
+}
+
+/* ---------- 31-E) SAFE-AREA KHI FULLSCREEN (port 3g) ----------
+   hmhFullscreenSetup (app-core.js) ghi tổng inset trên cùng vào
+   --hmh-sat trên :root: bằng safeAreaInset.top + contentSafeAreaInset.top
+   khi Telegram.WebApp.isFullscreen, ngược lại 0px. Đệm trên của
+   .content-wrapper (base không có padding-top) tiêu thụ biến này để
+   hàng avatar/ngày của hero không bị hàng nút nổi của Telegram che.
+   Mặc định 0px nên ngoài fullscreen bố cục không đổi một pixel. */
+:root { --hmh-sat: 0px; }
+.content-wrapper { padding-top: var(--hmh-sat, 0px); }
+
+/* ---------- 31-F) "Cách B" — DẢI TÍM PHỦ VÙNG TRÊN CÙNG (port 3h) ---
+   - body.hmh-fs do hmhFullscreenSetup bật khi fullscreen có inset > 0
+     (ngoài fullscreen: không dải, đệm 0 — bố cục không đổi 1 pixel).
+   - Dải = body::before position:fixed, cao đúng --hmh-sat, gradient
+     tím hero (#tab1 .hero-card ở trên) với background-size cao 340px
+     để dải là "lát trên" của cùng trường gradient. z-index 9000: trên
+     .fullscreen-page (3000), .modal-sheet (2000), .bottom-nav (1000);
+     dưới toast + confirm overlay (999999). pointer-events: none.
+   - Đệm trên cho .fullscreen-page (Cài đặt + Giới thiệu, position:fixed
+     inset:0 nên đệm của wrapper không với tới): padding-top = --hmh-sat
+     -> tiêu đề không bị nút nổi đè. Trang Từ khóa là tab trong wrapper
+     nên đã được 31-E chừa đệm.
+   - .modal-sheet neo ĐÁY (cả sheet Tìm kiếm): khi fullscreen, sheet rất
+     cao có thể chạm vùng dải -> giới hạn max-height chừa --hmh-sat +
+     12px, chỉ áp khi body.hmh-fs nên ngoài fullscreen giữ nguyên. */
+body.hmh-fs::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: var(--hmh-sat, 0px);
+  background-image: linear-gradient(135deg, #B79CFC 0%, #9D7BFA 22%, #8256E7 45%, #7C3AED 72%, #6D28D9 100%);
+  background-size: 100% 340px;
+  background-position: top left;
+  background-repeat: no-repeat;
+  z-index: 9000;
+  pointer-events: none;
+}
+.fullscreen-page { padding-top: var(--hmh-sat, 0px); }
+body.hmh-fs .modal-sheet { max-height: calc(100dvh - var(--hmh-sat, 0px) - 12px); }
+
+/* ---------- 31-G) THƯƠNG HIỆU DƯỚI NÚT + (port 3i) ----------
+   Dòng "©masterhmh" rời đỉnh trang (đã xóa .app-branding khỏi
+   index.html) -> bản thu nhỏ trong .bottom-nav, ghim theo trục FAB:
+   - #fabBtn absolute, bottom: 30px, cao 60px -> mép dưới FAB cố định ở
+     30px trên mép dưới nav. Chữ neo bằng top: calc(100% - 27px) -> mép
+     trên của chữ ở 27px trên mép dưới nav, tức 3px DƯỚI mép dưới FAB,
+     không bao giờ đè FAB kể cả khi padding-bottom nav thay đổi theo
+     safe-area. Cỡ chữ 0.6rem, line-height 1.15 -> cao ~11px, nằm trọn
+     trong nav, trên vùng safe-area home-indicator.
+   - left: 50% + translateX(-50%) = cùng trục với FAB.
+   - pointer-events: none + position absolute -> không đổi chiều cao
+     nav, không chặn chạm. Nav toàn cục nên chữ hiện ở mọi tab/trang. */
+.bottom-nav .nav-branding {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: calc(100% - 27px);
+  font-size: 0.6rem;
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-3);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ---------- 31-H) XÓA VẾT CẮT DẢI TÍM / HERO TAB 1 (port 3j) ----------
+   Dải (31-F) và hero sơn HAI LẦN LẤY MẪU KHÁC NHAU của cùng gradient
+   135° (dải neo tại y=0 với size 340px; hero bắt đầu lại từ độ sâu 0
+   tại y=sat vì wrapper đã chừa đệm) -> bước nhảy kênh màu ~28 tại biên
+   trong khi bước trung vị của gradient là 1 -> mắt thấy đường cắt.
+   Khi Tab 1 đang active + fullscreen (body.hmh-fs.hmh-on-tab1 do
+   window.openTab duy trì) + KHÔNG có trang phủ toàn màn hình đang mở
+   (.fullscreen-open — Cài đặt/Giới thiệu vẫn cần dải tím đặc của 31-F):
+   1) Dải ::before trong suốt -> chỉ còn MỘT bề mặt tím duy nhất sơn.
+   2) Hero vươn lên lấp vùng inset: margin-top: -sat kéo hộp hero về
+      y=0 để gradient hero sơn liền từ đỉnh màn hình; padding-top tăng
+      đúng sat để MỌI nội dung trong hero đứng yên tại vị trí cũ.
+   3) Avatar position:absolute; top:16px theo HỘP hero nên cộng thêm
+      sat, nếu không nó trồi lên và bị hàng nút nổi che.
+   Ngoài fullscreen (không .hmh-fs): không rule nào áp dụng — bố cục
+   Tab 1 không đổi một pixel. Các tab/trang khác giữ dải tím 31-F. */
+body.hmh-fs.hmh-on-tab1:not(.fullscreen-open)::before {
+  background: none;
+}
+body.hmh-fs.hmh-on-tab1:not(.fullscreen-open) #tab1 .hero-card {
+  margin-top: calc(-1 * var(--hmh-sat, 0px)) !important;
+  padding-top: calc(20px + var(--hmh-sat, 0px)) !important;
+}
+body.hmh-fs.hmh-on-tab1:not(.fullscreen-open) #tab1 .hero-card .hero-avatar {
+  top: calc(16px + var(--hmh-sat, 0px)) !important;
 }
