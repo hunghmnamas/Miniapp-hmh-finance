@@ -602,8 +602,8 @@ function renderInsightStrip(ctx) {
     var topCat = null, topAmt = 0;
     Object.keys(catMap).forEach(function (c) { if (catMap[c] > topAmt) { topAmt = catMap[c]; topCat = c; } });
     var share = tExp > 0 ? (topAmt / tExp * 100).toFixed(1) : '0.0';
-    // R41: nhãn + giá trị in ĐẬM (700); thêm ':' sau "cho"; phần "(…% tổng chi)" giữ thường.
-    lines.push('<strong>Chi nhiều nhất cho:</strong> <strong>' + escapeHTML(topCat) + ' — ' + money(topAmt) + '</strong> (' + pctT(share) + ' tổng chi)');
+    // R41: thêm ':' sau "cho". R43: nhãn + phần "(…% tổng chi)" giữ THƯỜNG; chỉ giá trị in ĐẬM (700).
+    lines.push('Chi nhiều nhất cho: <strong>' + escapeHTML(topCat) + ' — ' + money(topAmt) + '</strong> (' + pctT(share) + ' tổng chi)');
     var mode = (typeof currentFilterMode !== 'undefined') ? currentFilterMode : 'monthly';
     var wholeYear = (mode === 'yearly') || (mode === 'custom' && labels.length === 12 && labels[0] === 'Tháng 1');
     var line2 = '';
@@ -612,7 +612,7 @@ function renderInsightStrip(ctx) {
       expTxs.forEach(function (t) { var p = String(t.date || '').split('/'); if (p.length === 3) { var k = p[1] + '/' + p[2]; mMap[k] = (mMap[k] || 0) + t.amount; } });
       var bk = null, bv = 0;
       Object.keys(mMap).forEach(function (k) { if (mMap[k] > bv) { bv = mMap[k]; bk = k; } });
-      if (bk) { var mp = bk.split('/'); line2 = '<strong>Tháng chi cao nhất:</strong> <strong>Tháng ' + parseInt(mp[0], 10) + '/' + mp[1] + ' — ' + money(bv) + '</strong>'; }
+      if (bk) { var mp = bk.split('/'); line2 = 'Tháng chi cao nhất: <strong>Tháng ' + parseInt(mp[0], 10) + '/' + mp[1] + ' — ' + money(bv) + '</strong>'; }
     } else {
       var bd = null, bdv = 0;
       Object.keys(dayMap).forEach(function (k) { if (dayMap[k] > bdv) { bdv = dayMap[k]; bd = k; } });
