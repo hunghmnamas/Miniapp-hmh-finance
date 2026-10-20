@@ -243,7 +243,14 @@ window.closeIconPickerModal = function() {
 
 // ---------------- LƯU & ÁP DỤNG CÀI ĐẶT NGƯỜI DÙNG ----------------
 function applyTheme(v) {
-  document.body.className = `theme-${v || 'auto'}`;
+  // FIX ROUND 33: chỉ thay lớp theme-*, GIỮ NGUYÊN mọi lớp trạng thái
+  // khác trên body (hmh-fs, hmh-on-tab1, fullscreen-open...). Cách gán
+  // className cũ xóa sạch chúng: hmh-fs do hmhFullscreenSetup bật lúc
+  // khởi động bị initSettings() gọi hàm này xóa mất -> dải tím chết +
+  // vết cắt Tab 1 xuất hiện trong trạng thái chờ fullscreen, và đổi
+  // theme giữa phiên cũng làm mất dải tới sự kiện inset kế tiếp.
+  document.body.classList.remove('theme-auto', 'theme-light', 'theme-dark');
+  document.body.classList.add(`theme-${v || 'auto'}`);
   if (isPrivacyActive) document.body.classList.add('privacy-on');
 }
 
