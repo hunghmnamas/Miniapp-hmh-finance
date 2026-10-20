@@ -1590,17 +1590,20 @@ body.privacy-on #tab2 .cat-progress-pct::after {
 
 /* ---------- 31-E) SAFE-AREA KHI FULLSCREEN (port 3g) ----------
    hmhFullscreenSetup (app-core.js) ghi tổng inset trên cùng vào
-   --hmh-sat trên :root: bằng safeAreaInset.top + contentSafeAreaInset.top
-   khi Telegram.WebApp.isFullscreen, ngược lại 0px. Đệm trên của
-   .content-wrapper (base không có padding-top) tiêu thụ biến này để
-   hàng avatar/ngày của hero không bị hàng nút nổi của Telegram che.
-   Mặc định 0px nên ngoài fullscreen bố cục không đổi một pixel. */
+   --hmh-sat trên :root: bằng safeAreaInset.top + contentSafeAreaInset.top.
+   Đệm trên của .content-wrapper (base không có padding-top) tiêu thụ
+   biến này để hàng avatar/ngày của hero không bị hàng nút nổi của
+   Telegram che. Mặc định 0px nên khi Telegram báo inset 0 bố cục không
+   đổi một pixel.
+   R33: tổng inset KHÔNG còn bị cổng isFullscreen ép về 0 trong trạng
+   thái chờ fullscreen — lấy đúng số Telegram báo ở mọi trạng thái, và
+   body.hmh-fs có nghĩa "dải đang hoạt động" (sat > 0). Xem REPORT33. */
 :root { --hmh-sat: 0px; }
 .content-wrapper { padding-top: var(--hmh-sat, 0px); }
 
 /* ---------- 31-F) "Cách B" — DẢI TÍM PHỦ VÙNG TRÊN CÙNG (port 3h) ---
-   - body.hmh-fs do hmhFullscreenSetup bật khi fullscreen có inset > 0
-     (ngoài fullscreen: không dải, đệm 0 — bố cục không đổi 1 pixel).
+   - body.hmh-fs do hmhFullscreenSetup bật khi inset > 0 ở bất kỳ trạng
+     thái nào (R33; inset = 0: không dải, đệm 0 — bố cục không đổi 1 pixel).
    - Dải = body::before position:fixed, cao đúng --hmh-sat, gradient
      tím hero (#tab1 .hero-card ở trên) với background-size cao 340px
      để dải là "lát trên" của cùng trường gradient. z-index 9000: trên
@@ -1659,8 +1662,11 @@ body.hmh-fs .modal-sheet { max-height: calc(100dvh - var(--hmh-sat, 0px) - 12px)
    135° (dải neo tại y=0 với size 340px; hero bắt đầu lại từ độ sâu 0
    tại y=sat vì wrapper đã chừa đệm) -> bước nhảy kênh màu ~28 tại biên
    trong khi bước trung vị của gradient là 1 -> mắt thấy đường cắt.
-   Khi Tab 1 đang active + fullscreen (body.hmh-fs.hmh-on-tab1 do
-   window.openTab duy trì) + KHÔNG có trang phủ toàn màn hình đang mở
+   Khi Tab 1 đang active + dải đang hoạt động (body.hmh-fs.hmh-on-tab1;
+   R33: lớp hmh-on-tab1 do index.html mang sẵn từ khung hình đầu tiên —
+   Tab 1 là tab mặc định trong markup — và window.openTab duy trì khi
+   đổi tab; hmh-fs nay bật theo inset > 0 kể cả khi CHƯA fullscreen)
+   + KHÔNG có trang phủ toàn màn hình đang mở
    (.fullscreen-open — Cài đặt/Giới thiệu vẫn cần dải tím đặc của 31-F):
    1) Dải ::before trong suốt -> chỉ còn MỘT bề mặt tím duy nhất sơn.
    2) Hero vươn lên lấp vùng inset: margin-top: -sat kéo hộp hero về
