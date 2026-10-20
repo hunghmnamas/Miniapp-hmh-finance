@@ -81,7 +81,36 @@
     tInput.style.display = 'block';
     tInput.classList.add('hero-date-native');
     wrap.appendChild(tInput);
-    tInput.addEventListener('click', function (e) { e.stopPropagation(); });
+    // FIX ROUND 38: bấm vào BẤT KỲ điểm nào thuộc hộp pill (.hero-date-tap:
+    // chữ ngày, caret ▾, vùng đệm) đều mở BẢNG CHỌN NGÀY của input này.
+    // Trước đây chỉ vùng input vô hình phủ tới mới mở được; điểm bấm lọt
+    // ra ngoài wrap (hoặc trước khi wrap dựng xong) sẽ nổi xuống hero-card
+    // và bị hiểu là "quay về hôm nay". Nay handler gắn ở wrap:
+    // - stopPropagation: chặn hero-card (không reset ngày khi chọn ngày).
+    // - Mở qua showPicker() — API chuẩn của HTMLInputElement; client cũ
+    //   không có showPicker thì fallback focus() + click() gốc
+    //   (cờ __hmhNativePickerPass để cú click tổng hợp đó đi qua handler
+    //   mà không bị preventDefault chặn mất picker gốc).
+    // - preventDefault với click thật: tránh trình duyệt tự mở picker
+    //   chồng lên showPicker (picker đã mở thì showPicker tự bỏ qua).
+    // Nút ‹ › nằm NGOÀI wrap: vẫn chuyển ngày như cũ, không mở bảng chọn.
+    window.__hmhNativePickerPass = false;
+    function openHeroDatePicker() {
+      try {
+        if (typeof tInput.showPicker === 'function') { tInput.showPicker(); return; }
+        throw new Error('showPicker unsupported');
+      } catch (err) {
+        try { tInput.focus({ preventScroll: true }); } catch (e1) { try { tInput.focus(); } catch (e2) {} }
+        window.__hmhNativePickerPass = true;
+        try { tInput.click(); } catch (e3) {}
+      }
+    }
+    wrap.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (window.__hmhNativePickerPass) { window.__hmhNativePickerPass = false; return; }
+      e.preventDefault();
+      openHeroDatePicker();
+    });
     tInput.addEventListener('change', function () { if (typeof window.fetchTransactions === 'function') window.fetchTransactions(false); });
   }
 
