@@ -43,7 +43,13 @@ function renderHeroDateLabel() {
   const parts = window.__heroDateLabelParts;
   const el = document.getElementById('displayCurrentDate');
   if (!parts || !el) return;
-  el.textContent = (window.innerWidth <= 370) ? parts.dmy : (parts.prefix + parts.dmy);
+  // FIX ROUND 38: dạng rút gọn CHỈ áp cho di động. Desktop — Telegram
+  // Desktop/Web (body.hmh-desktop do app-core gắn) hoặc thiết bị con trỏ
+  // fine (chuột/trackpad, kể cả trình duyệt desktop ngoài Telegram) —
+  // luôn giữ nhãn ĐẦY ĐỦ ở mọi bề ngang cửa sổ.
+  const isDesktop = document.body.classList.contains('hmh-desktop') ||
+    (window.matchMedia && !window.matchMedia('(pointer: coarse)').matches);
+  el.textContent = (!isDesktop && window.innerWidth <= 370) ? parts.dmy : (parts.prefix + parts.dmy);
 }
 window.addEventListener('resize', renderHeroDateLabel);
 
