@@ -101,6 +101,10 @@ function displayTransactions() {
   if(heroBalSub) { 
       let sign = tBal > 0 ? '+ ' : (tBal < 0 ? '− ' : ''); 
       heroBalSub.innerHTML = `<span>${sign}</span>${tBalObj.val}<span>${tBalObj.unit}</span>`; 
+      // R31 (port 3f bản cá nhân): số dư ÂM -> hồng #E11D48 qua class
+      // .bal-neg trên thẻ statbox (CSS redesign khối R31); dương/0 giữ tím.
+      const balCard = heroBalSub.closest('.hero-stat');
+      if (balCard) balCard.classList.toggle('bal-neg', tBal < 0);
   }
   
   const heroExpCompare = document.getElementById('heroExpenseCompare');
@@ -398,7 +402,7 @@ function renderCalendar(txs, dateObj, mode) {
 // định dạng sống sót sau khi app-upgrade.js (wrapper ngoài cùng) ghi đè
 // innerHTML các ô so sánh bằng HTML thô của getCompareHTML.
 // ============================================================================
-var G6_INDIGO = '#6366F1', G6_ROSE = '#F43F5E', G6_TRACK = '#E9EBF1', G6_PAD = 9;
+var G6_GREEN = '#10B981', G6_ROSE = '#F43F5E', G6_TRACK = '#E9EBF1', G6_PAD = 9; // R31: đoạn Thu = xanh lá #10B981 (trước là chàm #6366F1)
 
 function buildDonutSVG(inc, exp) {
   // R23: vòng 140px, nét 19 (tỉ lệ từ mẫu G7/G8 đã duyệt).
@@ -414,8 +418,8 @@ function buildDonutSVG(inc, exp) {
   if (total > 0) {
     var expDeg = exp / total * 360, incDeg = 360 - expDeg;
     if (inc > 0) {
-      if (incDeg >= 359.9) segs += '<circle cx="' + cx + '" cy="' + cx + '" r="' + r.toFixed(2) + '" fill="none" stroke="' + G6_INDIGO + '" stroke-width="' + sw + '"/>';
-      else segs += '<path d="' + arc(expDeg + G6_PAD, 360 - G6_PAD) + '" fill="none" stroke="' + G6_INDIGO + '" stroke-width="' + sw + '" stroke-linecap="round"/>';
+      if (incDeg >= 359.9) segs += '<circle cx="' + cx + '" cy="' + cx + '" r="' + r.toFixed(2) + '" fill="none" stroke="' + G6_GREEN + '" stroke-width="' + sw + '"/>';
+      else segs += '<path d="' + arc(expDeg + G6_PAD, 360 - G6_PAD) + '" fill="none" stroke="' + G6_GREEN + '" stroke-width="' + sw + '" stroke-linecap="round"/>';
     }
     if (exp > 0) {
       if (expDeg >= 359.9) segs += '<path d="' + arc(G6_PAD, 360 - G6_PAD) + '" fill="none" stroke="' + G6_ROSE + '" stroke-width="' + sw + '" stroke-linecap="round"/>';
@@ -487,13 +491,13 @@ function renderG6StatsPanel(tInc, tExp, tBal, pInc, pExp, pBal, compareText) {
     return '<div class="g6-amt stat-num" id="' + id + '">' + inner + '</div>';
   }
   var rows = [
-    { icon: 'fa-hand-holding-dollar', label: 'Thu nhập',
+    { icon: 'fa-hand-holding-dollar', label: 'Thu nhập', cls: 'g6-inc',
       amt: amtHTML(tIncObj.val + '<span>' + tIncObj.unit + '</span>', 'tab2Income'),
       cmp: getCompareHTML(tInc, pInc, 'income', compareText), cmpId: 'tab2IncomeCompare' },
-    { icon: 'fa-money-bill-transfer', label: 'Chi tiêu',
+    { icon: 'fa-money-bill-transfer', label: 'Chi tiêu', cls: 'g6-exp',
       amt: amtHTML(tExpObj.val + '<span>' + tExpObj.unit + '</span>', 'tab2Expense'),
       cmp: getCompareHTML(tExp, pExp, 'expense', compareText), cmpId: 'tab2ExpenseCompare' },
-    { icon: 'fa-wallet', label: 'Số dư',
+    { icon: 'fa-wallet', label: 'Số dư', cls: 'g6-bal' + (tBal < 0 ? ' g6-balneg' : ''),
       amt: amtHTML('<span>' + sign + '</span>' + tBalObj.val + '<span>' + tBalObj.unit + '</span>', 'tab2Balance'),
       cmp: getCompareHTML(tBal, pBal, 'balance', compareText), cmpId: 'tab2BalanceCompare' }
   ];
@@ -504,7 +508,7 @@ function renderG6StatsPanel(tInc, tExp, tBal, pInc, pExp, pBal, compareText) {
     '<div class="g6-legend">' + rows.map(function (r) {
       // R23: icon CÙNG hàng flex với nhãn (.g6-lft) — thẳng tâm icon với tâm chữ nhãn;
       // so sánh thụt vào thẳng dưới nhãn (margin-left 28px trong CSS).
-      return '<div class="g6-row"><div class="g6-line1">' +
+      return '<div class="g6-row ' + r.cls + '"><div class="g6-line1">' +
         '<span class="g6-lft"><span class="g6-ic"><i class="fas ' + r.icon + '"></i></span>' +
         '<span class="g6-tag">' + r.label + '</span></span>' + r.amt + '</div>' +
         '<div class="g6-cmp" id="' + r.cmpId + '">' + r.cmp + '</div></div>';
@@ -667,7 +671,7 @@ function processReportData(currentTx, prevTx, labels, incs, exps) {
     expGradient.addColorStop(0, 'rgba(244, 63, 94, 0.8)'); expGradient.addColorStop(1, 'rgba(244, 63, 94, 0.1)');
 
     let dsInc = { label: 'Thu nhập', data: incs, backgroundColor: incGradient, borderColor: '#10B981', borderWidth: 0, borderRadius: 4, maxBarThickness: 20 };
-    let dsExp = { label: 'Chi tiêu', data: exps, backgroundColor: expGradient, borderColor: '#D73752', borderWidth: 0, borderRadius: 4, maxBarThickness: 20 };
+    let dsExp = { label: 'Chi tiêu', data: exps, backgroundColor: expGradient, borderColor: '#F43F5E', borderWidth: 0, borderRadius: 4, maxBarThickness: 20 }; // R31: họ hồng #F43F5E như gradient + G6_ROSE (trước #D73752 trầm)
 
     if (window.currentChartType === 'line') {
         dsInc.tension = 0.4; dsInc.fill = true; dsInc.borderWidth = 2; dsInc.pointRadius = 4;
@@ -708,13 +712,13 @@ function drawMonthlyPieChart(data) {
   const ctx = document.getElementById('monthlyPieChart').getContext('2d');
   if(window.pChart) window.pChart.destroy();
   data.sort((a,b) => b.amount - a.amount);
-  const amts = data.map(i=>i.amount); const lbls = data.map(i=>i.category); const bg = data.map((_,i)=>getColorByIndex(i));
+  const amts = data.map(i=>i.amount); const lbls = data.map(i=>i.category); const bg = data.map((d)=>getCategoryColor(d.category)); // R31: màu theo TÊN danh mục (bảng chuẩn)
   const total = amts.reduce((a,b)=>a+b,0);
   
   window.pChart = new Chart(ctx, { type: 'doughnut', data: { labels:lbls, datasets: [{data:amts, backgroundColor:bg, borderWidth: 0, hoverOffset: 4, borderRadius: 6, spacing: 2}] }, options: { devicePixelRatio: 4, cutout:'62%', layout: {padding: 8}, plugins: { legend: {display:false}, tooltip: { enabled: false } }, onClick: (event, activeEls) => { if (activeEls && activeEls.length > 0) { const activeIdx = activeEls[0].index; const catName = lbls[activeIdx]; showCategoryDetail(catName); } } }, plugins: [{ id:'cText', afterDraw(c) { const {ctx} = c; ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle'; const activeEls = c.getActiveElements(); if (activeEls && activeEls.length > 0) { const activeIdx = activeEls[0].index; const catName = c.data.labels[activeIdx]; const catAmt = c.data.datasets[0].data[activeIdx]; const color = c.data.datasets[0].backgroundColor[activeIdx]; const pct = total > 0 ? ((catAmt/total)*100).toFixed(1) : 0; let shortName = catName.length > 14 ? catName.substring(0, 14) + '...' : catName; ctx.fillStyle = '#94A3B8'; ctx.font = `600 9px ${appFont}`; ctx.fillText(shortName, c.width/2, c.height/2 - 12); ctx.fillStyle = color; ctx.font = `800 12px ${appFont}`; 
   const catObj = formatCurrencyWithUnit(catAmt);
   const displayAmt = isPrivacyActive ? '***' : catObj.val + catObj.unit;
-  ctx.fillText(displayAmt, c.width/2, c.height/2 + 4); ctx.fillStyle = '#94A3B8'; ctx.font = `500 9px ${appFont}`; ctx.fillText(`(${pct}%)`, c.width/2, c.height/2 + 16); } else { ctx.fillStyle='#94A3B8'; ctx.font=`500 10px ${appFont}`; ctx.fillText('Tổng chi', c.width/2, c.height/2 - 10); ctx.fillStyle='#D73752'; ctx.font=`800 13px ${appFont}`; 
+  ctx.fillText(displayAmt, c.width/2, c.height/2 + 4); ctx.fillStyle = '#94A3B8'; ctx.font = `500 9px ${appFont}`; ctx.fillText(`(${pct}%)`, c.width/2, c.height/2 + 16); } else { ctx.fillStyle='#94A3B8'; ctx.font=`500 10px ${appFont}`; ctx.fillText('Tổng chi', c.width/2, c.height/2 - 10); ctx.fillStyle='#F43F5E'; ctx.font=`800 13px ${appFont}`; // R31: họ hồng tươi như G6_ROSE 
   const totalObj = formatCurrencyWithUnit(total);
   const displayTotal = isPrivacyActive ? '***' : totalObj.val + totalObj.unit;
   ctx.fillText(displayTotal, c.width/2, c.height/2 + 8); } ctx.restore(); } }] });
@@ -736,7 +740,7 @@ function drawMonthlyPieChart(data) {
     if (progList) { 
         const iAmtObj = formatCurrencyWithUnit(i.amount);
         const divProg = document.createElement('div'); divProg.className = 'cat-progress-card'; 
-        divProg.innerHTML = `<div class="cat-progress-header"><div class="cat-progress-info"><div class="cat-progress-icon" style="background:${c}22; color:${c};">${catIconHTML}</div><span class="cat-progress-title">${escapeHTML(i.category)}</span></div><div style="display:flex; flex-direction:column; align-items:flex-end; gap:3px;"><span class="cat-progress-amt" style="color:${c}">${iAmtObj.val}<span>${iAmtObj.unit}</span></span><span style="font-size: 10px; color: var(--text-3); font-weight: 600;">${pct}% tổng chi</span></div></div><div class="cat-progress-bar-bg"><div class="cat-progress-bar-fill" style="width:${pct}%; background:${c}"></div></div>`; 
+        divProg.innerHTML = `<div class="cat-progress-header"><div class="cat-progress-info"><div class="cat-progress-icon" style="background:${c}22; color:${c};">${catIconHTML}</div><span class="cat-progress-title">${escapeHTML(i.category)}</span></div><div style="display:flex; flex-direction:column; align-items:flex-end; gap:3px;"><span class="cat-progress-amt" style="color:${c}">${iAmtObj.val}<span>${iAmtObj.unit}</span></span><span class="cat-progress-pct" style="font-size: 10px; color:${c}; font-weight: 600;">${pct}% tổng chi</span></div></div><div class="cat-progress-bar-bg"><div class="cat-progress-bar-fill" style="width:${pct}%; background:${c}"></div></div>`; 
         divProg.onclick = () => { triggerHaptic('light'); showCategoryDetail(i.category); }; 
         progList.appendChild(divProg); 
     }
@@ -835,13 +839,13 @@ function openDailyDetailView(d, m, y, allTxs) {
 function drawDailyPieChart(data, totalExp) {
     const ctx = document.getElementById('dailyPieChart').getContext('2d');
     if(window.dChart) window.dChart.destroy();
-    const amts = data.map(i=>i.amount); const lbls = data.map(i=>i.category); const bg = data.map((_,i)=>getColorByIndex(i));
+    const amts = data.map(i=>i.amount); const lbls = data.map(i=>i.category); const bg = data.map((d)=>getCategoryColor(d.category)); // R31: màu theo TÊN danh mục (bảng chuẩn)
     
     const appFont = applyAppFontToCharts();
     window.dChart = new Chart(ctx, { 
         type: 'doughnut', data: { labels:lbls, datasets: [{data:amts, backgroundColor:bg, borderWidth: 0, hoverOffset: 4}] }, 
         options: { devicePixelRatio: 4, cutout:'75%', layout: {padding: 8}, plugins: { legend: {display:false}, tooltip: { enabled: false } } },
-        plugins: [{ id:'cText2', afterDraw(c) { const {ctx} = c; ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#94A3B8'; ctx.font=`500 9px ${appFont}`; ctx.fillText('Tổng chi', c.width/2, c.height/2 - 8); ctx.fillStyle='#D73752'; ctx.font=`800 11px ${appFont}`; 
+        plugins: [{ id:'cText2', afterDraw(c) { const {ctx} = c; ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#94A3B8'; ctx.font=`500 9px ${appFont}`; ctx.fillText('Tổng chi', c.width/2, c.height/2 - 8); ctx.fillStyle='#F43F5E'; ctx.font=`800 11px ${appFont}`; // R31: họ hồng tươi như G6_ROSE 
         const tObj = formatCurrencyWithUnit(totalExp);
         const displayTotal = isPrivacyActive ? '***' : tObj.val + tObj.unit;
         ctx.fillText(displayTotal, c.width/2, c.height/2 + 6); ctx.restore(); } }]
