@@ -88,6 +88,22 @@ if (window.Telegram && window.Telegram.WebApp) {
             window.__hmhFsRequested = true;
             tg.requestFullscreen();
         }
+        // FIX ROUND 39: tắt cử chỉ VUỐT XUỐNG thu nhỏ / thoát app trên di
+        // động (disableVerticalSwipes, Bot API 7.7+). Ở chế độ fullscreen,
+        // vuốt xuống từ mép trên khiến Telegram co app thành thẻ nổi lơ
+        // lửng trên khung chat (ảnh Hùng gửi 20/10) — Hùng muốn đúng như
+        // BotFather: vuốt xuống KHÔNG thu nhỏ / thoát, chỉ nút Close mới
+        // đóng app. Gọi đúng 1 lần khi khởi động, cùng cổng di động với
+        // requestFullscreen ở trên ('ios' / 'android' — desktop không có
+        // cử chỉ này nên không gọi). API này chỉ chặn cử chỉ thu nhỏ/đóng
+        // của Telegram: vuốt ngang đổi tab và cuộn nội dung trong app
+        // không bị ảnh hưởng.
+        var canDisableSwipes = isMobilePlatform && typeof tg.disableVerticalSwipes === 'function' &&
+            (typeof tg.isVersionAtLeast !== 'function' || tg.isVersionAtLeast('7.7'));
+        if (canDisableSwipes && !window.__hmhSwipesDisabled) {
+            window.__hmhSwipesDisabled = true;
+            try { tg.disableVerticalSwipes(); } catch (e) {}
+        }
     } catch (e) { /* lỗi phía Telegram không được làm hỏng khởi động app */ }
 })();
 
