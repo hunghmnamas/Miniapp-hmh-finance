@@ -265,36 +265,6 @@ function initSettings() {
   applyTheme(themeVal);
 }
 
-function showWhatsNew() {
-  if (localStorage.getItem('whatsnew_v1') === 'dismissed') return;
-  const features = [
-    ['🛡️', 'Chế Độ Riêng Tư', 'Ẩn toàn bộ số tiền chỉ với 1 chạm.'],
-    ['📅', 'Giao Diện Lịch', 'Xem thu chi từng ngày trực quan theo tuần/tháng.'],
-    ['📈', 'Biểu Đồ Kép', 'Chuyển nhanh giữa biểu đồ cột và đường.'],
-    ['📄', 'Xuất PDF Chuẩn Layout', 'Báo cáo PDF đẹp, đúng bố cục.'],
-    ['🏷️', 'Quản Lý Từ Khóa & Icon', 'Tự tạo danh mục, gắn icon và từ khóa riêng.'],
-    ['💱', 'Định Dạng Tiền Siêu Gọn', 'Hiển thị gọn kiểu 50K / 1m520.'],
-    ['☁️', 'Sao Lưu & Cài Đặt Sâu', 'Sao lưu toàn bộ dữ liệu ra CSV.'],
-    ['🔒', 'Bảo Mật Đa Người Dùng', 'Dữ liệu mỗi người được tách riêng an toàn.']
-  ];
-  let itemsHTML = '';
-  features.forEach(f => {
-    itemsHTML += `<div style='display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--border-color);'><div style='font-size:22px; line-height:1;'>${f[0]}</div><div style='flex:1;'><div style='font-weight:700; color:var(--text-1); font-size:13px;'>${f[1]}</div><div style='color:var(--text-2); font-size:12px; margin-top:2px;'>${f[2]}</div></div></div>`;
-  });
-  const overlay = document.createElement('div');
-  overlay.id = 'whatsNewOverlay';
-  overlay.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.75); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:99999; display:flex; align-items:center; justify-content:center; padding:20px;';
-  overlay.innerHTML = `<div style='background:var(--bg-base); border:1px solid var(--border-color); border-radius:18px; max-width:420px; width:100%; max-height:85vh; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.55);'><div style='padding:20px 20px 12px; text-align:center;'><div style='font-size:30px;'>🎉</div><div style='font-weight:800; color:var(--text-1); font-size:17px; margin-top:6px;'>Có Gì Mới?</div><div style='color:var(--text-2); font-size:12px; margin-top:4px;'>Cập nhật các tính năng mới nhất của ứng dụng</div></div><div style='padding:0 20px; overflow-y:auto; flex:1;'>${itemsHTML}</div><div style='padding:14px 20px 18px;'><label style='display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-2); margin-bottom:12px; cursor:pointer;'><input type='checkbox' id='whatsNewDontShow' style='width:16px; height:16px;'> Không hiển thị lại lần sau</label><button id='whatsNewCloseBtn' class='btn-save' style='width:100%;'>Đã hiểu</button></div></div>`;
-  document.body.appendChild(overlay);
-  document.getElementById('whatsNewCloseBtn').onclick = () => {
-    triggerHaptic('light');
-    if (document.getElementById('whatsNewDontShow').checked) {
-      localStorage.setItem('whatsnew_v1', 'dismissed');
-    }
-    overlay.remove();
-  };
-}
-
 // ---------------- INIT LẮNG NGHE SỰ KIỆN CHÍNH ----------------
 document.addEventListener('DOMContentLoaded', async () => {
   applyPrivacyMode(); 
@@ -498,5 +468,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   boot();
 
-  showWhatsNew();
 });
