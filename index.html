@@ -109,8 +109,8 @@
 
           <div id="timeNavContainer" class="time-nav-container" style="display: flex;">
             <button id="prevPeriodBtn" class="nav-arrow-btn"><i class="fas fa-chevron-left"></i></button>
-            <div class="time-nav-center">
-               <span id="currentPeriodLabel">Tuần này</span>
+            <div class="time-nav-center" id="timeNavCenter" title="Chọn kỳ báo cáo">
+               <span id="currentPeriodLabel">Tuần này</span><i id="periodPickerCaret" class="fas fa-caret-down period-caret" aria-hidden="true"></i>
                <input type="week" id="weekPicker" class="hidden-picker" style="display: none;">
                <input type="month" id="monthPicker" class="hidden-picker" style="display: none;">
             </div>
@@ -160,7 +160,7 @@
             <div id="calCtrlBar" class="cal-ctrl-bar">
                <div class="cal-ctrl-left">
                   <i class="fas fa-calendar-alt cal-ctrl-icon"></i>
-                  <span id="calCtrlLabel">Lịch thu chi</span>
+                  <span id="calCtrlLabel" title="Chọn kỳ báo cáo">Lịch thu chi</span><i id="calPickerCaret" class="fas fa-caret-down period-caret" aria-hidden="true"></i>
                   <button id="calToggleBtn" class="cal-ctrl-toggle" type="button" title="Ẩn / hiện lịch"><i class="fas fa-chevron-up"></i></button>
                </div>
                <div class="cal-ctrl-right">
@@ -327,6 +327,21 @@
     </div>
 
     <div id="modalOverlay" class="overlay" style="display: none;" onclick="closeAllModals()"></div>
+
+    <!-- FIX ROUND 35: bảng chọn kỳ báo cáo (Tuần/Tháng/Năm) — mở khi chạm nhãn kỳ -->
+    <div id="periodPickerModal" class="modal-sheet pp-sheet" style="display: flex; flex-direction: column;">
+        <div class="modal-handle" onclick="closePeriodPicker()"></div>
+        <div class="modal-title" id="periodPickerTitle" style="margin-bottom: 14px;">CHỌN KỲ</div>
+        <div class="pp-stepper" id="ppStepper">
+            <button type="button" class="pp-step-btn" id="ppYearPrev" aria-label="Năm trước"><i class="fas fa-chevron-left"></i></button>
+            <span class="pp-step-year" id="ppYearLabel">2026</span>
+            <button type="button" class="pp-step-btn" id="ppYearNext" aria-label="Năm sau"><i class="fas fa-chevron-right"></i></button>
+        </div>
+        <div class="pp-body" id="ppBody"></div>
+        <div class="modal-actions m-0 pt-3" style="border-top: 1px solid var(--border-color); flex-shrink: 0;">
+            <button type="button" class="btn-cancel w-full m-0 flex-1" onclick="closePeriodPicker()"><i class="fas fa-times"></i> Đóng</button>
+        </div>
+    </div>
 
     <div id="searchModal" class="modal-sheet" style="display: flex; flex-direction: column;">
         <div class="modal-handle" onclick="closeSearchModal()"></div>
