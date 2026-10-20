@@ -21,32 +21,35 @@
     enabled: true,
 
     // >>> ĐỔI MỖI KHI CÓ THÔNG BÁO MỚI (bắt buộc) <<<
-    version: '2026.08.12d',
+    version: '2026.10.20a',
 
     // false = KHÔNG cho người dùng tắt, hiện mọi lần mở app
-    dismissible: false,
+    dismissible: true,
 
-    style: 'warning',        // 'warning' (cam/đỏ) hoặc 'info' (xanh)
-    icon: '⚠️',
-    title: 'Thông báo quan trọng',
-    subtitle: 'Ngừng duy trì Miniapp Quản lý tài chính',
+    style: 'info',        // 'warning' (cam/đỏ) hoặc 'info' (xanh)
+    icon: '🎉',
+    title: 'CÓ GÌ MỚI?',
+    subtitle: 'Miniapp Quản lý tài chính vừa được nâng cấp',
 
     // Căn lề đoạn văn: 'justify' (đều 2 bên) | 'left' | 'center'
     align: 'justify',
 
     // Các đoạn văn. Cho phép thẻ HTML đơn giản: <b> <i> <br>
     body: [
-      'Cảm ơn bạn đã đồng hành cùng Miniapp trong thời gian qua.',
-      'Sắp tới, do yêu cầu nâng cấp hệ thống và giới hạn nguồn lực duy trì server, tác giả xin phép ngừng hoạt động phiên bản này, dự kiến <b>12/12/2026</b>. Nếu có thay đổi tác giả sẽ thông báo sau.',
-      'Bạn vui lòng <b>sao lưu hoặc trích xuất dữ liệu chi tiêu</b> của mình để mất dữ liệu.',
-      'Rất mong bạn thông cảm cho sự bất tiện này. Chân thành cảm ơn!'
+      'Cảm ơn bạn đã đồng hành cùng Miniapp. Bản cập nhật này làm mới giao diện và bổ sung nhiều tính năng hữu ích:'
     ],
 
     // Danh sách gạch đầu dòng kiểu "Có gì mới". Để [] nếu không dùng.
-    items: [],
+    items: [
+      { icon:'📊', title:'Báo cáo trực quan', desc:'Vòng tròn tỉ trọng thu – chi kèm nhận xét nhanh: Danh mục chi nhiều nhất, ngày chi cao nhất và mức chi trung bình mỗi ngày.' },
+      { icon:'👆', title:'Vuốt để chuyển tab', desc:'Vuốt sang trái hoặc phải để di chuyển nhanh giữa các tab Giao dịch, Báo cáo, Tìm kiếm và Cài đặt.' },
+      { icon:'🖼️', title:'Ảnh đại diện đồng bộ', desc:'Chạm vào ảnh đại diện trên thẻ số dư để đổi và cắt ảnh; ảnh được đồng bộ theo tài khoản của bạn.' },
+      { icon:'🙈', title:'Ẩn số toàn diện', desc:'Khi bật ẩn số, mọi số tiền ở mọi màn hình đều được che kín, không còn sót số ở phần so sánh hay chi tiết.' },
+      { icon:'📳', title:'Rung phản hồi', desc:'Rung nhẹ khi chuyển tab và khi lưu giao dịch thành công; có thể bật hoặc tắt trong mục Cài đặt.' }
+    ],
 
     // Ô đếm ngược. Đặt null nếu không dùng.
-    deadline: { label: 'DỰ KIẾN NGỪNG HOẠT ĐỘNG', date: '2026-12-12', display: '12/12/2026' },
+    deadline: null,
 
     // Nút liên hệ. Đặt null từng cái nếu không dùng.
     contacts: { telegram: 'masterhmh', facebook: 'masterhmh' },
