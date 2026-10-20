@@ -1755,9 +1755,26 @@ body.hmh-fs.hmh-on-tab1:not(.fullscreen-open) #tab1 .hero-card .hero-avatar {
    - Vẫn chưa đủ ở ≤370px: nhãn chuyển dạng rút gọn "dd/mm/yyyy" (bỏ
      tiền tố "Hôm nay, "/"Hôm qua, "/"Ngày mai, "/"Ngày ") — phần render
      ở app-reports.js (renderHeroDateLabel), ngưỡng innerWidth <= 370.
+   - R38: toàn bộ cơ chế co này CHỈ áp cho DI ĐỘNG — media bên dưới thêm
+     (pointer: coarse) + body:not(.hmh-desktop); desktop giữ nguyên cỡ.
    ========================================================================== */
-@media (max-width: 400px) {
-  #tab1 .hero-date-nav { gap: 6px; }
-  #tab1 .hero-date { padding: 7px 6px; margin: 0; font-size: 11px; }
-  #tab1 .hero-date-nav .fa-caret-down { display: none !important; }
+@media (max-width: 400px) and (pointer: coarse) {
+  body:not(.hmh-desktop) #tab1 .hero-date-nav { gap: 6px; }
+  body:not(.hmh-desktop) #tab1 .hero-date { padding: 7px 6px; margin: 0; font-size: 11px; }
+  body:not(.hmh-desktop) #tab1 .hero-date-nav .fa-caret-down { display: none !important; }
 }
+
+/* ==========================================================================
+   FIX ROUND 38 — Cách A CHỈ cho di động; desktop luôn nguyên cỡ + bấm cả
+   pill để chọn ngày.
+   - Khối R36 ở trên nay thêm 2 cổng: media (pointer: coarse) và selector
+     body:not(.hmh-desktop) (app-core gắn lớp cho tdesktop/macos/weba/
+     webk/unigram). Cửa sổ desktop hẹp tới đâu pill ngày vẫn giữ cỡ gốc
+     (đệm 7px 16px, chữ 12px, caret ▾ hiện) — đúng ý Hùng: trên máy tính
+     phần ngày bị thu nhỏ và mất mũi tên chọn ngày là lỗi. Nhãn rút gọn
+     ≤370px ở app-reports.js cũng được cổng hoá tương tự.
+   - Bấm TOÀN BỘ hộp pill (.hero-date-tap: chữ + caret + đệm) mở bảng
+     chọn ngày — handler ở app-upgrade.js (setupHeroDateNative); ở đây
+     chỉ thêm con trỏ tay cho cả hộp (trước chỉ caret có cursor:pointer).
+   ========================================================================== */
+#tab1 .hero-date-tap { cursor: pointer; }
