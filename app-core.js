@@ -11,6 +11,61 @@ if (window.Telegram && window.Telegram.WebApp) {
     Telegram.WebApp.expand();
 }
 
+// ==== FIX ROUND 31: mở FULLSCREEN trong Telegram + safe-area (port từ bản
+// cá nhân vòng 3g/3h/3j — Hùng chốt "Áp dụng cho bản kia luôn nhé") ====
+// Main Mini App mở từ BotFather mặc định hiện full màn hình, còn app mở từ
+// nút trong khung chat thì không — phải tự xin qua requestFullscreen()
+// (Bot API 8.0+). Xin đúng 1 LẦN khi khởi động; người dùng tự thoát
+// fullscreen thì tôn trọng, KHÔNG xin lại. Client cũ / ngoài Telegram:
+// no-op hoàn toàn (mọi API đều kiểm tra tồn tại trước khi gọi).
+// Khi fullscreen, Telegram chèn nút nổi (đóng ⋯) ở mép trên màn hình: cộng
+// safeAreaInset.top + contentSafeAreaInset.top vào biến CSS --hmh-sat để
+// redesign.css (khối FIX ROUND 31) chừa khoảng trống trên cùng cho app +
+// sơn dải tím phủ vùng nút nổi (Cách B). Không fullscreen -> --hmh-sat =
+// 0px -> bố cục y hệt như trước vòng này.
+(function hmhFullscreenSetup() {
+    try {
+        var tg = (window.Telegram && window.Telegram.WebApp) || null;
+        if (!tg) return;
+        function applySafeArea() {
+            var sat = 0;
+            try {
+                if (tg.isFullscreen) {
+                    var sa = tg.safeAreaInset || {}, ca = tg.contentSafeAreaInset || {};
+                    sat = (Number(sa.top) || 0) + (Number(ca.top) || 0);
+                }
+            } catch (e) {}
+            document.documentElement.style.setProperty('--hmh-sat', sat + 'px');
+            // body.hmh-fs bật khi fullscreen CÓ inset thật (> 0) — CSS dùng
+            // nó để dựng dải tím phủ vùng status/nút nổi (Cách B) + áp đệm
+            // trên cho mọi trang. sat = 0 (ngoài fullscreen, hoặc fullscreen
+            // desktop không inset) thì không lớp, không dải, bố cục y hệt cũ.
+            try {
+                if (document.body) document.body.classList.toggle('hmh-fs', sat > 0);
+            } catch (e) {}
+        }
+        if (typeof tg.onEvent === 'function') {
+            tg.onEvent('safeAreaChanged', applySafeArea);
+            tg.onEvent('contentSafeAreaChanged', applySafeArea);
+            tg.onEvent('fullscreenChanged', applySafeArea);
+            // Xin fullscreen thất bại (thiết bị không hỗ trợ): giữ nguyên
+            // chế độ expand, im lặng — không báo lỗi, không thử lại.
+            tg.onEvent('fullscreenFailed', function () {});
+        }
+        // Màu thanh header Telegram = tím hero để vùng trên cùng liền mạch
+        if (typeof tg.setHeaderColor === 'function') {
+            try { tg.setHeaderColor('#7C3AED'); } catch (e) {}
+        }
+        applySafeArea();
+        var canFullscreen = typeof tg.requestFullscreen === 'function' &&
+            (typeof tg.isVersionAtLeast !== 'function' || tg.isVersionAtLeast('8.0'));
+        if (canFullscreen && !window.__hmhFsRequested) {
+            window.__hmhFsRequested = true;
+            tg.requestFullscreen();
+        }
+    } catch (e) { /* lỗi phía Telegram không được làm hỏng khởi động app */ }
+})();
+
 // Flag đánh dấu tab 2 cần reload khi có thay đổi giao dịch
 let tab2NeedsReload = false;
 
@@ -298,6 +353,34 @@ function formatNumberWithCommas(value) {
 }
 function getColorByIndex(i) { const c = ['#5D5FE2', '#D73752', '#0B855D', '#F59E0B', '#06B6D4', '#EC4899', '#84CC16', '#8B5CF6', '#F97316', '#14B8A6', '#EAB308', '#D946EF', '#22C55E', '#0EA5E9', '#A855F7', '#EF4444', '#64748B', '#059669', '#DC2626', '#4F46E5', '#C026D3']; return c[i % c.length]; }
 
+// ============================================================================
+// FIX ROUND 31: MÀU NGỮ NGHĨA TƯƠI + BẢNG MÀU DANH MỤC CHUẨN (port NGUYÊN
+// trạng thái cuối của bản cá nhân vòng 3d/3e/3f — cùng hằng số, cùng bảng
+// màu, cùng hàm băm để MỘT tên danh mục cho MỘT màu ở cả 2 bản app).
+// SEM_INC/SEM_EARN = xanh lá số tiền Thu (#098D5D); SEM_INC_STAT = xanh lá
+// statbox Tab1 (#0B855D, tương phản trên nền thẻ sáng); SEM_INC_VIVID =
+// #10B981 cho icon/đoạn donut/dataset biểu đồ; SEM_EXP = hồng tươi Chi
+// (#E11D48); SEM_BAL = tím Số dư (#7C3AED, âm -> SEM_EXP).
+// ============================================================================
+const SEM_INC = '#098D5D', SEM_INC_STAT = '#0B855D', SEM_INC_VIVID = '#10B981', SEM_EXP = '#E11D48', SEM_BAL = '#7C3AED', SEM_EARN = '#098D5D';
+
+// Bảng màu danh mục CHUẨN — MỘT hex cho MỌI bề mặt (lát donut, cột, icon,
+// số tiền, %, chip, chú thích, PDF). Tầng "TƯƠI-LỚN" (bản cá nhân 3h):
+// S cố định 88%, L hạ cho tới khi tương phản trên trắng >= 3,1:1 — vẫn
+// tươi nhưng không còn màu nào bị "chìm" trên nền trắng/sáng.
+const CATEGORY_PALETTE = ['#F55C83', '#F36545', '#CD810D', '#92980A', '#5DA30A', '#1CA90B', '#0BA93F', '#0BA57F', '#0C9FBD', '#5191F4', '#8985F7', '#B175F6', '#E252F4', '#F450BF'];
+function categoryPaletteIndex(name) {
+    // Băm theo TÊN danh mục — cùng công thức bản cá nhân (seed 266571,
+    // nhân 31, finalizer xor-shift-13) nên 2 bản app cho cùng màu.
+    const s = String(name || '');
+    let h = 266571;
+    for (let i = 0; i < s.length; i++) h = (Math.imul(h, 31) + s.codePointAt(i)) >>> 0;
+    h = (h ^ (h >>> 13)) >>> 0;
+    return h % CATEGORY_PALETTE.length;
+}
+function getCategoryColor(name) { return CATEGORY_PALETTE[categoryPaletteIndex(name)]; }
+function getCategoryTextColor(name) { return getCategoryColor(name); }
+
 function getRawFaIconName(catName) {
     if (!catName) return null;
     const categoryName = catName.trim(); let iconVal = null;
@@ -335,7 +418,11 @@ function renderTxCard(item, stt) {
     const tCls = item.type === 'Thu nhập' ? 'income' : 'expense';
     const icon = getCategoryIcon(item.category);
     const amtObj = formatCurrencyWithUnit(item.amount);
-    return `<div class="tx-icon-wrap ${tCls}">${icon}</div><div class="tx-body"><div class="tx-title">${escapeHTML(item.content)}</div><div class="tx-meta-row"><span class="tx-date">${escapeHTML(formatDate(item.date))}</span><span class="tx-badge tx-badge-neutral">${escapeHTML(item.type)}</span><span class="tx-badge ${tCls}">${escapeHTML(item.category)}</span></div>${item.note ? `<div class="tx-note"><i class="fas fa-tag tx-note-icon"></i>${escapeHTML(item.note)}</div>` : ''}<div class="tx-id-row"><span>STT: ${stt}</span> • <span>#${escapeHTML(item.id)}</span></div></div><div class="tx-right-col"><div class="tx-amount ${tCls}"><span>${item.type === 'Thu nhập' ? '+' : '−'}</span>${amtObj.val}<span>${amtObj.unit}</span></div><div class="tx-actions"><button class="tx-btn edit-btn" data-id="${escapeHTML(item.id)}"><i class="fas fa-pen"></i></button><button class="tx-btn delete-btn" data-id="${escapeHTML(item.id)}"><i class="fas fa-trash"></i></button></div></div>`;
+    // R31: chip icon + pill danh mục nhuốm màu DANH MỤC chuẩn (biến --cat-bg
+    // nền 14% alpha / --cat-fg glyph + chữ; CSS ở redesign.css khối R31
+    // thắng .tx-badge.income/.expense !important của redesign).
+    const _catC = getCategoryColor(item.category);
+    return `<div class="tx-icon-wrap ${tCls} cat-tint" style="--cat-bg:${_catC}24; --cat-fg:${_catC}">${icon}</div><div class="tx-body"><div class="tx-title">${escapeHTML(item.content)}</div><div class="tx-meta-row"><span class="tx-date">${escapeHTML(formatDate(item.date))}</span><span class="tx-badge tx-badge-neutral">${escapeHTML(item.type)}</span><span class="tx-badge ${tCls} cat-tint" style="--cat-bg:${_catC}24; --cat-fg:${_catC}">${escapeHTML(item.category)}</span></div>${item.note ? `<div class="tx-note"><i class="fas fa-tag tx-note-icon"></i>${escapeHTML(item.note)}</div>` : ''}<div class="tx-id-row"><span>STT: ${stt}</span> • <span>#${escapeHTML(item.id)}</span></div></div><div class="tx-right-col"><div class="tx-amount ${tCls}"><span>${item.type === 'Thu nhập' ? '+' : '−'}</span>${amtObj.val}<span>${amtObj.unit}</span></div><div class="tx-actions"><button class="tx-btn edit-btn" data-id="${escapeHTML(item.id)}"><i class="fas fa-pen"></i></button><button class="tx-btn delete-btn" data-id="${escapeHTML(item.id)}"><i class="fas fa-trash"></i></button></div></div>`;
 }
 
 function getCompareHTML(current, prev, type, text = 'so với kỳ trước') {
@@ -350,7 +437,13 @@ function getCompareHTML(current, prev, type, text = 'so với kỳ trước') {
     let isUp = diff > 0;
     let icon = isUp ? '<i class=\"fas fa-arrow-up\"></i>' : '<i class=\"fas fa-arrow-down\"></i>';
     let arrowText = isUp ? (type === 'balance' ? 'Dư' : 'Tăng') : (type === 'balance' ? 'Âm' : 'Giảm');
-    let colorVar = type === 'expense' ? (isUp ? 'var(--expense)' : 'var(--income)') : (isUp ? 'var(--income)' : 'var(--expense)');
+    // R31: màu so sánh TƯƠI theo hệ SEM (port bản cá nhân 3f) — trước đây
+    // đi qua var(--income)/var(--expense) của redesign = bản trầm
+    // (#0B855D / #D73752) LỆCH hẳn hệ SEM tươi. Nay dùng thẳng hex SEM:
+    // chiều tốt = #098D5D, chiều xấu = #E11D48 (chi tăng = xấu, chi giảm
+    // = tốt). Wrapper app-upgrade.js gọi lại getCompareHTML nên sửa ở
+    // đây là đủ cho cả 2 lớp.
+    let colorVar = type === 'expense' ? (isUp ? SEM_EXP : SEM_INC) : (isUp ? SEM_INC : SEM_EXP);
     let diffObj = formatCurrencyWithUnit(Math.abs(diff));
     return `<span style=\"color: ${colorVar}; font-weight: 600;\">${icon} ${arrowText} <span class=\"cmp-amt\">${diffObj.val}${diffObj.unit}</span> ${cmpLabel(text)}</span>`;
 }
@@ -358,6 +451,9 @@ function getCompareHTML(current, prev, type, text = 'so với kỳ trước') {
 window.openTab = function(tabId) {
   // R29: không rung ở đây nữa — tab chuyển do người dùng đi qua activateTab
   // (selection); mở app lần đầu (boot) im lặng.
+  // R31 (port 3j bản cá nhân): duy trì cờ Tab 1 trên body — CSS khối R31
+  // dùng body.hmh-fs.hmh-on-tab1 để xóa vết cắt dải tím/hero khi fullscreen.
+  document.body.classList.toggle('hmh-on-tab1', tabId === 'tab1');
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById(tabId).classList.add('active');
