@@ -1820,3 +1820,55 @@ body.hmh-fs.hmh-on-tab1:not(.fullscreen-open) #tab1 .hero-card .hero-avatar {
 #calCtrlBar .cal-ctrl-toggle i, #calCtrlBar .cal-ctrl-toggle svg {
   position: relative; z-index: 1;
 }
+
+/* ==========================================================================
+   FIX ROUND 42 — DESKTOP cửa sổ hẹp: cụm ngày NGUYÊN CỠ của R38 (nhãn
+   đầy đủ + caret ▾ + chữ 12px) rộng 272.5px, nên ở cửa sổ desktop hẹp
+   nút ‹ ĐÈ lên avatar (đo trên code R41, stub tdesktop: gap −3.3px ở
+   390, −18.3px ở 360; dưới STRESS chữ +25% kiểu máy Hùng: −18.5 / −33.5
+   — khớp ảnh anh gửi 22:33). Cách A (R36) không cứu được vì R38 chủ
+   động loại desktop khỏi khối co đó.
+   FIX: biến thể "fit" CHỈ cho desktop, bề ngang ≤460px — chỉ siết
+   KHOẢNG CÁCH PHỤ bên trong cụm (đúng họ lever của Cách A, gồm margin
+   pill 4->0 vốn là lever R36 đã dùng):
+     - hộp nút ‹ › 44 -> 36px; đĩa sơn ::before 40 -> 32px (= hộp − 4,
+       giữ đúng quan hệ R40 đã lập; 32px cũng là cỡ đĩa thanh lịch R40);
+     - gap cụm 12 -> 4px (bậc siết thêm khi các lever chính chưa đủ
+       chạm ngưỡng gap >= 8 dưới stress — bảng đo trong REPORT42);
+     - đệm ngang pill 16 -> 10px; margin pill 4 -> 0;
+     - gap trong .hero-date-tap (pill <-> caret) 4 -> 0.
+   Ghi chú cỡ hộp: bản chốt ban đầu là 38px/đĩa 34 — đã ĐO THẬT trên
+   bản 38: tổng siết 52px, gap stress ở 390 = +7.5px, THIẾU 0.5px so
+   với ngưỡng >= 8. Hạ hộp xuống 36px là độ lệch tối thiểu để chạm
+   ngưỡng ở đúng bề ngang cửa sổ của Hùng (~390px): gap stress 390 =
+   +9.5px. Ở 360px + stress, ngưỡng >= 8 là KHÔNG THỂ đạt đồng thời
+   với các chốt cứng (nhãn đầy đủ 12px + caret hiện + avatar 46px trái
+   16 + canh giữa): ngân sách bề ngang cho cụm = 360 − 2×(62+8) =
+   220px, trong khi riêng chữ stress (146.9) + đệm pill tối thiểu +
+   caret + 2 hộp nút đã vượt — chứng minh + số đo ở REPORT42. Ở 360
+   không stress gap = +9.7px (không đè); stress còn −5.5px.
+   GIỮ NGUYÊN theo chốt R38: nhãn ĐẦY ĐỦ (không rút gọn trên desktop),
+   caret ▾ HIỆN, chữ pill 12px, avatar absolute 46px trái/trên 16, cụm
+   vẫn canh giữa theo TOÀN bề ngang hero (tâm Δ = 0), >460px hình học
+   y hệt R41, di động (pointer: coarse + không hmh-desktop) không bị
+   áp khối này — Cách A R36/R40 ở di động giữ nguyên từng byte.
+   Cổng desktop = 2 khối media phải GIỐNG HỆT nhau (CSS không gộp
+   được cổng OR): khối 1 (pointer: fine) cho trình duyệt desktop /
+   Telegram Desktop chuột; khối 2 body.hmh-desktop (app-core gắn cho
+   tdesktop/macos/weba/webk/unigram) phòng máy desktop cảm ứng mà
+   pointer báo coarse.
+   ========================================================================== */
+@media (max-width: 460px) and (pointer: fine) {
+  #tab1 .hero-date-nav { gap: 4px; }
+  #tab1 .date-nav-btn { width: 36px !important; height: 36px !important; }
+  #tab1 .date-nav-btn::before { width: 32px; height: 32px; }
+  #tab1 .hero-date { padding: 7px 10px; margin: 0; }
+  #tab1 .hero-date-tap { gap: 0; }
+}
+@media (max-width: 460px) {
+  body.hmh-desktop #tab1 .hero-date-nav { gap: 4px; }
+  body.hmh-desktop #tab1 .date-nav-btn { width: 36px !important; height: 36px !important; }
+  body.hmh-desktop #tab1 .date-nav-btn::before { width: 32px; height: 32px; }
+  body.hmh-desktop #tab1 .hero-date { padding: 7px 10px; margin: 0; }
+  body.hmh-desktop #tab1 .hero-date-tap { gap: 0; }
+}
