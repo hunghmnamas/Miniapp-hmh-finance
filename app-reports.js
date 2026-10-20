@@ -32,6 +32,21 @@ function applyAppFontToCharts() {
 function scrollPager(id){ const el = document.getElementById(id); if(el){ try { el.scrollIntoView({ block: 'nearest' }); } catch(e){} } }
 
 // ---------------- TAB 1: GIAO DỊCH ----------------
+// FIX ROUND 36 (Cách A): nhãn ngày trên hero. Ở bề ngang >370px giữ nhãn
+// đầy đủ "<tiền tố>dd/mm/yyyy" ("Hôm nay, 20/10/2026"...). Ở ≤370px cụm
+// ngày vẫn chưa đủ chỗ dù đã co (ẩn caret + đệm/gap/chữ nhỏ — khối FIX
+// ROUND 36 trong redesign.css, áp ở ≤400px) nên nhãn rút gọn còn đúng
+// "dd/mm/yyyy", bỏ tiền tố. Đánh giá lại mỗi lần render và khi resize
+// qua ngưỡng 370 (xoay máy / kéo cửa sổ desktop).
+window.__heroDateLabelParts = null;
+function renderHeroDateLabel() {
+  const parts = window.__heroDateLabelParts;
+  const el = document.getElementById('displayCurrentDate');
+  if (!parts || !el) return;
+  el.textContent = (window.innerWidth <= 370) ? parts.dmy : (parts.prefix + parts.dmy);
+}
+window.addEventListener('resize', renderHeroDateLabel);
+
 window.fetchTransactions = async function(forceRefresh = false) {
   const tDate = document.getElementById('transactionDate').value;
   if (!tDate) return;
@@ -41,7 +56,8 @@ window.fetchTransactions = async function(forceRefresh = false) {
   const diffDays = Math.round((selectedDateObj - todayObj) / (1000 * 60 * 60 * 24));
   let prefixText = "Ngày "; if (diffDays === 0) prefixText = "Hôm nay, "; else if (diffDays === -1) prefixText = "Hôm qua, "; else if (diffDays === 1) prefixText = "Ngày mai, ";
   
-  document.getElementById('displayCurrentDate').textContent = `${prefixText}${d}/${m}/${y}`;
+  window.__heroDateLabelParts = { prefix: prefixText, dmy: `${d}/${m}/${y}` };
+  renderHeroDateLabel();
   const cacheKey = `${d}/${m}/${y}`;
   const currDateObj = new Date(y, m - 1, d); currDateObj.setDate(currDateObj.getDate() - 1);
   const prevDateStr = formatDateToDDMMYYYY(currDateObj); const prevM = String(currDateObj.getMonth() + 1).padStart(2, '0');
