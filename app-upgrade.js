@@ -799,6 +799,254 @@
   };
 
   // ------------------------------------------------------------------
+  // FIX ROUND 35 — BẢNG CHỌN KỲ (picker) cho Tab 2.
+  // Chạm vào nhãn kỳ (Tuần/Tháng/Năm) -> mở sheet chọn trực tiếp, thay vì
+  // chỉ tiến/lùi từng kỳ bằng mũi tên. Chọn kỳ đi qua ĐÚNG đường state
+  // của mũi tên / input gốc: gán activePeriodDate rồi updateTimeNavUI()
+  // (giống hệt handler onchange của #weekPicker/#monthPicker và calShift
+  // của chế độ Năm) -> panel/biểu đồ/lịch/danh mục/so sánh tải lại.
+  // GIỚI HẠN = giới hạn của chính mũi tên:
+  //  - Không bao giờ chọn kỳ tương lai: mũi tên "tới" bị chặn khi kỳ sau
+  //    bắt đầu sau hôm nay hoặc sau mốc dữ liệu mới nhất (refreshNavArrows
+  //    + getNavDataBounds) -> ở đây: kỳ bị khóa khi startKey > todayKey
+  //    hoặc (maxKey != null && startKey > maxKey); khóa phía quá khứ khi
+  //    (minKey != null && endKey < minKey).
+  //  - getNavDataBounds đọc window.monthDataCache — lớp dữ liệu này
+  //    KHÔNG được nạp ở production (fetchYearData đã vô hiệu hoá) nên
+  //    minKey/maxKey = null: mũi tên tuần/tháng không có mốc cứng phía
+  //    quá khứ. Khi đó năm sớm nhất của picker = năm sớm nhất còn dữ
+  //    liệu trong chỉ mục, dò bằng chính yearHasData() của mũi tên Năm
+  //    (lùi liên tiếp từ năm hiện tại, dừng ở năm đầu tiên không có dữ
+  //    liệu — đúng tập năm mà mũi tên Năm đi tới được).
+  // ------------------------------------------------------------------
+  var ppState = { year: 0, earliestYear: null, bounds: null };
+  var ppEarliestPromise = null;
+
+  function ppKeyOf(y, m, d) { return y * 10000 + m * 100 + d; }
+
+  function ppEarliestYear() {
+    if (ppEarliestPromise) return ppEarliestPromise;
+    ppEarliestPromise = (async function () {
+      var curY = new Date().getFullYear();
+      try {
+        var b = await getNavDataBounds(false);
+        if (b && b.minKey) return Math.floor(b.minKey / 10000);
+      } catch (e) {}
+      var y = curY;
+      while (y > curY - 60) {
+        var has = false;
+        try { has = await yearHasData(y - 1); } catch (e) { has = false; }
+        if (!has) break;
+        y--;
+      }
+      return y;
+    })();
+    return ppEarliestPromise;
+  }
+
+  function ppLoadBounds() {
+    if (ppState.bounds) return Promise.resolve(ppState.bounds);
+    return getNavDataBounds(false).then(function (b) {
+      ppState.bounds = b || { minKey: null, maxKey: null };
+      return ppState.bounds;
+    }).catch(function () { return { minKey: null, maxKey: null }; });
+  }
+
+  function ppPeriodDisabled(startKey, endKey) {
+    if (startKey > keyOf(new Date())) return true;
+    var b = ppState.bounds;
+    if (b) {
+      if (b.maxKey !== null && b.maxKey !== undefined && startKey > b.maxKey) return true;
+      if (b.minKey !== null && b.minKey !== undefined && endKey < b.minKey) return true;
+    }
+    return false;
+  }
+
+  window.openPeriodPicker = function () {
+    if (typeof currentFilterMode === 'undefined') return;
+    if (currentFilterMode === 'custom') return; // "Tùy chọn": ngoài phạm vi vòng này
+    if (window.hmhHaptic) window.hmhHaptic('impact', 'light'); else triggerHaptic('light');
+    ppState.year = activePeriodDate.getFullYear();
+    ppRenderPicker();
+    var ov = document.getElementById('modalOverlay');
+    if (ov) ov.classList.add('show');
+    setTimeout(function () {
+      var sh = document.getElementById('periodPickerModal');
+      // Vẽ lại sau khi sheet hiện: nếu promise mốc năm/bounds đã resolve
+      // TRƯỚC mốc 10ms này, handler .then bên dưới bỏ qua vì sheet chưa
+      // có .show — lần vẽ lại này chốt trạng thái đúng trong mọi thứ tự.
+      if (sh) { sh.classList.add('show'); ppRenderPicker(); }
+    }, 10);
+    // Nạp mốc năm sớm nhất + bounds (bất đồng bộ) rồi vẽ lại trạng thái.
+    ppEarliestYear().then(function (y) {
+      ppState.earliestYear = y;
+      var sh = document.getElementById('periodPickerModal');
+      if (sh && sh.classList.contains('show')) ppRenderPicker();
+    });
+    ppLoadBounds().then(function () {
+      var sh = document.getElementById('periodPickerModal');
+      if (sh && sh.classList.contains('show')) ppRenderPicker();
+    });
+  };
+
+  window.closePeriodPicker = function () {
+    // Cùng khuôn closeSearchModal/closeAddForm: bỏ .show của sheet, sau
+    // 300ms bỏ .show của overlay (không điều kiện — trong app có sẵn một
+    // phần tử .modal-sheet luôn mang .show nên không được dùng nó làm
+    // điều kiện giữ overlay).
+    var sh = document.getElementById('periodPickerModal');
+    if (sh) sh.classList.remove('show');
+    setTimeout(function () {
+      var ov = document.getElementById('modalOverlay');
+      if (ov) ov.classList.remove('show');
+    }, 300);
+  };
+
+  function ppRenderPicker() {
+    if (typeof currentFilterMode === 'undefined') return;
+    var title = document.getElementById('periodPickerTitle');
+    var stepper = document.getElementById('ppStepper');
+    var body = document.getElementById('ppBody');
+    if (!title || !body) return;
+    if (currentFilterMode === 'monthly') {
+      title.textContent = 'CHỌN THÁNG';
+      if (stepper) stepper.style.display = 'flex';
+      ppRenderStepper();
+      ppRenderMonths(body);
+    } else if (currentFilterMode === 'yearly') {
+      title.textContent = 'CHỌN NĂM';
+      if (stepper) stepper.style.display = 'none';
+      ppRenderYears(body);
+    } else if (currentFilterMode === 'weekly') {
+      title.textContent = 'CHỌN TUẦN';
+      if (stepper) stepper.style.display = 'flex';
+      ppRenderStepper();
+      ppRenderWeeks(body);
+    }
+  }
+
+  function ppRenderStepper() {
+    var lbl = document.getElementById('ppYearLabel');
+    var prev = document.getElementById('ppYearPrev');
+    var next = document.getElementById('ppYearNext');
+    var curY = new Date().getFullYear();
+    if (lbl) lbl.textContent = ppState.year;
+    if (prev) {
+      var minY = (ppState.earliestYear !== null) ? ppState.earliestYear : ppState.year;
+      prev.disabled = ppState.year <= minY;
+    }
+    if (next) next.disabled = ppState.year >= curY;
+  }
+
+  function ppRenderMonths(body) {
+    var y = ppState.year;
+    var actY = activePeriodDate.getFullYear(), actM = activePeriodDate.getMonth() + 1;
+    var html = '<div class="pp-grid">';
+    for (var m = 1; m <= 12; m++) {
+      var startKey = ppKeyOf(y, m, 1);
+      var endKey = ppKeyOf(y, m, new Date(y, m, 0).getDate());
+      var dis = ppPeriodDisabled(startKey, endKey);
+      var sel = (y === actY && m === actM);
+      html += '<button type="button" class="pp-cell' + (sel ? ' selected' : '') + '" data-pp-month="' + m + '"' + (dis ? ' disabled' : '') + '>Tháng ' + m + '</button>';
+    }
+    body.innerHTML = html + '</div>';
+    body.querySelectorAll('[data-pp-month]').forEach(function (btn) {
+      btn.onclick = function () { ppPickMonth(y, parseInt(btn.getAttribute('data-pp-month'), 10)); };
+    });
+  }
+
+  function ppRenderYears(body) {
+    var curY = new Date().getFullYear();
+    var fromY = (ppState.earliestYear !== null) ? ppState.earliestYear : activePeriodDate.getFullYear();
+    if (fromY > curY) fromY = curY;
+    var actY = activePeriodDate.getFullYear();
+    var html = '<div class="pp-grid">';
+    for (var y = fromY; y <= curY; y++) {
+      html += '<button type="button" class="pp-cell pp-year-cell' + (y === actY ? ' selected' : '') + '" data-pp-year="' + y + '">' + y + '</button>';
+    }
+    body.innerHTML = html + '</div>';
+    body.querySelectorAll('[data-pp-year]').forEach(function (btn) {
+      btn.onclick = function () { ppPickYear(parseInt(btn.getAttribute('data-pp-year'), 10)); };
+    });
+  }
+
+  // Số tuần + ngày bắt đầu của từng tuần trong năm theo ĐÚNG quy ước của
+  // app: getDateFromWeekString("YYYY-Www") -> ngày bắt đầu tuần, và
+  // getWeekNumber() (tôn trọng settingStartOfWeek) phải khớp số tuần.
+  function ppWeeksInYear(y) {
+    var out = [];
+    if (typeof getDateFromWeekString !== 'function' || typeof getWeekNumber !== 'function') return out;
+    for (var n = 1; n <= 53; n++) {
+      var s = getDateFromWeekString(y + '-W' + String(n).padStart(2, '0'));
+      if (!s) continue;
+      if (getWeekNumber(s) !== n) continue;
+      out.push({ n: n, start: s });
+    }
+    return out;
+  }
+
+  function ppRenderWeeks(body) {
+    var y = ppState.year;
+    var weeks = ppWeeksInYear(y);
+    var actStartKey = keyOf(weekStartOf(activePeriodDate));
+    var html = '<div class="pp-week-list">';
+    weeks.forEach(function (w) {
+      var end = new Date(w.start); end.setDate(end.getDate() + 6);
+      var sKey = keyOf(w.start), eKey = keyOf(end);
+      var dis = ppPeriodDisabled(sKey, eKey);
+      var sel = (sKey === actStartKey);
+      var range = formatDateToDDMMYYYY(w.start).substring(0, 5) + ' – ' + formatDateToDDMMYYYY(end).substring(0, 5);
+      html += '<button type="button" class="pp-week-row' + (sel ? ' selected' : '') + '" data-pp-week="' + w.n + '"' + (dis ? ' disabled' : '') + '><span class="pp-week-name">Tuần ' + w.n + '</span><span class="pp-week-range">' + range + '</span></button>';
+    });
+    body.innerHTML = html + '</div>';
+    body.querySelectorAll('[data-pp-week]').forEach(function (btn) {
+      btn.onclick = function () { ppPickWeek(y, parseInt(btn.getAttribute('data-pp-week'), 10)); };
+    });
+    var selEl = body.querySelector('.pp-week-row.selected');
+    if (selEl) setTimeout(function () { try { selEl.scrollIntoView({ block: 'center' }); } catch (e) {} }, 60);
+  }
+
+  function ppPickMonth(y, m) {
+    if (window.hmhHaptic) window.hmhHaptic('selection');
+    activePeriodDate = new Date(y, m - 1, 1);
+    window.closePeriodPicker();
+    updateTimeNavUI();
+  }
+
+  function ppPickYear(y) {
+    if (window.hmhHaptic) window.hmhHaptic('selection');
+    activePeriodDate.setFullYear(y);
+    window.closePeriodPicker();
+    updateTimeNavUI();
+  }
+
+  function ppPickWeek(y, n) {
+    if (typeof getDateFromWeekString !== 'function') return;
+    var d = getDateFromWeekString(y + '-W' + String(n).padStart(2, '0'));
+    if (!d) return;
+    if (window.hmhHaptic) window.hmhHaptic('selection');
+    activePeriodDate = d;
+    window.closePeriodPicker();
+    updateTimeNavUI();
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    var center = document.getElementById('timeNavCenter');
+    if (center) center.addEventListener('click', function () { window.openPeriodPicker(); });
+    // Nhãn kỳ HIỂN THỊ ở tuần/tháng là #calCtrlLabel trên thanh điều
+    // khiển lịch (syncCalendarControlBar chép chữ từ #currentPeriodLabel);
+    // #timeNavContainer chỉ hiện ở chế độ Năm (CSS .fix2-year).
+    ['calCtrlLabel', 'calPickerCaret'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.addEventListener('click', function () { window.openPeriodPicker(); });
+    });
+    var prev = document.getElementById('ppYearPrev');
+    var next = document.getElementById('ppYearNext');
+    if (prev) prev.onclick = function () { if (prev.disabled) return; triggerHaptic('light'); ppState.year--; ppRenderPicker(); };
+    if (next) next.onclick = function () { if (next.disabled) return; triggerHaptic('light'); ppState.year++; ppRenderPicker(); };
+  });
+
+  // ------------------------------------------------------------------
   // MENU FAB (nút ＋)
   // ------------------------------------------------------------------
   window.toggleFabMenu = function () {
