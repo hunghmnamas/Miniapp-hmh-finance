@@ -1778,3 +1778,43 @@ body.hmh-fs.hmh-on-tab1:not(.fullscreen-open) #tab1 .hero-card .hero-avatar {
      chỉ thêm con trỏ tay cho cả hộp (trước chỉ caret có cursor:pointer).
    ========================================================================== */
 #tab1 .hero-date-tap { cursor: pointer; }
+
+/* ==========================================================================
+   FIX ROUND 40 (Hùng 20/10, 22:06) — "vòng tròn bọc mũi tên hơi to":
+   thu nhỏ VÒNG TRÒN SƠN quanh các nút mũi tên, KHÔNG đổi hình học.
+   Đo trước sửa (render @390): cả hai cụm đều sơn tròn Ø44px (màu nền của
+   chính phần tử, radius 50%). Sau sửa: Tab1 Ø40px, thanh lịch Tab2 Ø32px.
+   Cơ chế: màu nền chuyển từ phần tử sang ::before canh giữa đúng tâm —
+   hộp phần tử, flex-basis, vị trí, khoảng cách và vùng bấm (≥44px, R27 F5)
+   GIỮ NGUYÊN TỪNG PIXEL; glyph vẫn nằm đúng tâm cũ (z-index trên ::before).
+   - Tab1: nền kính rgba(255,255,255,0.22) như cũ; transform scale khi
+     hover/active nằm trên phần tử nên vòng tròn co/giãn theo như trước.
+   - Tab2 (#calCtrlBar: ‹ › + nút thu gọn ⌃): nền #F4F4F8 như cũ. Trạng
+     thái disabled mờ opacity 0.3 ở cấp phần tử -> vòng + glyph mờ cùng
+     nhau, y như trước. KHÔNG áp cho #barChartCollapseBtn (ngoài
+     #calCtrlBar, vẫn giữ nguyên — xem lưu ý R13).
+   ========================================================================== */
+#tab1 .date-nav-btn { position: relative; background: transparent !important; }
+#tab1 .date-nav-btn::before {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 40px; height: 40px; border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255,255,255,0.22);
+  pointer-events: none;
+}
+#tab1 .date-nav-btn i, #tab1 .date-nav-btn svg { position: relative; z-index: 1; }
+
+#calCtrlBar .cal-ctrl-arrow, #calCtrlBar .cal-ctrl-toggle {
+  position: relative; background: transparent !important;
+}
+#calCtrlBar .cal-ctrl-arrow::before, #calCtrlBar .cal-ctrl-toggle::before {
+  content: ''; position: absolute; left: 50%; top: 50%;
+  width: 32px; height: 32px; border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: #F4F4F8;
+  pointer-events: none;
+}
+#calCtrlBar .cal-ctrl-arrow i, #calCtrlBar .cal-ctrl-arrow svg,
+#calCtrlBar .cal-ctrl-toggle i, #calCtrlBar .cal-ctrl-toggle svg {
+  position: relative; z-index: 1;
+}
