@@ -1095,7 +1095,6 @@
   window.fabAddIncome = function () { closeFabMenu(); window.openAddForm('Thu nhập'); };
   window.fabAddExpense = function () { closeFabMenu(); window.openAddForm('Chi tiêu'); };
   window.fabSearch = function () { closeFabMenu(); if (typeof window.openSearchModal === 'function') window.openSearchModal(); };
-  window.fabSettings = function () { closeFabMenu(); openFullscreen('settingsPage'); };
   /* F4 (19/10): mở Quản lý từ khóa (tab3) — nav highlight Cài đặt */
   window.fabKeywords = function () {
     closeFabMenu();
