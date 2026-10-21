@@ -989,7 +989,7 @@ function drawDailyPieChart(data, totalExp, biggestExp) {
     
     const appFont = applyAppFontToCharts();
     window.dChart = new Chart(ctx, { 
-        type: 'doughnut', data: { labels:lbls, datasets: [{data:amts, backgroundColor:bg, borderWidth: 0, hoverOffset: 4}] }, 
+        type: 'doughnut', data: { labels:lbls, datasets: [{data:amts, backgroundColor:bg, borderWidth: 0, hoverOffset: 4, spacing: 3, borderRadius: 8}] }, 
         options: { devicePixelRatio: 4, cutout:'75%', layout: {padding: 8}, plugins: { legend: {display:false}, tooltip: { enabled: false } } },
         plugins: [{ id:'cText2', afterDraw(c) { const {ctx} = c; ctx.save(); ctx.textBaseline='middle'; const activeEls = c.getActiveElements ? c.getActiveElements() : []; if (activeEls.length > 0) { const idx = activeEls[0].index; const catName = c.data.labels[idx]; const catAmt = c.data.datasets[0].data[idx]; const color = c.data.datasets[0].backgroundColor[idx]; const shortName = catName.length > 14 ? catName.substring(0, 14) + '...' : catName; const aObj = formatCurrencyWithUnit(catAmt); const aVal = isPrivacyActive ? '***' : aObj.val; const aUnit = isPrivacyActive ? '' : aObj.unit; fitDailyDonutCenter(c, ctx, appFont, shortName, aVal, aUnit, color, 11, 'active'); } else { drawDailyDonutCenter(c, ctx, appFont, totalExp, biggestExp); } ctx.restore(); } }]
     });
