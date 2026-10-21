@@ -409,8 +409,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           results.forEach(monthData => { (monthData || []).forEach(t => { if (t) allTxs.push(t); }); });
           if (allTxs.length === 0) return showToast('Không có dữ liệu để sao lưu!', 'warning');
           allTxs.sort((a, b) => { const pa = a.date.split('/'); const pb = b.date.split('/'); return new Date(pa[2], pa[1]-1, pa[0]) - new Date(pb[2], pb[1]-1, pb[0]); });
-          let csvContent = "\\uFEFFMã GD,Ngày,Phân loại,Danh mục,Số tiền,Nội dung,Ghi chú\\n";
-          allTxs.forEach(t => { let content = t.content ? t.content.replace(/,/g, " ") : ""; let note = t.note ? t.note.replace(/,/g, " ") : ""; csvContent += `${t.id},${t.date},${t.type},${t.category},${t.amount},${content},${note}\\n`; });
+          let csvContent = "\uFEFFMã GD,Ngày,Phân loại,Danh mục,Số tiền,Nội dung,Ghi chú\n";
+          allTxs.forEach(t => { let content = t.content ? t.content.replace(/,/g, " ") : ""; let note = t.note ? t.note.replace(/,/g, " ") : ""; csvContent += `${t.id},${t.date},${t.type},${t.category},${t.amount},${content},${note}\n`; });
           const fileName = `SaoLuu_ToanBo_${formatDateToYYYYMMDD(new Date())}.csv`;
           const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8' });
           const platform = window.Telegram?.WebApp?.platform || 'unknown'; const isMobile = ['android', 'android_x', 'ios'].includes(platform.toLowerCase());
