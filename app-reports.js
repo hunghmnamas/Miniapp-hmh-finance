@@ -906,32 +906,44 @@ function openDailyDetailView(d, m, y, allTxs) {
         pieContainer.style.display = 'flex'; const catMap = {}; 
         dayTxs.forEach(t => { if(t.type==='Chi tiêu') catMap[t.category] = (catMap[t.category]||0)+t.amount; });
         const data = Object.keys(catMap).map(k => ({category: k, amount: catMap[k]})).sort((a,b) => b.amount - a.amount);
-        drawDailyPieChart(data, totalExp);
+        drawDailyPieChart(data, totalExp, getBiggestExpenseAmount(dayTxs));
     } else if (pieContainer) { pieContainer.style.display = 'none'; }
 
     currentPageCategory = 1; displayDetailTransactionsList(dayTxs);
 }
 
-// R44: tâm donut modal chi tiết ngày — vẽ tổng ngày vừa lỗ tròn.
-//   TẦNG 1: hộp donut 140px (index.html) cho MỌI ngày, không phóng
-//   theo từng ngày (thẻ sẽ nhảy cỡ giữa các ngày).
-//   TẦNG 2 (fallback, chỉ khi cần): nếu glyph thật vượt avail =
-//   0.75 * đường kính lỗ (0.75 * 1.25 = 0.94 < 1 nên số vừa trong
-//   sandbox vẫn vừa trên máy render chữ rộng hơn) mới co, bước
-//   0.5px từ 11px xuống sàn 6px; ₫ vẽ riêng ở 55% cỡ số (quy tắc ₫
-//   của app — trước đây tâm canvas vẽ ₫ 100%). Số KHÔNG bao giờ
-//   rút gọn. Privacy '***' đi qua cùng đường vẽ, vẫn căn giữa.
-//   Chẩn đoán cho suite: window.__dailyDonutFit.
-function drawDailyDonutCenter(c, ctx, appFont, totalExp) {
+// R46: tâm donut modal chi tiết ngày — KHÔNG còn là tổng ngày (trùng ô
+// CHI TIÊU phía trên) mà là KHOẢN CHI ĐƠN LẺ LỚN NHẤT trong ngày, theo
+// lựa chọn của Hùng (11:33, 21/10). Nhãn nhỏ xám 'Khoản lớn nhất' +
+// số tiền khoản đó, vẽ y hệt ô tổng chi: dấu trừ U+2212 + khoảng
+// trắng, đỏ #F43F5E, dấu phẩy phân tách, ₫ ở 55% cỡ số qua cùng
+// đường fit của R44 (không tên giao dịch trong lỗ — lỗ chỉ ~93px,
+// tên cắt ngắn sẽ khó đọc; người dùng nhận ra khoản đó là dòng lớn
+// nhất trong danh sách bên dưới). Chạm lát → tâm đổi thành số tiền
+// danh mục đó (màu danh mục); bỏ chọn → về lại khoản lớn nhất.
+// Không có giao dịch chi tiêu → về lại 'Tổng chi' + tổng (đường cũ).
+// Fit giữ nguyên R44: hộp 140px mọi ngày; co 0.5px từ 11px xuống sàn
+// 6px chỉ khi glyph vượt avail = 0.75 * đường kính lỗ; KHÔNG bao giờ
+// rút gọn số; privacy '***' qua cùng đường vẽ, nhãn giữ nguyên.
+// Chẩn đoán cho suite: window.__dailyDonutFit (thêm label + branch).
+function getBiggestExpenseAmount(dayTxs) {
+  let best = null;
+  (dayTxs || []).forEach(t => {
+    if (t && t.type === 'Chi tiêu' && typeof t.amount === 'number' && (best === null || t.amount > best)) best = t.amount;
+  });
+  return best;
+}
+
+// Vẽ nhãn + số tiền vừa lỗ ở tâm donut chi tiết ngày (dùng chung cho
+// nhánh mặc định và nhánh chạm lát). label: 500 9px xám ở -8px;
+// amount: 800, base basePx, fit R44, đơn vị ở 55% cỡ số.
+function fitDailyDonutCenter(c, ctx, appFont, label, val, unit, color, basePx, branch) {
   const cx = c.width / 2, cy = c.height / 2 + 6;
-  const tObj = formatCurrencyWithUnit(totalExp);
-  const val = isPrivacyActive ? '***' : tObj.val;
-  const unit = isPrivacyActive ? '' : tObj.unit;
   const meta = c.getDatasetMeta ? c.getDatasetMeta(0) : null;
   const arc = meta && meta.data && meta.data[0];
   const holeD = arc && arc.innerRadius ? arc.innerRadius * 2 : Math.min(c.width, c.height) * 0.75;
   const avail = holeD * 0.75;
-  let size = 11;
+  let size = basePx;
   const measure = (s) => {
     ctx.font = `800 ${s}px ${appFont}`;
     const wn = ctx.measureText(val).width;
@@ -940,19 +952,37 @@ function drawDailyDonutCenter(c, ctx, appFont, totalExp) {
   };
   let w = measure(size);
   while (w > avail && size > 6) { size = Math.max(6, +(size - 0.5).toFixed(1)); w = measure(size); }
-  ctx.fillStyle = '#F43F5E'; // R31: họ hồng tươi như G6_ROSE
+  ctx.save();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#94A3B8'; ctx.font = `500 9px ${appFont}`;
+  ctx.fillText(label, cx, c.height / 2 - 8);
   ctx.textAlign = 'left';
+  ctx.fillStyle = color;
   ctx.font = `800 ${size}px ${appFont}`;
   const wn = ctx.measureText(val).width;
   const x0 = cx - w / 2;
   ctx.fillText(val, x0, cy);
   ctx.font = `800 ${size * 0.55}px ${appFont}`;
   ctx.fillText(unit, x0 + wn, cy);
-  window.__dailyDonutFit = { fontPx: size, numW: +wn.toFixed(1), totalW: +w.toFixed(1), holeD: +holeD.toFixed(1), cx, cy, text: val + unit };
-  ctx.textAlign = 'center';
+  ctx.restore();
+  window.__dailyDonutFit = { branch, label, fontPx: size, numW: +wn.toFixed(1), totalW: +w.toFixed(1), holeD: +holeD.toFixed(1), cx, cy, text: val + unit };
 }
 
-function drawDailyPieChart(data, totalExp) {
+function drawDailyDonutCenter(c, ctx, appFont, totalExp, biggestExp) {
+  if (biggestExp != null && biggestExp > 0) {
+    const bObj = formatCurrencyWithUnit(biggestExp);
+    const val = isPrivacyActive ? '***' : ('− ' + bObj.val);
+    const unit = isPrivacyActive ? '' : bObj.unit;
+    fitDailyDonutCenter(c, ctx, appFont, 'Khoản lớn nhất', val, unit, '#F43F5E', 11, 'biggest');
+  } else {
+    const tObj = formatCurrencyWithUnit(totalExp);
+    const val = isPrivacyActive ? '***' : tObj.val;
+    const unit = isPrivacyActive ? '' : tObj.unit;
+    fitDailyDonutCenter(c, ctx, appFont, 'Tổng chi', val, unit, '#F43F5E', 11, 'total');
+  }
+}
+
+function drawDailyPieChart(data, totalExp, biggestExp) {
     const ctx = document.getElementById('dailyPieChart').getContext('2d');
     if(window.dChart) window.dChart.destroy();
     const amts = data.map(i=>i.amount); const lbls = data.map(i=>i.category); const bg = data.map((d)=>getCategoryColor(d.category)); // R31: màu theo TÊN danh mục (bảng chuẩn)
@@ -961,7 +991,7 @@ function drawDailyPieChart(data, totalExp) {
     window.dChart = new Chart(ctx, { 
         type: 'doughnut', data: { labels:lbls, datasets: [{data:amts, backgroundColor:bg, borderWidth: 0, hoverOffset: 4}] }, 
         options: { devicePixelRatio: 4, cutout:'75%', layout: {padding: 8}, plugins: { legend: {display:false}, tooltip: { enabled: false } } },
-        plugins: [{ id:'cText2', afterDraw(c) { const {ctx} = c; ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#94A3B8'; ctx.font=`500 9px ${appFont}`; ctx.fillText('Tổng chi', c.width/2, c.height/2 - 8); drawDailyDonutCenter(c, ctx, appFont, totalExp); ctx.restore(); } }]
+        plugins: [{ id:'cText2', afterDraw(c) { const {ctx} = c; ctx.save(); ctx.textBaseline='middle'; const activeEls = c.getActiveElements ? c.getActiveElements() : []; if (activeEls.length > 0) { const idx = activeEls[0].index; const catName = c.data.labels[idx]; const catAmt = c.data.datasets[0].data[idx]; const color = c.data.datasets[0].backgroundColor[idx]; const shortName = catName.length > 14 ? catName.substring(0, 14) + '...' : catName; const aObj = formatCurrencyWithUnit(catAmt); const aVal = isPrivacyActive ? '***' : aObj.val; const aUnit = isPrivacyActive ? '' : aObj.unit; fitDailyDonutCenter(c, ctx, appFont, shortName, aVal, aUnit, color, 11, 'active'); } else { drawDailyDonutCenter(c, ctx, appFont, totalExp, biggestExp); } ctx.restore(); } }]
     });
 
     const leg = document.getElementById('dailyCustomLegend'); if(leg) leg.innerHTML = '';
