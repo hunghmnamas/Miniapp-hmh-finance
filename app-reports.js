@@ -1,4 +1,3 @@
-
 // Lấy font app từ biến CSS --app-font trong index.html/styles.css để Chart.js/canvas tự đổi theo font cấu hình.
 function getAppFontFamily() {
     try {
@@ -827,6 +826,7 @@ function showCategoryDetail(cat) {
   const detailModal = document.getElementById('detailModal');
   document.getElementById('modalOverlay').classList.add('show');
   setTimeout(() => detailModal.classList.add('show'), 10);
+  lockDetailModalScroll(); // R48: khóa cuộn trang nền (cùng sheet #detailModal, cùng lỗi chaining)
   
   document.getElementById('detailModalTitle').textContent = cat.toUpperCase(); 
   document.getElementById('detailModalTitle').style.color = 'var(--primary)';
@@ -886,6 +886,7 @@ function openDailyDetailView(d, m, y, allTxs) {
     const detailModal = document.getElementById('detailModal');
     document.getElementById('modalOverlay').classList.add('show');
     setTimeout(() => detailModal.classList.add('show'), 10);
+    lockDetailModalScroll(); // R48: khóa cuộn trang nền khi modal chi tiết ngày mở
 
     document.getElementById('detailModalTitle').textContent = `NGÀY ${String(dNum).padStart(2,'0')}/${String(mNum).padStart(2,'0')}/${yNum}`; 
     document.getElementById('detailModalTitle').style.color = 'var(--text-1)';
@@ -897,7 +898,6 @@ function openDailyDetailView(d, m, y, allTxs) {
     document.getElementById('detailTotalIncome').innerHTML = `<span>+ </span>${incObj.val}<span>${incObj.unit}</span>`;
     const expObj = formatCurrencyWithUnit(totalExp);
     document.getElementById('detailTotalExpense').innerHTML = `<span>− </span>${expObj.val}<span>${expObj.unit}</span>`;
-
     const chartContainer = document.getElementById('detailChartContainer');
     if(chartContainer) chartContainer.style.display = 'none';
 
@@ -1018,7 +1018,76 @@ function displayDetailTransactionsList(txs) {
   document.querySelectorAll('#detailTransactionsContainer .delete-btn').forEach(btn => btn.onclick = () => { closeDetailModal(); setTimeout(() => deleteTransaction(btn.getAttribute('data-id')), 350); });
 }
 
+// ============================================================================
+// FIX ROUND 48: KHÓA CUỘN TRANG CHÍNH KHI MODAL CHI TIẾT (#detailModal) MỞ.
+// Vấn đề (Hùng 21/10, ảnh iPhone modal NGÀY 12/10/2026): khi modal mở, vuốt
+// dọc trong danh sách giao dịch của modal vẫn "xuyên" xuống trang chính
+// phía sau (scroll chaining) — trang nền cuộn theo trong khi người dùng
+// đang cuộn danh sách modal. Cách khóa (chuẩn, chỉ trong app — KHÔNG
+// đụng disableVerticalSwipes cấp Telegram R39):
+//  - Mở modal -> lockDetailModalScroll(): overflow hidden trên cả <html>
+//    và <body> (ngăn document cuộn), overscroll-behavior: contain +
+//    touch-action: pan-y trên vùng cuộn trong modal (danh sách vẫn cuộn
+//    dọc bình thường, nhưng tới mép trên/dưới không "tràn" ra document).
+//  - Đóng modal (mọi đường: handle, overlay -> closeAllModals, nút
+//    sửa/xóa trong danh sách) -> unlockDetailModalScroll(): trả đúng
+//    giá trị inline cũ, trả lại đúng vị trí cuộn đã lưu.
+//  - Lũy thừa an toàn: cờ active — mở ngày thứ 2 khi modal đang mở chỉ
+//    no-op (giữ nguyên vị trí đã lưu lần đầu); đóng khi không khóa cũng
+//    no-op, nên closeAllModals gọi closeDetailModal vô điều kiện từ các
+//    modal khác không làm gì. KHÔNG chặn touchmove toàn cục (không có
+//    preventDefault) nên vuốt tab ngang sau khi đóng không ảnh hưởng.
+//  - Vùng cuộn trong modal lấy qua #detailTransactionsContainer
+//    .parentElement (chính là div overflow-y: auto trong #detailModal) —
+//    không cần sửa index.html, không thêm id.
+//  - Cùng khóa áp cho showCategoryDetail vì mở chung một sheet
+//    #detailModal nên gặp đúng lỗi chaining này.
+//  - Mở khóa NGAY khi closeDetailModal chạy (không đợi 300ms overlay mờ
+//    dần): trong 300ms đó overlay vẫn phủ kín màn hình nên chạm không
+//    tới trang nền; mở khóa trễ mới nguy hiểm — mở lại modal trong 300ms
+//    sẽ bị unlock trễ phá khóa giữa chừng.
+// Chẩn đoán cho suite: window.__detailScrollLockState.
+// ============================================================================
+var __detailScrollLock = null;
+function lockDetailModalScroll() {
+  if (__detailScrollLock && __detailScrollLock.active) return;
+  var scrollEl = null;
+  try {
+    var txList = document.getElementById('detailTransactionsContainer');
+    if (txList) scrollEl = txList.parentElement;
+  } catch (e) { scrollEl = null; }
+  __detailScrollLock = {
+    active: true,
+    savedY: (typeof window.scrollY === 'number') ? window.scrollY : 0,
+    prevBodyOverflow: document.body ? document.body.style.overflow : '',
+    prevDocOverflow: document.documentElement ? document.documentElement.style.overflow : '',
+    prevScrollOverscroll: scrollEl ? scrollEl.style.overscrollBehavior : '',
+    prevScrollTouch: scrollEl ? scrollEl.style.touchAction : '',
+    scrollEl: scrollEl
+  };
+  try {
+    if (document.documentElement) document.documentElement.style.overflow = 'hidden';
+    if (document.body) document.body.style.overflow = 'hidden';
+    if (scrollEl) { scrollEl.style.overscrollBehavior = 'contain'; scrollEl.style.touchAction = 'pan-y'; }
+  } catch (e) {}
+  window.__detailScrollLockState = __detailScrollLock;
+}
+function unlockDetailModalScroll() {
+  var st = __detailScrollLock;
+  if (!st || !st.active) return;
+  st.active = false;
+  try {
+    if (document.documentElement) document.documentElement.style.overflow = st.prevDocOverflow;
+    if (document.body) document.body.style.overflow = st.prevBodyOverflow;
+    if (st.scrollEl) { st.scrollEl.style.overscrollBehavior = st.prevScrollOverscroll; st.scrollEl.style.touchAction = st.prevScrollTouch; }
+  } catch (e) {}
+  try {
+    if (typeof window.scrollY === 'number' && window.scrollY !== st.savedY) window.scrollTo(0, st.savedY);
+  } catch (e) {}
+}
+
 window.closeDetailModal = function() {
+    unlockDetailModalScroll(); // R48: mở khóa TRƯỚC mọi thứ — không rò rỉ khóa nếu haptic ném lỗi
     triggerHaptic('light'); document.querySelectorAll('.calendar-day.selected-day').forEach(el => el.classList.remove('selected-day')); document.getElementById('detailModal').classList.remove('show'); setTimeout(() => document.getElementById('modalOverlay').classList.remove('show'), 300);
 };
 
