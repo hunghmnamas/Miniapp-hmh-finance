@@ -932,8 +932,6 @@ async function fetchMonthData(month) {
     if (fm && fm.classList.contains('show')) return true;
     var sheets = document.querySelectorAll('.modal-sheet.show');
     for (var i = 0; i < sheets.length; i++) {
-      // NOTE: #confirmDeleteModal .confirm-dialog mang class show trong markup
-      // nhưng parent display:none -> rect 0x0, không tính là đang mở
       if (sheets[i].id !== 'searchModal' && isShown(sheets[i])) return true;
     }
     var fps = document.querySelectorAll('.fullscreen-page.show');
