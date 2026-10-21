@@ -861,6 +861,46 @@ function openDailyDetailView(d, m, y, allTxs) {
     currentPageCategory = 1; displayDetailTransactionsList(dayTxs);
 }
 
+// R44: tâm donut modal chi tiết ngày — vẽ tổng ngày vừa lỗ tròn.
+//   TẦNG 1: hộp donut 140px (index.html) cho MỌI ngày, không phóng
+//   theo từng ngày (thẻ sẽ nhảy cỡ giữa các ngày).
+//   TẦNG 2 (fallback, chỉ khi cần): nếu glyph thật vượt avail =
+//   0.75 * đường kính lỗ (0.75 * 1.25 = 0.94 < 1 nên số vừa trong
+//   sandbox vẫn vừa trên máy render chữ rộng hơn) mới co, bước
+//   0.5px từ 11px xuống sàn 6px; ₫ vẽ riêng ở 55% cỡ số (quy tắc ₫
+//   của app — trước đây tâm canvas vẽ ₫ 100%). Số KHÔNG bao giờ
+//   rút gọn. Privacy '***' đi qua cùng đường vẽ, vẫn căn giữa.
+//   Chẩn đoán cho suite: window.__dailyDonutFit.
+function drawDailyDonutCenter(c, ctx, appFont, totalExp) {
+  const cx = c.width / 2, cy = c.height / 2 + 6;
+  const tObj = formatCurrencyWithUnit(totalExp);
+  const val = isPrivacyActive ? '***' : tObj.val;
+  const unit = isPrivacyActive ? '' : tObj.unit;
+  const meta = c.getDatasetMeta ? c.getDatasetMeta(0) : null;
+  const arc = meta && meta.data && meta.data[0];
+  const holeD = arc && arc.innerRadius ? arc.innerRadius * 2 : Math.min(c.width, c.height) * 0.75;
+  const avail = holeD * 0.75;
+  let size = 11;
+  const measure = (s) => {
+    ctx.font = `800 ${s}px ${appFont}`;
+    const wn = ctx.measureText(val).width;
+    ctx.font = `800 ${s * 0.55}px ${appFont}`;
+    return wn + ctx.measureText(unit).width;
+  };
+  let w = measure(size);
+  while (w > avail && size > 6) { size = Math.max(6, +(size - 0.5).toFixed(1)); w = measure(size); }
+  ctx.fillStyle = '#F43F5E'; // R31: họ hồng tươi như G6_ROSE
+  ctx.textAlign = 'left';
+  ctx.font = `800 ${size}px ${appFont}`;
+  const wn = ctx.measureText(val).width;
+  const x0 = cx - w / 2;
+  ctx.fillText(val, x0, cy);
+  ctx.font = `800 ${size * 0.55}px ${appFont}`;
+  ctx.fillText(unit, x0 + wn, cy);
+  window.__dailyDonutFit = { fontPx: size, numW: +wn.toFixed(1), totalW: +w.toFixed(1), holeD: +holeD.toFixed(1), cx, cy, text: val + unit };
+  ctx.textAlign = 'center';
+}
+
 function drawDailyPieChart(data, totalExp) {
     const ctx = document.getElementById('dailyPieChart').getContext('2d');
     if(window.dChart) window.dChart.destroy();
@@ -870,10 +910,7 @@ function drawDailyPieChart(data, totalExp) {
     window.dChart = new Chart(ctx, { 
         type: 'doughnut', data: { labels:lbls, datasets: [{data:amts, backgroundColor:bg, borderWidth: 0, hoverOffset: 4}] }, 
         options: { devicePixelRatio: 4, cutout:'75%', layout: {padding: 8}, plugins: { legend: {display:false}, tooltip: { enabled: false } } },
-        plugins: [{ id:'cText2', afterDraw(c) { const {ctx} = c; ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#94A3B8'; ctx.font=`500 9px ${appFont}`; ctx.fillText('Tổng chi', c.width/2, c.height/2 - 8); ctx.fillStyle='#F43F5E'; ctx.font=`800 11px ${appFont}`; // R31: họ hồng tươi như G6_ROSE 
-        const tObj = formatCurrencyWithUnit(totalExp);
-        const displayTotal = isPrivacyActive ? '***' : tObj.val + tObj.unit;
-        ctx.fillText(displayTotal, c.width/2, c.height/2 + 6); ctx.restore(); } }]
+        plugins: [{ id:'cText2', afterDraw(c) { const {ctx} = c; ctx.save(); ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillStyle='#94A3B8'; ctx.font=`500 9px ${appFont}`; ctx.fillText('Tổng chi', c.width/2, c.height/2 - 8); drawDailyDonutCenter(c, ctx, appFont, totalExp); ctx.restore(); } }]
     });
 
     const leg = document.getElementById('dailyCustomLegend'); if(leg) leg.innerHTML = '';
