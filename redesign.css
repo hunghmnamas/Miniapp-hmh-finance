@@ -224,9 +224,14 @@ body { background: #F7F7FA !important; color: #14141A !important; }
 }
 #tab2 .chart-placeholder:hover { transform: none !important; }
 #tab2 .pie-layout-wrapper { flex-direction: column !important; align-items: center !important; padding: 20px 16px 22px !important; gap: 0 !important; }
+/* R45: donut Tab-2 TO LÊN một nấc cố định cho mọi kỳ (mirror personal 3t).
+   Hộp 170 -> 230px: lỗ đo thật pre-fix 94.24px (cutout 62%); tổng 10 chữ số
+   với ₫ 55% chiếu máy thật ~111px nên hộp 230 cho lỗ ~128-131px, hở ~17-20px.
+   Vẫn < inner card ~328px ở 360px nên không chèn gì. Modal chi tiết ngày
+   nằm NGOÀI #tab2 nên không bị ảnh hưởng (giữ 140px của R44). */
 #tab2 .pie-layout-wrapper .pie-chart-inner {
-  flex: 0 0 170px !important; width: 170px !important; height: 170px !important;
-  min-width: 170px !important; min-height: 170px !important;
+  flex: 0 0 230px !important; width: 230px !important; height: 230px !important;
+  min-width: 230px !important; min-height: 230px !important;
 }
 #tab2 .pie-layout-wrapper .pie-chart-inner:hover { transform: none !important; }
 #tab2 #monthlyCustomLegend { display: none !important; }
