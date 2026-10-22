@@ -1,9 +1,14 @@
 // ============================================================================
-// app-import.js — R50 + R51: NHẬP FILE CSV (bản chính).
+// app-import.js — R50 + R51 + R52: NHẬP FILE CSV (bản chính).
 // Thêm giao dịch lịch sử từ file CSV ngoài hoặc từ file CSV do chính app xuất.
 // R51 thêm: bước ánh xạ cột (mọi CSV đều chuẩn hóa được về chuẩn app),
 // xem trước 3 nhóm Sẵn sàng/Trùng lặp/Lỗi với lựa chọn từng dòng + sửa dòng
 // lỗi inline, và spinner trong suốt lúc tải file + kiểm tra trùng + lúc ghi.
+// R52 thêm: NGUYÊN TẮC "loại chưa hỗ trợ thì user chọn nơi nhập vào" —
+// mọi loại giao dịch không phải Chi/Thu (không chỉ "Chuyển khoản") đều vào
+// nhóm "Loại chưa hỗ trợ" với lựa chọn từng dòng (Chi tiêu / Thu nhập /
+// Bỏ qua, mặc định Bỏ qua); dòng được chọn ghi với danh mục "Chuyển khoản"
+// qua đúng đường ghi + bản ghi đợt nhập như mọi dòng khác (hoàn tác được).
 // KHÔNG dùng submitTx theo từng dòng (nó tải lại toàn bộ dữ liệu, toast và
 // render lại mỗi dòng): vòng này tải toàn bộ dữ liệu MỘT lần để cấp id, rồi
 // PUT trực tiếp từng giao dịch mới qua secureFetch với _action addTransaction.
@@ -374,7 +379,8 @@
   }
 
   // Ánh xạ MỘT dòng theo mapping hiện tại. Trả về { kind: 'tx', tx } |
-  // { kind: 'transfer', lineNo, cells } | { kind: 'failed', lineNo, reason, cells }.
+  // { kind: 'unsupported', lineNo, cells, typeRaw, date, amount, content, note } |
+  // { kind: 'failed', lineNo, reason, cells }.
   // Thứ tự kiểm tra: ngày -> loại -> tiền -> danh mục; lỗi đầu tiên được báo.
   function mapRowMapped(cells, mapping, lineNo) {
     cells = cells || [];
@@ -386,9 +392,30 @@
     var type = null;
     if (typeRaw === 'Chi' || typeRaw === 'Chi tiêu') type = 'Chi tiêu';
     else if (typeRaw === 'Thu' || typeRaw === 'Thu nhập') type = 'Thu nhập';
-    else if (typeRaw === 'Chuyển khoản') return { kind: 'transfer', lineNo: lineNo, cells: cells };
     else if (!typeRaw) return { kind: 'failed', lineNo: lineNo, reason: 'Thiếu loại giao dịch', cells: cells };
-    else return { kind: 'failed', lineNo: lineNo, reason: 'Loại giao dịch không nhận diện: ' + typeRaw, cells: cells };
+    else {
+      // R52 — NGUYÊN TẮC: loại app chưa hỗ trợ KHÔNG tự đoán, KHÔNG lặng
+      // lẽ bỏ: đưa vào nhóm "loại chưa hỗ trợ" để user chọn nơi nhập vào
+      // (Chi tiêu / Thu nhập / Bỏ qua). Ngày đã hợp lệ ở trên; số tiền
+      // phải hợp lệ thì dòng mới vào được nhóm này (tiền hỏng thì vẫn là
+      // dòng lỗi để sửa inline — sửa xong mà loại vẫn chưa hỗ trợ thì lại
+      // về nhóm này). Danh mục không bắt buộc ở đây: khi ghi, danh mục
+      // mặc định là "Chuyển khoản" để các dòng này nhận diện được trong
+      // báo cáo (xem unsupportedToTx).
+      var uAmountRaw = trim(targetCell(cells, mapping, 'amount'));
+      if (!uAmountRaw) return { kind: 'failed', lineNo: lineNo, reason: 'Thiếu số tiền', cells: cells };
+      var uAmount = parseAmountUnified(uAmountRaw);
+      if (uAmount === null) return { kind: 'failed', lineNo: lineNo, reason: 'Số tiền không hợp lệ', cells: cells };
+      var uContent = trim(targetCell(cells, mapping, 'content')) || trim(targetCell(cells, mapping, 'category')) || 'Chuyển khoản';
+      var uNoteParts = [];
+      var uNoteBase = trim(targetCell(cells, mapping, 'note'));
+      if (uNoteBase) uNoteParts.push(uNoteBase);
+      var uGroup = trim(targetCell(cells, mapping, 'group'));
+      if (uGroup && uGroup !== DEFAULT_GROUP) uNoteParts.push('Nhóm: ' + uGroup);
+      var uAccount = trim(targetCell(cells, mapping, 'account'));
+      if (uAccount && uAccount !== DEFAULT_ACCOUNT) uNoteParts.push('TK: ' + uAccount);
+      return { kind: 'unsupported', lineNo: lineNo, cells: cells, typeRaw: typeRaw, date: date, amount: uAmount, content: uContent, note: uNoteParts.join(' • ') };
+    }
     var amountRaw = trim(targetCell(cells, mapping, 'amount'));
     if (!amountRaw) return { kind: 'failed', lineNo: lineNo, reason: 'Thiếu số tiền', cells: cells };
     var amount = parseAmountUnified(amountRaw);
@@ -407,13 +434,15 @@
   }
 
   // Ánh xạ toàn bộ dòng theo mapping. failed giữ lại cells gốc để sửa inline.
+  // unsupported giữ đủ trường đã parse (ngày/tiền/nội dung/ghi chú + loại
+  // gốc) để nhóm "loại chưa hỗ trợ" vẽ và ghi mà không cần parse lại.
   function mapAllRowsMapped(rows, mapping) {
-    var out = { txs: [], transfers: [], failed: [] };
+    var out = { txs: [], unsupported: [], failed: [] };
     if (!rows || rows.length < 2) return out;
     for (var i = 1; i < rows.length; i++) {
       var r = mapRowMapped(rows[i], mapping, i + 1);
       if (r.kind === 'tx') out.txs.push(r.tx);
-      else if (r.kind === 'transfer') out.transfers.push({ lineNo: r.lineNo, cells: r.cells });
+      else if (r.kind === 'unsupported') out.unsupported.push({ lineNo: r.lineNo, cells: r.cells, typeRaw: r.typeRaw, date: r.date, amount: r.amount, content: r.content, note: r.note });
       else out.failed.push({ lineNo: r.lineNo, reason: r.reason, cells: r.cells });
     }
     return out;
@@ -451,12 +480,63 @@
     return { ready: ready, duplicates: duplicates };
   }
 
-  // Tập sẽ ghi = dòng Sẵn sàng được tick + dòng Trùng lặp được tick ép.
-  function computeWriteSet(readyRows, duplicateRows) {
+  // R52 — dòng loại chưa hỗ trợ -> giao dịch theo lựa chọn của user.
+  // dest 'skip'/khác -> null (không ghi). Danh mục LUÔN là "Chuyển khoản"
+  // (theo spec R52) để các dòng này nhận diện được trong báo cáo; nội dung
+  // giữ nguyên văn bản gốc của dòng (Ghi chú/Nội dung trong file); ngày +
+  // số tiền đã parse sẵn từ bước ánh xạ.
+  function unsupportedToTx(u, dest) {
+    if (!u || (dest !== 'Chi tiêu' && dest !== 'Thu nhập')) return null;
+    return { date: u.date, type: dest, content: u.content || 'Chuyển khoản', amount: u.amount, category: 'Chuyển khoản', note: u.note || '' };
+  }
+
+  // Tập sẽ ghi = dòng Sẵn sàng được tick + dòng Trùng lặp được tick ép +
+  // dòng loại chưa hỗ trợ được chọn Chi/Thu. Tx của dòng chưa hỗ trợ được
+  // cache vào r._mappedTx để tổng kết trừ đúng dòng ghi lỗi theo identity
+  // (runImport giữ đúng reference tx từ writeSet trong failedRows).
+  function computeWriteSet(readyRows, duplicateRows, unsupportedRows) {
     var out = [];
     (readyRows || []).forEach(function (r) { if (r.checked) out.push(r.tx); });
     (duplicateRows || []).forEach(function (r) { if (r.checked) out.push(r.tx); });
+    (unsupportedRows || []).forEach(function (r) {
+      var tx = unsupportedToTx(r, r.dest);
+      r._mappedTx = tx || null;
+      if (tx) out.push(tx);
+    });
     return out;
+  }
+
+  // R52 — đếm tổng kết nhập (thuần, test được). parts: { ready, duplicates,
+  // unsupported, errors } theo đúng shape của importState; mappedTxs = mảng
+  // tx đã tạo từ các dòng chưa hỗ trợ (cùng reference với writeSet) để trừ
+  // đúng các dòng ghi lỗi; result = { imported, failedRows } của runImport.
+  // Lưu ý: dòng chưa hỗ trợ KHÔNG được kiểm tra trùng trước khi ghi (user
+  // đã chọn đích một cách tường minh) — nếu nó trùng dữ liệu có sẵn thì
+  // vẫn tạo thêm một dòng giống hệt, và hoàn tác sẽ gỡ đúng dòng đó.
+  function summarizeImport(parts, mappedTxs, result) {
+    var skippedUnchecked = 0;
+    (parts.ready || []).forEach(function (r) { if (!r.checked) skippedUnchecked += 1; });
+    (parts.duplicates || []).forEach(function (r) { if (!r.checked) skippedUnchecked += 1; });
+    (parts.unsupported || []).forEach(function (r) { if (!r.dest || r.dest === 'skip') skippedUnchecked += 1; });
+    var duplicatesForced = 0;
+    (parts.duplicates || []).forEach(function (r) { if (r.checked) duplicatesForced += 1; });
+    var failedSet = new Set();
+    (result.failedRows || []).forEach(function (f) { failedSet.add(f.tx); });
+    var mappedChi = 0, mappedThu = 0;
+    (mappedTxs || []).forEach(function (tx) {
+      if (failedSet.has(tx)) return;
+      if (tx.type === 'Chi tiêu') mappedChi += 1;
+      else if (tx.type === 'Thu nhập') mappedThu += 1;
+    });
+    return {
+      imported: result.imported,
+      skippedUnchecked: skippedUnchecked,
+      duplicatesForced: duplicatesForced,
+      errorsRemaining: (parts.errors || []).length,
+      failedCount: (result.failedRows || []).length,
+      mappedChi: mappedChi,
+      mappedThu: mappedThu
+    };
   }
 
   // ---------- 7. Hiển thị xem trước ----------
@@ -504,6 +584,12 @@
     classifyImportRows: classifyImportRows,
     isDuplicateTx: isDuplicateTx,
     computeWriteSet: computeWriteSet,
+    unsupportedToTx: unsupportedToTx,
+    summarizeImport: summarizeImport,
+    // Hàm vẽ số tiền của dòng chưa hỗ trợ (khai báo ở phần UI nhưng là
+    // function declaration nên hoisted — chỉ đọc global isPrivacyActive /
+    // formatCurrencyWithUnit lúc gọi nên chạy được cả trong vm.
+    unsupportedAmountHtml: unsupportedAmountHtml,
     newImportBatchId: newImportBatchId,
     normalizeImportBatches: normalizeImportBatches,
     formatBatchDate: formatBatchDate,
@@ -524,7 +610,8 @@
     ready: [],       // [{ key, tx, checked }]
     duplicates: [],  // [{ key, tx, dupInfo, checked }]
     errors: [],      // [{ key, lineNo, cells, reason }]
-    transfers: [],   // [{ lineNo, cells }]
+    unsupported: [], // [{ key, lineNo, cells, typeRaw, date, amount, content, note, dest }]
+                     // dest: 'skip' | 'Chi tiêu' | 'Thu nhập' (mặc định 'skip')
     existingByMonth: null,
     running: false,
     loadToken: 0,
@@ -618,7 +705,7 @@
     if (importState.step === 'mapping') {
       setPrimaryButton('<i class="fas fa-arrow-right"></i> Tiếp tục', false);
     } else if (importState.step === 'preview') {
-      var n = computeWriteSet(importState.ready, importState.duplicates).length;
+      var n = computeWriteSet(importState.ready, importState.duplicates, importState.unsupported).length;
       setPrimaryButton('<i class="fas fa-file-import"></i> Nhập ' + n + ' giao dịch', n === 0);
     } else if (importState.step === 'done' || importState.step === 'undoDone') {
       setPrimaryButton('<i class="fas fa-check"></i> Xong', false);
@@ -706,6 +793,61 @@
       + '<span style="flex:1;min-width:0;">Trùng: ' + escHtml(info.date) + ' — ' + escHtml(info.content) + ' — ' + escHtml(formatPreviewAmount(info.amount, info.type)) + (info.inFile ? ' <span style="color:var(--text-2);">(trùng trong file)</span>' : '') + '</span></label>';
   }
 
+  // R52 — số tiền của dòng chưa hỗ trợ theo lựa chọn hiện tại: Chi đỏ
+  // dấu −, Thu xanh dấu +, Bỏ qua không dấu; privacy thì "***" (không rò
+  // số) đúng như các nhóm khác.
+  function unsupportedAmountHtml(u, dest) {
+    try {
+      if (typeof isPrivacyActive !== 'undefined' && isPrivacyActive) return '***';
+    } catch (e) {}
+    var val = '';
+    try {
+      if (typeof formatCurrencyWithUnit === 'function') {
+        var o = formatCurrencyWithUnit(u.amount);
+        val = o.val + (o.unit || '');
+      }
+    } catch (e) {}
+    if (!val) val = Number(u.amount).toLocaleString('en-US') + ' ₫';
+    if (dest === 'Chi tiêu') return '<b style="color:#E11D48;">− ' + escHtml(val) + '</b>';
+    if (dest === 'Thu nhập') return '<b style="color:#10B981;">+ ' + escHtml(val) + '</b>';
+    return escHtml(val);
+  }
+
+  // R52 — gợi ý khi dòng được chọn nhập mà trùng dữ liệu đã có: chỉ cảnh
+  // báo, không chặn (user đã chọn đích một cách tường minh; hoàn tác sẽ
+  // gỡ đúng dòng này nếu nhập sai).
+  function unsupportedDupHintHtml(u) {
+    var dest = u.dest || 'skip';
+    if (dest === 'skip') return '';
+    var tx = unsupportedToTx(u, dest);
+    if (tx && txDuplicatesCurrent(tx)) return ' <span style="color:#E11D48;">(trùng với giao dịch đã có — nhập sẽ tạo thêm một dòng giống hệt)</span>';
+    return '';
+  }
+
+  // R52 — một dòng chưa hỗ trợ: loại gốc hiện rõ, select chọn đích.
+  // data-unsupported-amount / data-unsupported-dup để đổi lựa chọn cập
+  // nhật tại chỗ mà không vẽ lại toàn bộ (khỏi nhảy vị trí cuộn).
+  function unsupportedRowHtml(u) {
+    var dest = u.dest || 'skip';
+    return '<div style="padding:8px 0;border-bottom:1px solid var(--border-color);font-size:14px;">'
+      + '<div>Dòng ' + u.lineNo + ': ' + escHtml(u.date) + ' — ' + escHtml(u.content) + ' — <span data-unsupported-amount="' + u.key + '">' + unsupportedAmountHtml(u, dest) + '</span><span data-unsupported-dup="' + u.key + '">' + unsupportedDupHintHtml(u) + '</span></div>'
+      + '<div style="font-size:12px;color:var(--text-2);margin-top:2px;">Loại gốc: ' + escHtml(u.typeRaw) + ' — nhập vào sẽ mang danh mục "Chuyển khoản".</div>'
+      + '<select class="import-unsupported-select field-input" data-key="' + u.key + '" style="margin-top:6px;width:100%;">'
+      + '<option value="skip"' + (dest === 'skip' ? ' selected' : '') + '>Bỏ qua</option>'
+      + '<option value="Chi tiêu"' + (dest === 'Chi tiêu' ? ' selected' : '') + '>Nhập dạng Chi tiêu</option>'
+      + '<option value="Thu nhập"' + (dest === 'Thu nhập' ? ' selected' : '') + '>Nhập dạng Thu nhập</option>'
+      + '</select></div>';
+  }
+
+  // R52 — đồng bộ tại chỗ số tiền + gợi ý trùng của một dòng sau khi đổi
+  // lựa chọn (không vẽ lại toàn bộ, không động tới select).
+  function refreshUnsupportedDom(u) {
+    var amtSpan = document.querySelector('[data-unsupported-amount="' + u.key + '"]');
+    if (amtSpan) amtSpan.innerHTML = unsupportedAmountHtml(u, u.dest || 'skip');
+    var dupSpan = document.querySelector('[data-unsupported-dup="' + u.key + '"]');
+    if (dupSpan) dupSpan.innerHTML = unsupportedDupHintHtml(u);
+  }
+
   function errorRowHtml(row) {
     if (importState.editKey === row.key) return editRowHtml(row);
     return '<div style="padding:8px 0;border-bottom:1px solid var(--border-color);font-size:14px;">'
@@ -719,6 +861,13 @@
         + '<option value="Chi tiêu"' + (value === 'Chi tiêu' ? ' selected' : '') + '>Chi tiêu</option>'
         + '<option value="Thu nhập"' + (value === 'Thu nhập' ? ' selected' : '') + '>Thu nhập</option>'
         + '<option value="Chuyển khoản"' + (value === 'Chuyển khoản' ? ' selected' : '') + '>Chuyển khoản</option>';
+      // R52: loại lạ (không phải 3 lựa chọn trên) phải giữ nguyên trong
+      // dropdown — nếu không nó rơi về "— Chọn —" và lưu lại rớt lỗi
+      // 'Thiếu loại giao dịch' dù loại gốc vốn hợp lệ; lưu giữ nguyên thì
+      // dòng về nhóm "loại chưa hỗ trợ" để user chọn nơi nhập vào.
+      if (value && value !== 'Chi tiêu' && value !== 'Thu nhập' && value !== 'Chuyển khoản') {
+        opts += '<option value="' + escHtml(value) + '" selected>' + escHtml(value) + ' (chưa hỗ trợ)</option>';
+      }
       return '<div style="margin-top:6px;"><div style="font-size:12px;color:var(--text-2);">' + label + '</div><select class="field-input" data-field="' + field + '" style="width:100%;">' + opts + '</select></div>';
     }
     return '<div style="margin-top:6px;"><div style="font-size:12px;color:var(--text-2);">' + label + '</div><input class="field-input" data-field="' + field + '" value="' + escHtml(value) + '" style="width:100%;"></div>';
@@ -768,7 +917,7 @@
     var progress = getEl('importProgress');
     if (progress) { progress.style.display = 'none'; progress.textContent = ''; }
     if (!body) return;
-    var ready = importState.ready, dups = importState.duplicates, errs = importState.errors, trs = importState.transfers;
+    var ready = importState.ready, dups = importState.duplicates, errs = importState.errors, uns = importState.unsupported;
     var html = '<div class="field-helper" style="margin-bottom:4px;">File: <b>' + escHtml(importState.fileName) + '</b></div>';
     html += '<button class="btn-soft" data-action="back-mapping" style="padding:6px 12px;margin-bottom:4px;"><i class="fas fa-arrow-left"></i> Sửa ánh xạ cột</button>';
     var readyAll = ready.length > 0 && ready.every(function (r) { return r.checked; });
@@ -782,18 +931,18 @@
     html += '<div class="field-label" style="margin-top:14px;">Lỗi (' + errs.length + ') — bấm Sửa để sửa rồi nhập</div>';
     if (errs.length === 0) html += '<div style="font-size:13px;color:var(--text-2);padding:6px 0;">Không có dòng lỗi.</div>';
     errs.forEach(function (r) { html += errorRowHtml(r); });
-    html += '<div class="field-label" style="margin-top:14px;">Chuyển khoản (' + trs.length + ') — không nhập được</div>';
-    if (trs.length === 0) html += '<div style="font-size:13px;color:var(--text-2);padding:6px 0;">Không có dòng chuyển khoản.</div>';
+    // R52 — nhóm "loại chưa hỗ trợ": KHÁC R51 ở chỗ không còn "không nhập
+    // được" nữa — mỗi dòng có lựa chọn đích (mặc định Bỏ qua), vẽ ĐỦ mọi
+    // dòng (không cắt 5 dòng như trước vì giờ mỗi dòng đều cần chọn).
+    html += '<div class="field-label" style="margin-top:14px;">Loại chưa hỗ trợ (' + uns.length + ') — chọn nơi nhập vào</div>';
+    if (uns.length === 0) html += '<div style="font-size:13px;color:var(--text-2);padding:6px 0;">Không có dòng loại chưa hỗ trợ.</div>';
     else {
-      html += '<div style="font-size:13px;color:var(--text-2);padding:6px 0;">App chưa hỗ trợ loại chuyển khoản nên các dòng này luôn bị bỏ qua.</div>';
-      trs.slice(0, 5).forEach(function (t) {
-        var d = trim(targetCell(t.cells, importState.mapping, 'date'));
-        var c = trim(targetCell(t.cells, importState.mapping, 'content')) || trim(targetCell(t.cells, importState.mapping, 'category'));
-        var a = trim(targetCell(t.cells, importState.mapping, 'amount'));
-        var amtHtml = '';
-        try { amtHtml = (typeof isPrivacyActive !== 'undefined' && isPrivacyActive) ? '***' : escHtml(a); } catch (e) { amtHtml = escHtml(a); }
-        html += '<div style="font-size:13px;color:var(--text-2);padding:4px 0;">Dòng ' + t.lineNo + ': ' + escHtml(d) + ' — ' + escHtml(c) + ' — ' + amtHtml + '</div>';
-      });
+      html += '<div style="font-size:13px;color:var(--text-2);padding:6px 0;">Những dòng này có loại giao dịch app chưa hỗ trợ. App không tự đoán — chọn Chi tiêu, Thu nhập hoặc Bỏ qua cho từng dòng (mặc định: Bỏ qua). Dòng được chọn sẽ nhập với danh mục "Chuyển khoản".</div>';
+      html += '<div style="display:flex;gap:8px;flex-wrap:wrap;margin:4px 0 8px;">'
+        + '<button class="btn-soft" data-action="unsupported-all" data-dest="Chi tiêu" style="padding:6px 12px;">Tất cả → Chi tiêu</button>'
+        + '<button class="btn-soft" data-action="unsupported-all" data-dest="Thu nhập" style="padding:6px 12px;">Tất cả → Thu nhập</button>'
+        + '<button class="btn-soft" data-action="unsupported-all" data-dest="skip" style="padding:6px 12px;">Tất cả → Bỏ qua</button></div>';
+      uns.forEach(function (u) { html += unsupportedRowHtml(u); });
     }
     body.innerHTML = html;
     updatePrimaryButton();
@@ -854,8 +1003,10 @@
       } else {
         importState.ready.push({ key: importState.nextKey++, tx: r.tx, checked: true });
       }
-    } else if (r.kind === 'transfer') {
-      importState.transfers.push({ lineNo: row.lineNo, cells: newCells });
+    } else if (r.kind === 'unsupported') {
+      // R52: sửa xong mà loại vẫn chưa hỗ trợ thì về nhóm chưa hỗ trợ
+      // (mặc định Bỏ qua) chứ không biến mất khỏi xem trước.
+      importState.unsupported.push({ key: importState.nextKey++, lineNo: row.lineNo, cells: newCells, typeRaw: r.typeRaw, date: r.date, amount: r.amount, content: r.content, note: r.note, dest: 'skip' });
     } else {
       importState.errors.push({ key: row.key, lineNo: row.lineNo, cells: newCells, reason: r.reason });
     }
@@ -872,6 +1023,22 @@
       var row = findRow(section, key);
       if (row) row.checked = !!t.checked;
       syncSectionToggle(section);
+      updatePrimaryButton();
+      return;
+    }
+    // R52 — đổi đích của một dòng chưa hỗ trợ: cập nhật state + số tiền /
+    // gợi ý trùng tại chỗ, nút "Nhập N" cập nhật theo (không vẽ lại).
+    if (t.classList.contains('import-unsupported-select')) {
+      var ukey = parseInt(t.getAttribute('data-key'), 10);
+      var urow = null;
+      for (var ui = 0; ui < importState.unsupported.length; ui++) {
+        if (importState.unsupported[ui].key === ukey) { urow = importState.unsupported[ui]; break; }
+      }
+      if (urow) {
+        var uval = t.value || 'skip';
+        urow.dest = (uval === 'Chi tiêu' || uval === 'Thu nhập') ? uval : 'skip';
+        refreshUnsupportedDom(urow);
+      }
       updatePrimaryButton();
       return;
     }
@@ -893,6 +1060,20 @@
     var action = btn.getAttribute('data-action');
     var key = parseInt(btn.getAttribute('data-key'), 10);
     if (action === 'back-mapping') { renderMappingStep(); return; }
+    // R52 — chọn hàng loạt cho nhóm chưa hỗ trợ; select từng dòng vẫn sửa
+    // lại được sau đó (hàng loạt chỉ đặt giá trị, không khóa gì).
+    if (action === 'unsupported-all') {
+      var udest = btn.getAttribute('data-dest') || 'skip';
+      if (udest !== 'Chi tiêu' && udest !== 'Thu nhập') udest = 'skip';
+      importState.unsupported.forEach(function (u) {
+        u.dest = udest;
+        var sel = document.querySelector('.import-unsupported-select[data-key="' + u.key + '"]');
+        if (sel) sel.value = udest;
+        refreshUnsupportedDom(u);
+      });
+      updatePrimaryButton();
+      return;
+    }
     if (action === 'undo-last-batch') { startUndoFromSummary(); return; }
     if (action === 'undo-retry') { startUndoFromSummary(); return; }
     if (action === 'edit-error') { importState.editKey = key; renderImportSections(); return; }
@@ -931,7 +1112,7 @@
     importState.ready = [];
     importState.duplicates = [];
     importState.errors = [];
-    importState.transfers = [];
+    importState.unsupported = [];
     importState.existingByMonth = null;
     importState.editKey = null;
     openImportSheet();
@@ -991,7 +1172,7 @@
       importState.ready = cls.ready.map(function (tx) { return { key: importState.nextKey++, tx: tx, checked: true }; });
       importState.duplicates = cls.duplicates.map(function (d) { return { key: importState.nextKey++, tx: d.tx, dupInfo: d.dupInfo, checked: false }; });
       importState.errors = mapped.failed.map(function (f) { return { key: importState.nextKey++, lineNo: f.lineNo, cells: f.cells, reason: f.reason }; });
-      importState.transfers = mapped.transfers;
+      importState.unsupported = mapped.unsupported.map(function (u) { return { key: importState.nextKey++, lineNo: u.lineNo, cells: u.cells, typeRaw: u.typeRaw, date: u.date, amount: u.amount, content: u.content, note: u.note, dest: 'skip' }; });
       renderImportSections();
     } catch (e) {
       if (token === importState.loadToken) renderImportError('<div style="color:#E11D48;">Lỗi khi xử lý file: ' + escHtml(e.message || e) + '</div>');
@@ -1002,18 +1183,12 @@
 
   // ---------- Ghi hàng loạt ----------
   async function confirmImport() {
-    var writeSet = computeWriteSet(importState.ready, importState.duplicates);
+    var writeSet = computeWriteSet(importState.ready, importState.duplicates, importState.unsupported);
     if (importState.running || writeSet.length === 0) return;
     if (typeof chatId === 'undefined' || !chatId) {
       try { showToast('Chưa xác định được người dùng (chatId trống), không thể ghi.', 'error'); } catch (e) {}
       return;
     }
-    var skippedUnchecked = 0;
-    importState.ready.forEach(function (r) { if (!r.checked) skippedUnchecked += 1; });
-    importState.duplicates.forEach(function (r) { if (!r.checked) skippedUnchecked += 1; });
-    var duplicatesForced = 0;
-    importState.duplicates.forEach(function (r) { if (r.checked) duplicatesForced += 1; });
-    var errorsRemaining = importState.errors.length;
     importState.running = true;
     importState.step = 'writing';
     var progress = getEl('importProgress');
@@ -1061,16 +1236,27 @@
     }
     importState.lastBatch = lastBatch;
     importState.lastBatchSaveFailed = batchSaveFailed;
+    // R52 — tổng kết qua hàm thuần (đếm đúng dòng chưa hỗ trợ được ghi theo
+    // từng chiều, trừ dòng ghi lỗi theo identity; dòng chưa hỗ trợ để Bỏ qua
+    // tính vào "Bỏ chọn"). _mappedTx do computeWriteSet cache lúc tạo
+    // writeSet nên đây đúng là các object đã ghi.
+    var mappedTxs = [];
+    importState.unsupported.forEach(function (r) { if (r._mappedTx) mappedTxs.push(r._mappedTx); });
+    var summary = summarizeImport(
+      { ready: importState.ready, duplicates: importState.duplicates, unsupported: importState.unsupported, errors: importState.errors },
+      mappedTxs, result);
     importState.step = 'done';
     setImportTitle('Kết quả nhập CSV');
     var body = getEl('importPreviewBody');
     var html = '<div class="field-helper" style="margin-bottom:12px;">Nhập xong.</div>';
     html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">';
-    html += '<div style="background:var(--bg-card2);border-radius:12px;padding:10px;"><b style="font-size:18px;">' + result.imported + '</b><br><span style="font-size:12px;color:var(--text-2);">Đã nhập</span></div>';
-    html += '<div style="background:var(--bg-card2);border-radius:12px;padding:10px;"><b style="font-size:18px;">' + skippedUnchecked + '</b><br><span style="font-size:12px;color:var(--text-2);">Bỏ chọn (không nhập)</span></div>';
-    html += '<div style="background:var(--bg-card2);border-radius:12px;padding:10px;"><b style="font-size:18px;">' + duplicatesForced + '</b><br><span style="font-size:12px;color:var(--text-2);">Trùng nhập ép</span></div>';
-    html += '<div style="background:var(--bg-card2);border-radius:12px;padding:10px;"><b style="font-size:18px;">' + errorsRemaining + '</b><br><span style="font-size:12px;color:var(--text-2);">Lỗi còn lại</span></div>';
-    html += '<div style="background:var(--bg-card2);border-radius:12px;padding:10px;"><b style="font-size:18px;">' + result.failedRows.length + '</b><br><span style="font-size:12px;color:var(--text-2);">Ghi lỗi</span></div>';
+    html += '<div style="background:var(--bg-card2);border-radius:12px;padding:10px;"><b style="font-size:18px;">' + summary.imported + '</b><br><span style="font-size:12px;color:var(--text-2);">Đã nhập</span></div>';
+    html += '<div style="background:var(--bg-card2);border-radius:12px;padding:10px;"><b style="font-size:18px;">' + summary.skippedUnchecked + '</b><br><span style="font-size:12px;color:var(--text-2);">Bỏ chọn (không nhập)</span></div>';
+    html += '<div style="background:var(--bg-card2);border-radius:12px;padding:10px;"><b style="font-size:18px;">' + summary.duplicatesForced + '</b><br><span style="font-size:12px;color:var(--text-2);">Trùng nhập ép</span></div>';
+    html += '<div style="background:var(--bg-card2);border-radius:12px;padding:10px;"><b style="font-size:18px;">' + summary.errorsRemaining + '</b><br><span style="font-size:12px;color:var(--text-2);">Lỗi còn lại</span></div>';
+    html += '<div style="background:var(--bg-card2);border-radius:12px;padding:10px;"><b style="font-size:18px;">' + summary.failedCount + '</b><br><span style="font-size:12px;color:var(--text-2);">Ghi lỗi</span></div>';
+    html += '<div style="background:var(--bg-card2);border-radius:12px;padding:10px;"><b style="font-size:18px;">' + summary.mappedChi + '</b><br><span style="font-size:12px;color:var(--text-2);">Loại chưa hỗ trợ → Chi</span></div>';
+    html += '<div style="background:var(--bg-card2);border-radius:12px;padding:10px;"><b style="font-size:18px;">' + summary.mappedThu + '</b><br><span style="font-size:12px;color:var(--text-2);">Loại chưa hỗ trợ → Thu</span></div>';
     html += '</div>';
     if (result.failedRows.length > 0) {
       html += '<div class="field-label">Dòng ghi lỗi (tối đa 5 dòng đầu)</div>';
