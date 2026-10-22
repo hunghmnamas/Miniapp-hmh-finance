@@ -21,7 +21,7 @@
     enabled: true,
 
     // >>> ĐỔI MỖI KHI CÓ THÔNG BÁO MỚI (bắt buộc) <<<
-    version: '2026.10.20a',
+    version: '2026.10.22a',
 
     // false = KHÔNG cho người dùng tắt, hiện mọi lần mở app
     dismissible: true,
@@ -29,23 +29,25 @@
     style: 'info',        // 'warning' (cam/đỏ) hoặc 'info' (xanh)
     icon: '🎉',
     title: 'CÓ GÌ MỚI?',
-    subtitle: 'Miniapp Quản lý tài chính vừa được nâng cấp',
+    subtitle: 'Đã có nhập giao dịch từ file CSV',
 
     // Căn lề đoạn văn: 'justify' (đều 2 bên) | 'left' | 'center'
     align: 'justify',
 
     // Các đoạn văn. Cho phép thẻ HTML đơn giản: <b> <i> <br>
     body: [
-      'Cảm ơn bạn đã đồng hành cùng Miniapp. Bản cập nhật này làm mới giao diện và bổ sung nhiều tính năng hữu ích:'
+      'Bản cập nhật này thêm tính năng nhập giao dịch từ file CSV — chuyển dữ liệu từ app khác sang mà không cần nhập tay từng dòng:',
+      'Vào Cài đặt → Dữ liệu & Hệ thống → Nhập file CSV để bắt đầu.'
     ],
 
     // Danh sách gạch đầu dòng kiểu "Có gì mới". Để [] nếu không dùng.
     items: [
-      { icon:'📊', title:'Báo cáo trực quan', desc:'Vòng tròn tỉ trọng thu – chi kèm nhận xét nhanh: Danh mục chi nhiều nhất, ngày chi cao nhất và mức chi trung bình mỗi ngày.' },
-      { icon:'👆', title:'Vuốt để chuyển tab', desc:'Vuốt sang trái hoặc phải để di chuyển nhanh giữa các tab Giao dịch, Báo cáo, Tìm kiếm và Cài đặt.' },
-      { icon:'🖼️', title:'Ảnh đại diện đồng bộ', desc:'Chạm vào ảnh đại diện trên thẻ số dư để đổi và cắt ảnh; ảnh được đồng bộ theo tài khoản của bạn.' },
-      { icon:'🙈', title:'Ẩn số toàn diện', desc:'Khi bật ẩn số, mọi số tiền ở mọi màn hình đều được che kín, không còn sót số ở phần so sánh hay chi tiết.' },
-      { icon:'📳', title:'Rung phản hồi', desc:'Rung nhẹ khi chuyển tab và khi lưu giao dịch thành công; có thể bật hoặc tắt trong mục Cài đặt.' }
+      { icon:'📥', title:'Nhập hàng loạt từ file CSV', desc:'Nhập hàng loạt giao dịch từ file CSV của app khác, không cần nhập tay từng dòng.' },
+      { icon:'🧭', title:'Tự chọn cột nhập vào đâu', desc:'App tự nhận diện định dạng file; bạn tự chọn cột nào nhập vào trường nào, cột nào bỏ qua.' },
+      { icon:'👀', title:'Xem trước từng dòng', desc:'Dòng nhập, dòng trùng, dòng lỗi đều hiện rõ để bạn chọn trước khi nhập.' },
+      { icon:'✏️', title:'Sửa dòng lỗi ngay tại chỗ', desc:'Dòng lỗi sửa trực tiếp ngay trong khung xem trước rồi nhập tiếp.' },
+      { icon:'🔀', title:'Loại lạ vẫn nhập được', desc:'Loại giao dịch app chưa hỗ trợ (ví dụ chuyển khoản) thì bạn tự chọn nhập dạng Chi hay Thu, hoặc bỏ qua — app không tự đoán, không tự bỏ lặng.' },
+      { icon:'↩️', title:'Nhập sai vẫn gỡ được', desc:'Mỗi đợt nhập đều có nút hoàn tác, chỉ xoá đúng dữ liệu vừa nhập, không động tới dữ liệu cũ.' }
     ],
 
     // Ô đếm ngược. Đặt null nếu không dùng.
