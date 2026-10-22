@@ -286,6 +286,11 @@
               <input type="text" id="settingChatId" class="field-input" placeholder="Nhập ID nhận Backup" style="background: rgba(0,0,0,0.03) !important; box-shadow: none; border: 1px solid var(--border-color);">
               <button id="backupTelegramBtn" class="btn-soft mt-3" style="padding: 10px;"><i class="fas fa-cloud-arrow-up text-primary-color"></i> Backup dữ liệu CSV</button>
           </div>
+          <div class="settings-row-col">
+              <div class="settings-info mb-2"><i class="fas fa-file-import" style="color: var(--primary);"></i><span>Nhập dữ liệu từ file CSV</span></div>
+              <button id="importCsvBtn" class="btn-soft" style="padding: 10px;"><i class="fas fa-file-csv text-primary-color"></i> Nhập file CSV</button>
+              <input type="file" id="importCsvFile" accept=".csv" style="display: none;">
+          </div>
           <div class="settings-row danger-row" id="hardResetBtn">
               <i class="fas fa-trash"></i> Xóa tất cả dữ liệu!
           </div>
@@ -510,6 +515,19 @@
       </div>
     </div>
 
+   <div id="importPreviewModal" class="modal-sheet" style="display: flex; flex-direction: column;">
+      <div class="modal-handle" id="importPreviewHandle"></div>
+      <div class="modal-title"><i class="fas fa-file-import" style="color: var(--primary); margin-right: 8px;"></i> Xem trước khi nhập CSV</div>
+      <div style="flex: 1; overflow-y: auto; padding-bottom: 10px; -webkit-overflow-scrolling: touch;">
+          <div id="importPreviewBody"></div>
+          <div id="importProgress" style="display: none; font-size: 14px; font-weight: 700; text-align: center; padding: 12px 0;"></div>
+      </div>
+      <div class="modal-actions m-0 pt-3" style="border-top: 1px solid var(--border-color); flex-shrink: 0;">
+          <button class="btn-cancel m-0 flex-1" id="importCancelBtn"><i class="fas fa-times"></i> Đóng</button>
+          <button class="btn-save m-0 flex-1" id="importConfirmBtn"><i class="fas fa-file-import"></i> Nhập dữ liệu</button>
+      </div>
+    </div>
+
    <div id="iconPickerModal" class="modal-sheet" style="display: flex; flex-direction: column;">
       <div class="modal-handle" onclick="closeIconPickerModal()"></div>
       <div class="modal-title"><i class="fas fa-shapes" style="color: var(--primary); margin-right: 8px;"></i> Quản lý danh mục</div>
@@ -625,6 +643,7 @@
   <script src="app-reports.js" defer></script>
   <script src="app-crud.js" defer></script>
   <script src="app-export.js" defer></script>
+  <script src="app-import.js" defer></script>
   <script src="app-init.js" defer></script>
   <script src="app-upgrade.js" defer></script>
   <script src="search-cf.js" defer></script>
