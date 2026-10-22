@@ -2,6 +2,8 @@
 // PHẦN 5/5: ICON PICKER + SETTINGS + BACKUP/RESET + KEYWORD HANDLERS + BOOT
 // (đã chuyển sang lớp dữ liệu đa người dùng qua secureFetch / chatId)
 // =====================================================================
+// R49-D redeploy (2026-10-22): re-commit để kích hoạt lại Pages deploy
+// (nội dung sửa escape CSV giữ nguyên, chỉ thêm dòng ghi chú này).
 
 // ==========================================
 // TÍNH NĂNG CỬA SỔ "ICON PICKER"
