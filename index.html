@@ -291,6 +291,10 @@
               <button id="importCsvBtn" class="btn-soft" style="padding: 10px;"><i class="fas fa-file-csv text-primary-color"></i> Nhập file CSV</button>
               <input type="file" id="importCsvFile" accept=".csv" style="display: none;">
           </div>
+          <div class="settings-row-col">
+              <div class="settings-info mb-2"><i class="fas fa-clock-rotate-left" style="color: var(--primary);"></i><span>Lịch sử nhập CSV</span></div>
+              <div id="importHistoryList" style="font-size:14px;"><div style="font-size:13px;color:var(--text-2);">Chưa có đợt nhập CSV nào.</div></div>
+          </div>
           <div class="settings-row danger-row" id="hardResetBtn">
               <i class="fas fa-trash"></i> Xóa tất cả dữ liệu!
           </div>
@@ -517,7 +521,7 @@
 
    <div id="importPreviewModal" class="modal-sheet" style="display: flex; flex-direction: column;">
       <div class="modal-handle" id="importPreviewHandle"></div>
-      <div class="modal-title"><i class="fas fa-file-import" style="color: var(--primary); margin-right: 8px;"></i> Xem trước khi nhập CSV</div>
+      <div class="modal-title"><i class="fas fa-file-import" style="color: var(--primary); margin-right: 8px;"></i><span id="importSheetTitleText">Xem trước khi nhập CSV</span></div>
       <div style="flex: 1; overflow-y: auto; padding-bottom: 10px; -webkit-overflow-scrolling: touch;">
           <div id="importPreviewBody"></div>
           <div id="importProgress" style="display: none; font-size: 14px; font-weight: 700; text-align: center; padding: 12px 0;"></div>
@@ -525,6 +529,10 @@
       <div class="modal-actions m-0 pt-3" style="border-top: 1px solid var(--border-color); flex-shrink: 0;">
           <button class="btn-cancel m-0 flex-1" id="importCancelBtn"><i class="fas fa-times"></i> Đóng</button>
           <button class="btn-save m-0 flex-1" id="importConfirmBtn"><i class="fas fa-file-import"></i> Nhập dữ liệu</button>
+      </div>
+      <div id="importSpinner" style="display:none;position:absolute;inset:0;z-index:5;background:rgba(255,255,255,0.88);border-radius:28px 28px 0 0;align-items:center;justify-content:center;flex-direction:column;gap:10px;">
+          <i class="fas fa-circle-notch fa-spin" style="font-size:28px;color:var(--primary);"></i>
+          <span id="importSpinnerText" style="font-size:14px;font-weight:600;">Đang tải…</span>
       </div>
     </div>
 
