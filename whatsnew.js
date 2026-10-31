@@ -21,7 +21,7 @@
     enabled: true,
 
     // >>> ĐỔI MỖI KHI CÓ THÔNG BÁO MỚI (bắt buộc) <<<
-    version: '2026.10.22a',
+    version: '2026.10.31a',
 
     // false = KHÔNG cho người dùng tắt, hiện mọi lần mở app
     dismissible: true,
@@ -29,19 +29,25 @@
     style: 'info',        // 'warning' (cam/đỏ) hoặc 'info' (xanh)
     icon: '🎉',
     title: 'CÓ GÌ MỚI?',
-    subtitle: 'Đã có nhập giao dịch từ file CSV',
+    subtitle: 'Đã có nhập nhanh kiểu tin nhắn',
 
     // Căn lề đoạn văn: 'justify' (đều 2 bên) | 'left' | 'center'
     align: 'justify',
 
     // Các đoạn văn. Cho phép thẻ HTML đơn giản: <b> <i> <br>
     body: [
-      'Bản cập nhật này thêm tính năng nhập giao dịch từ file CSV — chuyển dữ liệu từ app khác sang mà không cần nhập tay từng dòng:',
-      'Vào Cài đặt → Dữ liệu & Hệ thống → Nhập file CSV để bắt đầu.'
+      'Bản cập nhật này thêm tính năng nhập nhanh kiểu tin nhắn — nhập giao dịch ngay trong app như gửi tin nhắn, không cần mở từng form:',
+      'Nhập từ file CSV vẫn ở Cài đặt → Dữ liệu & Hệ thống → Nhập file CSV.'
     ],
 
     // Danh sách gạch đầu dòng kiểu "Có gì mới". Để [] nếu không dùng.
+    // R70: 5 mục nhập nhanh thêm lên trên, 6 mục CSV của R53 giữ nguyên bên dưới.
     items: [
+      { icon:'💬', title:'Nhập nhanh kiểu tin nhắn', desc:'Bấm bong bóng chat ở góc phải, gõ như gửi tin nhắn rồi bấm Lưu — không cần mở từng form.' },
+      { icon:'✍️', title:'Một tin nhập được nhiều khoản', desc:'Nhiều khoản cách nhau bằng dấu chấm; Enter để xuống dòng, chỉ nút máy bay giấy mới gửi.' },
+      { icon:'📅', title:'Ngày nào cũng rõ', desc:'Dòng không ghi ngày thì mặc định hôm nay; ghi ngày thì khoản đó theo ngày đó; mọi dòng đều hiện ngày trong ngoặc.' },
+      { icon:'📝', title:'Ghi chú trong ngoặc đơn', desc:'Viết thêm ghi chú trong ngoặc đơn cuối câu, ví dụ: 500k siêu thị (mua đồ cả tuần).' },
+      { icon:'✅', title:'Lưu xong biết rõ từng ngày', desc:'Bấm Lưu là lưu hàng loạt; kết quả báo rõ từng ngày, bấm Đóng là về lại tab Giao dịch.' },
       { icon:'📥', title:'Nhập hàng loạt từ file CSV', desc:'Nhập hàng loạt giao dịch từ file CSV của app khác, không cần nhập tay từng dòng.' },
       { icon:'🧭', title:'Tự chọn cột nhập vào đâu', desc:'App tự nhận diện định dạng file; bạn tự chọn cột nào nhập vào trường nào, cột nào bỏ qua.' },
       { icon:'👀', title:'Xem trước từng dòng', desc:'Dòng nhập, dòng trùng, dòng lỗi đều hiện rõ để bạn chọn trước khi nhập.' },
