@@ -213,9 +213,12 @@ window.deleteTransaction = function(id) {
 // từ đánh dấu); "lương"/"nhận" đầu dòng -> Thu nhập NHƯNG giữ lại trong
 // nội dung (vì đó là nội dung thật: "lương 15tr" -> nội dung "lương").
 // Mặc định còn lại là Chi tiêu.
-// QUY TẮC DANH MỤC: khớp chuỗi con trên chuỗi đã thường hoá (không dấu,
-// không phân biệt hoa thường) với từ khóa của user; từ khóa dài nhất thắng.
-// Không khớp -> danh mục để trống, preview bắt user chọn mới cho lưu.
+// QUY TẮC DANH MỤC (R60 — ĐÚNG LUẬT WEBHOOK Worker v3.1, sửa sai R54):
+// chỉ lowercase, GIỮ NGUYÊN dấu (R54 strip dấu nên "sữa" thành "sua" =
+// "sửa", làm "sữa chua" bị nhận nhầm thành "Dịch vụ sửa chữa"); từ khóa
+// phải khớp nguyên cụm từ với ranh giới từ (?:^|\s)kw(?:\s|$) như webhook;
+// điểm = số từ của từ khóa, điểm cao thắng, hòa thì từ khóa gặp trước thắng.
+// Không khớp -> danh mục để trống, khung chat bắt user chọn mới cho lưu.
 
 function __qeNorm(s) {
   return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\u0111/g, 'd');
@@ -305,16 +308,27 @@ function __qeDetectType(text) {
   return { type: 'Chi tiêu', rest: t };
 }
 
+// R60: escape ký tự regex trong từ khóa, đúng như webhook làm
+// (kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).
+function __qeEscapeRegExp(s) {
+  return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// R60: khớp danh mục đúng luật webhook — lowercase giữ dấu, ranh giới từ,
+// điểm = số từ, cao thắng, hòa thì gặp trước thắng. Không khớp -> ''.
 function __qeMatchCategory(content, entries) {
-  var norm = __qeNorm(content);
-  if (!norm) return '';
-  var best = '', bestLen = 0;
+  var desc = (content || '').toLowerCase().trim();
+  if (!desc) return '';
+  var best = '', bestScore = 0;
   (entries || []).forEach(function (e) {
     if (!e || !e.category) return;
-    var kws = (e.keywords || '').split(',').map(function (k) { return k.trim(); }).filter(Boolean);
+    var kws = (e.keywords || '').split(',').map(function (k) { return k.trim().toLowerCase(); }).filter(Boolean);
     kws.forEach(function (kw) {
-      var nk = __qeNorm(kw);
-      if (nk && norm.indexOf(nk) !== -1 && nk.length > bestLen) { best = e.category.trim(); bestLen = nk.length; }
+      var re = new RegExp('(?:^|\\s)' + __qeEscapeRegExp(kw) + '(?:\\s|$)', 'i');
+      if (re.test(desc)) {
+        var score = kw.split(/\s+/).length;
+        if (score > bestScore) { best = e.category.trim(); bestScore = score; }
+      }
     });
   });
   return best;
@@ -535,6 +549,9 @@ window.closeQuickEntry = function (force) {
     return;
   }
   __qeThread = []; __qeSaving = false; __qeNotices = [];
+  // R60: đóng khung cũng giấu popup lưu nếu còn hiện (phòng trường hợp
+  // đóng bằng đường khác ngoài nút "Đã hiểu").
+  try { var sp = document.getElementById('quickEntrySavePopup'); if (sp) sp.style.display = 'none'; } catch (e) {}
   // R58: vẽ lại thread sau khi dọn để DOM khớp dữ liệu (trước đây DOM cũ
   // vẫn còn cho tới lần mở sau, dù dữ liệu đã trống).
   try { __qeRenderThread(); } catch (e) {}
@@ -606,24 +623,91 @@ window.quickEntrySaveEdit = async function (id) {
   __qeEnsureCats();
 };
 
+// R60: popup lưu GIỮA MÀN HÌNH thay cho spin/đếm trong thread của R59
+// (Hùng: "Spin lúc chờ lưu nó là show popup giữa màn hình chứ. Icon tick
+// phải dạng flat."). Popup z-index 2500: trên sheet chat (2000) và overlay
+// (1500), dưới trang fullscreen (3000) và sheet nhập CSV (3500); lớp phủ
+// chặn tương tác trong lúc lưu nên không bấm đúp được. Xong: CÙNG popup
+// chuyển sang tick FLAT (SVG 1 màu, không emoji, không gradient, không
+// bóng) + "Đã lưu N giao dịch" (+ dòng lỗi/chưa hợp lệ nếu có) và ĐỨNG
+// YÊN tới khi user bấm "Đã hiểu" — không tự tắt để khỏi giấu dòng lỗi.
+// Popup này LÀ thông báo lưu nên dòng hệ thống trong thread của R59 bị gỡ
+// để khỏi thông báo trùng 2 lần cho cùng 1 lần lưu (dòng lỗi/chưa hợp lệ
+// vẫn giữ trong thread, gắn cờ như trước).
+function __qeShowSavePopup() {
+  var p = document.getElementById('quickEntrySavePopup'); if (!p) return;
+  var ic = document.getElementById('quickEntrySavePopupIcon');
+  var tx = document.getElementById('quickEntrySavePopupText');
+  var btn = document.getElementById('quickEntrySavePopupBtn');
+  if (ic) ic.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>';
+  if (tx) tx.textContent = '';
+  if (btn) btn.style.display = 'none';
+  p.style.display = 'flex';
+}
+function __qeUpdateSavePopupCount(i, n) {
+  var tx = document.getElementById('quickEntrySavePopupText');
+  if (tx) tx.textContent = 'Đang lưu ' + i + '/' + n + '…';
+}
+function __qeShowSavePopupDone(saved, failed, invalid) {
+  var p = document.getElementById('quickEntrySavePopup'); if (!p) return;
+  var ic = document.getElementById('quickEntrySavePopupIcon');
+  var tx = document.getElementById('quickEntrySavePopupText');
+  var btn = document.getElementById('quickEntrySavePopupBtn');
+  // Tick FLAT: SVG 1 màu #10B981, không emoji, không gradient, không bóng.
+  if (ic) ic.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5" stroke="#10B981" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  if (tx) {
+    var lines = [];
+    if (saved > 0) lines.push('Đã lưu ' + saved + ' giao dịch');
+    if (failed > 0) lines.push('⚠️ ' + failed + ' dòng lưu lỗi, vẫn giữ trong khung chat để sửa');
+    if (invalid > 0) lines.push('⚠️ ' + invalid + ' dòng chưa hợp lệ chưa được lưu');
+    tx.textContent = lines.join('\n');
+  }
+  if (btn) btn.style.display = 'block';
+  p.style.display = 'flex';
+}
+window.quickEntryDismissSavePopup = function () {
+  var p = document.getElementById('quickEntrySavePopup'); if (p) p.style.display = 'none';
+};
+
+// R60 (FIX 3): submitTx unshift khoản mới vào cache ngày Tab 1 đang hiển
+// thị BẤT KỂ ngày thật của khoản — lưu khoản 27/10 trong khi Tab 1 đang ở
+// 31/10 sẽ nhiễm cache ngày 31/10, chỉ load lại mới sạch (BUG Hùng báo).
+// Sau khi lưu xong, lọc khỏi cache ngày đang hiển thị mọi khoản có ngày
+// khác ngày đó; khoản cùng ngày giữ lại (đúng ngày, submitTx đã thêm
+// đúng). Không đụng #transactionDate nên ngày hiển thị của Tab 1 không
+// đổi. Chạy cả khi Tab 1 không phải tab đang mở (lúc quay lại Tab 1,
+// openTab gọi fetchTransactions(false) đi đường cache nên cache đã lọc
+// sẵn là đủ đúng). LƯU Ý: khoản lưu LỖI cùng ngày vẫn để lại "bóng ma"
+// trong cache do submitTx unshift trước PUT và không rollback — đó là hành
+// vi sẵn có của submitTx (form thêm lẻ cũng vậy), ngoài phạm vi R60.
+function __qePurgeWrongDateFromTab1Cache() {
+  try {
+    var ct = (typeof cachedTransactions !== 'undefined') ? cachedTransactions : null;
+    if (!ct || !ct.cacheKey || !Array.isArray(ct.data)) return;
+    var ck = ct.cacheKey;
+    var keep = function (t) { return !t || !t.date || t.date === ck; };
+    ct.data = ct.data.filter(keep);
+    // dayTxCache thường giữ cùng object, nhưng lọc luôn nếu là object khác.
+    if (typeof window !== 'undefined' && window.dayTxCache && window.dayTxCache[ck] && window.dayTxCache[ck] !== ct && Array.isArray(window.dayTxCache[ck].data)) {
+      window.dayTxCache[ck].data = window.dayTxCache[ck].data.filter(keep);
+    }
+  } catch (e) {}
+}
+
 // R57: Lưu từ thread (không còn màn xem trước tổng). Ghi TUẦN TỰ các
 // khoản hợp lệ (cấp id toàn cục bắt buộc tuần tự, không song song).
-// R59: lúc lưu hiện SPIN + đếm trực tiếp "Đang lưu x/N…" trong khung chat,
-// nút Lưu khóa chống bấm đúp; xong thì thông báo thành công là dòng hệ
-// thống TRONG THREAD kiểu webhook ("✅ Đã lưu N giao dịch") — KHÔNG toast
-// tổng kết nữa để khỏi thông báo trùng 2 lần cho cùng 1 lần lưu.
+// R59: nút Lưu khóa chống bấm đúp; KHÔNG toast tổng kết.
+// R60: tiến trình + kết quả qua popup giữa màn hình (xem trên).
 window.quickEntrySave = async function () {
   if (__qeSaving) return;
   var rows = __qeFlatItems().filter(__qeValid);
   if (!rows.length) { try { showToast('Chưa có dòng hợp lệ để lưu', 'info'); } catch (e) {} return; }
   __qeSaving = true;
   var btn = document.getElementById('quickEntrySaveBtn'); if (btn) btn.disabled = true;
-  var prog = document.getElementById('quickEntrySaveProgress');
-  var spin = document.getElementById('quickEntrySaveSpinner');
-  if (spin) spin.style.display = 'block';
+  __qeShowSavePopup();
   var saved = 0, failed = 0;
   for (var i = 0; i < rows.length; i++) {
-    if (prog) prog.textContent = 'Đang lưu ' + (i + 1) + '/' + rows.length + '…';
+    __qeUpdateSavePopupCount(i + 1, rows.length);
     var ok = false;
     try { ok = await submitTx(__qeBuildTx(rows[i]), { quiet: true }); } catch (e) { ok = false; }
     if (ok) { saved++; rows[i]._saved = true; } else { failed++; rows[i].saveError = true; }
@@ -631,17 +715,20 @@ window.quickEntrySave = async function () {
   __qeThread.forEach(function (m) { m.items = m.items.filter(function (it) { return !it._saved; }); });
   __qeThread = __qeThread.filter(function (m) { return m.items.length; });
   __qeThread.forEach(function (m) { m.items.forEach(function (it) { delete it._saved; }); });
+  // R60 FIX 3: lọc khoản sai ngày khỏi cache Tab 1 trước khi vẽ lại.
+  __qePurgeWrongDateFromTab1Cache();
   // R58: lưu hàng loạt chỉ rung 1 lần cuối khi có dòng lưu thành công
   // (submitTx quiet đã tắt haptic từng dòng).
   if (saved > 0) { try { triggerHapticNotification('success'); } catch (e) {} }
   __qeSaving = false;
-  if (spin) spin.style.display = 'none';
-  if (prog) prog.textContent = '';
   var c = __qeCounts();
-  if (saved > 0) __qeNotices.push('✅ Đã lưu ' + saved + ' giao dịch');
-  if (failed > 0) __qeNotices.push('⚠️ ' + failed + ' dòng lưu lỗi, vẫn giữ trong khung chat để sửa');
-  if (c.invalid > 0) __qeNotices.push('⚠️ ' + c.invalid + ' dòng chưa hợp lệ chưa được lưu');
+  __qeShowSavePopupDone(saved, failed, c.invalid);
   __qeRenderThread();
+  // R60 FIX 3: vẽ lại Tab 1 từ cache đã lọc (ngày hiển thị không đổi).
+  try {
+    var t1 = document.getElementById('tab1');
+    if (t1 && t1.classList.contains('active') && typeof displayTransactions === 'function') displayTransactions();
+  } catch (e) {}
 };
 
 // Hook cho test Node (không ảnh hưởng hành vi production).
@@ -666,6 +753,15 @@ window.__quickEntryTest = {
   clearThread: function () { __qeThread = []; __qeNextId = 1; __qeNextItemId = 1; __qeNotices = []; },
   getNotices: function () { return __qeNotices.slice(); },
   renderThread: __qeRenderThread,
+  purgeWrongDateFromTab1Cache: __qePurgeWrongDateFromTab1Cache,
+  getSavePopup: function () {
+    var p = document.getElementById('quickEntrySavePopup');
+    var t = document.getElementById('quickEntrySavePopupText');
+    var ic = document.getElementById('quickEntrySavePopupIcon');
+    var b = document.getElementById('quickEntrySavePopupBtn');
+    return { display: p ? p.style.display : undefined, text: t ? t.textContent : undefined,
+      icon: ic ? ic.innerHTML : undefined, btnDisplay: b ? b.style.display : undefined };
+  },
 };
 
 // ================= END R54 =================
