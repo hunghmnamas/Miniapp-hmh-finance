@@ -479,7 +479,7 @@
       <div id="quickEntryThreadView" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
         <div id="quickEntryThread" class="quick-chat-thread"></div>
         <form id="quickEntryForm" class="quick-chat-composer" onsubmit="event.preventDefault(); quickEntrySend();">
-          <input type="text" id="quickEntryInput" class="field-input" style="flex: 1; margin: 0;" placeholder="Ví dụ: ăn trưa 50k" autocomplete="off">
+          <textarea id="quickEntryInput" class="field-input qe-composer-input" rows="1" style="flex: 1; margin: 0;" placeholder="Ví dụ: ăn trưa 50k" autocomplete="off"></textarea>
           <button type="submit" class="qe-send-btn" aria-label="Gửi"><i class="fas fa-paper-plane"></i></button>
         </form>
       </div>
