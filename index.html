@@ -471,7 +471,10 @@
       <div class="modal-handle" onclick="closeQuickEntry()"></div>
       <div class="quick-chat-header">
         <div class="modal-title" style="margin: 0;">Nhập nhanh</div>
-        <button id="quickEntrySaveBtn" type="button" class="btn-save" style="flex: none; width: auto; padding: 8px 16px;" onclick="quickEntrySave()">Lưu (0)</button>
+        <div style="display: flex; gap: 8px; align-items: center; flex: none;">
+          <button id="quickEntrySaveBtn" type="button" class="btn-save" style="flex: none; width: auto; padding: 8px 16px;" onclick="quickEntrySave()">Lưu (0)</button>
+          <button type="button" class="qe-close-btn" aria-label="Đóng khung nhập nhanh" onclick="closeQuickEntry()">✕</button>
+        </div>
       </div>
       <div id="quickEntryThreadView" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
         <div id="quickEntryThread" class="quick-chat-thread"></div>
