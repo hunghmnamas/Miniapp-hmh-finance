@@ -21,13 +21,14 @@
     enabled: true,
 
     // >>> ĐỔI MỖI KHI CÓ THÔNG BÁO MỚI (bắt buộc) <<<
-    version: '2026.10.31a',
+    version: '2026.10.31b',
 
     // false = KHÔNG cho người dùng tắt, hiện mọi lần mở app
     dismissible: true,
 
     style: 'info',        // 'warning' (cam/đỏ) hoặc 'info' (xanh)
-    icon: '🎉',
+    // R71: icon dạng flat (Font Awesome 6.5.2 đã nạp trong app) — không dùng emoji.
+    icon: 'fa-bullhorn',
     title: 'CÓ GÌ MỚI?',
     subtitle: 'Đã có nhập nhanh kiểu tin nhắn',
 
@@ -43,17 +44,17 @@
     // Danh sách gạch đầu dòng kiểu "Có gì mới". Để [] nếu không dùng.
     // R70: 5 mục nhập nhanh thêm lên trên, 6 mục CSV của R53 giữ nguyên bên dưới.
     items: [
-      { icon:'💬', title:'Nhập nhanh kiểu tin nhắn', desc:'Bấm bong bóng chat ở góc phải, gõ như gửi tin nhắn rồi bấm Lưu — không cần mở từng form.' },
-      { icon:'✍️', title:'Một tin nhập được nhiều khoản', desc:'Nhiều khoản cách nhau bằng dấu chấm; Enter để xuống dòng, chỉ nút máy bay giấy mới gửi.' },
-      { icon:'📅', title:'Ngày nào cũng rõ', desc:'Dòng không ghi ngày thì mặc định hôm nay; ghi ngày thì khoản đó theo ngày đó; mọi dòng đều hiện ngày trong ngoặc.' },
-      { icon:'📝', title:'Ghi chú trong ngoặc đơn', desc:'Viết thêm ghi chú trong ngoặc đơn cuối câu, ví dụ: 500k siêu thị (mua đồ cả tuần).' },
-      { icon:'✅', title:'Lưu xong biết rõ từng ngày', desc:'Bấm Lưu là lưu hàng loạt; kết quả báo rõ từng ngày, bấm Đóng là về lại tab Giao dịch.' },
-      { icon:'📥', title:'Nhập hàng loạt từ file CSV', desc:'Nhập hàng loạt giao dịch từ file CSV của app khác, không cần nhập tay từng dòng.' },
-      { icon:'🧭', title:'Tự chọn cột nhập vào đâu', desc:'App tự nhận diện định dạng file; bạn tự chọn cột nào nhập vào trường nào, cột nào bỏ qua.' },
-      { icon:'👀', title:'Xem trước từng dòng', desc:'Dòng nhập, dòng trùng, dòng lỗi đều hiện rõ để bạn chọn trước khi nhập.' },
-      { icon:'✏️', title:'Sửa dòng lỗi ngay tại chỗ', desc:'Dòng lỗi sửa trực tiếp ngay trong khung xem trước rồi nhập tiếp.' },
-      { icon:'🔀', title:'Loại lạ vẫn nhập được', desc:'Loại giao dịch app chưa hỗ trợ (ví dụ chuyển khoản) thì bạn tự chọn nhập dạng Chi hay Thu, hoặc bỏ qua — app không tự đoán, không tự bỏ lặng.' },
-      { icon:'↩️', title:'Nhập sai vẫn gỡ được', desc:'Mỗi đợt nhập đều có nút hoàn tác, chỉ xoá đúng dữ liệu vừa nhập, không động tới dữ liệu cũ.' }
+      { icon:'fa-comment', title:'Nhập nhanh kiểu tin nhắn', desc:'Bấm bong bóng chat ở góc phải, gõ như gửi tin nhắn rồi bấm Lưu — không cần mở từng form.' },
+      { icon:'fa-pen', title:'Một tin nhập được nhiều khoản', desc:'Nhiều khoản cách nhau bằng dấu chấm; Enter để xuống dòng, chỉ nút máy bay giấy mới gửi.' },
+      { icon:'fa-calendar-day', title:'Ngày nào cũng rõ', desc:'Dòng không ghi ngày thì mặc định hôm nay; ghi ngày thì khoản đó theo ngày đó; mọi dòng đều hiện ngày trong ngoặc.' },
+      { icon:'fa-note-sticky', title:'Ghi chú trong ngoặc đơn', desc:'Viết thêm ghi chú trong ngoặc đơn cuối câu, ví dụ: 500k siêu thị (mua đồ cả tuần).' },
+      { icon:'fa-circle-check', title:'Lưu xong biết rõ từng ngày', desc:'Bấm Lưu là lưu hàng loạt; kết quả báo rõ từng ngày, bấm Đóng là về lại tab Giao dịch.' },
+      { icon:'fa-file-import', title:'Nhập hàng loạt từ file CSV', desc:'Nhập hàng loạt giao dịch từ file CSV của app khác, không cần nhập tay từng dòng.' },
+      { icon:'fa-table-columns', title:'Tự chọn cột nhập vào đâu', desc:'App tự nhận diện định dạng file; bạn tự chọn cột nào nhập vào trường nào, cột nào bỏ qua.' },
+      { icon:'fa-eye', title:'Xem trước từng dòng', desc:'Dòng nhập, dòng trùng, dòng lỗi đều hiện rõ để bạn chọn trước khi nhập.' },
+      { icon:'fa-pen-to-square', title:'Sửa dòng lỗi ngay tại chỗ', desc:'Dòng lỗi sửa trực tiếp ngay trong khung xem trước rồi nhập tiếp.' },
+      { icon:'fa-shuffle', title:'Loại lạ vẫn nhập được', desc:'Loại giao dịch app chưa hỗ trợ (ví dụ chuyển khoản) thì bạn tự chọn nhập dạng Chi hay Thu, hoặc bỏ qua — app không tự đoán, không tự bỏ lặng.' },
+      { icon:'fa-rotate-left', title:'Nhập sai vẫn gỡ được', desc:'Mỗi đợt nhập đều có nút hoàn tác, chỉ xoá đúng dữ liệu vừa nhập, không động tới dữ liệu cũ.' }
     ],
 
     // Ô đếm ngược. Đặt null nếu không dùng.
@@ -129,7 +130,7 @@
     var itemsHtml = items.map(function (u, i) {
       var border = (i === items.length - 1) ? '' : 'border-bottom:1px solid #eef0f2;';
       return '<div style="display:flex; gap:12px; align-items:flex-start; padding:11px 0; ' + border + '">' +
-               '<div style="font-size:20px; line-height:1.35; flex-shrink:0;">' + (u.icon || '•') + '</div>' +
+               '<div style="font-size:20px; line-height:1.35; flex-shrink:0; color:' + T.accent + '; width:26px; text-align:center;">' + ((u.icon && u.icon.indexOf('fa-') === 0) ? '<i class="fas ' + u.icon + '"></i>' : (u.icon || '•')) + '</div>' +
                '<div style="flex:1;">' +
                  '<div style="font-weight:700; color:#111827; font-size:14px; margin-bottom:3px;">' + u.title + '</div>' +
                  '<div style="color:#4b5563; font-size:13px; line-height:1.5; text-align:' + ALIGN + '; hyphens:none;">' + u.desc + '</div>' +
@@ -181,7 +182,7 @@
     dialog.style.cssText = 'background:#ffffff; width:100%; max-width:400px; max-height:85vh; display:flex; flex-direction:column; border-radius:20px; box-shadow:0 24px 70px rgba(0,0,0,0.45); overflow:hidden;';
     dialog.innerHTML =
       '<div style="padding:22px 20px 16px; text-align:center; background:' + T.grad + '; color:#fff;">' +
-        '<div style="font-size:28px; margin-bottom:6px;">' + (POPUP.icon || '🔔') + '</div>' +
+        '<div style="font-size:28px; margin-bottom:6px;">' + (((POPUP.icon || 'fa-bell').indexOf('fa-') === 0) ? '<i class="fas ' + (POPUP.icon || 'fa-bell') + '"></i>' : (POPUP.icon || 'fa-bell')) + '</div>' +
         '<div style="font-size:18px; font-weight:800; color:#fff;">' + POPUP.title + '</div>' +
         subtitleHtml +
       '</div>' +
