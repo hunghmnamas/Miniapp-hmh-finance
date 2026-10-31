@@ -318,23 +318,128 @@ function parseQuickMessage(text, entries) {
   return { ok: true, amount: amt.value, type: det.type, category: category, content: content, date: formatDateToDDMMYYYY(new Date()) };
 }
 
-// ---- Lớp giao diện: sheet nhập nhanh (dùng chung modalOverlay + .modal-sheet) ----
-var __qeType = 'Chi tiêu';
+// ---- Lớp giao diện R55: khung chat nhập hàng loạt (thay sheet xem trước từng dòng của R54) ----
+// Parser phía trên giữ nguyên R54, không đổi quy tắc. Nguyên tắc R55: gửi tin
+// KHÔNG BAO GIỜ mở modal chặn luồng; mỗi tin hiện ngay trong thread kèm dòng
+// phân tích gọn; xem trước TỔNG duy nhất một lần rồi "Lưu tất cả" ghi tuần tự
+// qua submitTx. Dòng chưa hợp lệ không bị mất — vẫn giữ trong thread để sửa.
+
+var __qeThread = [];
+var __qeNextId = 1;
+var __qeCatCache = null;
+var __qePreviewOpen = false;
+var __qeSaving = false;
+
+// --- Logic thuần (không chạm DOM) — test được trong VM ---
+function __qeNewMessage(text, entries) {
+  var r = parseQuickMessage(text, entries);
+  var m = { id: __qeNextId++, text: text, editing: false, saveError: false };
+  if (r.ok) { m.ok = true; m.error = ''; m.amount = r.amount; m.type = r.type; m.category = r.category; m.content = r.content; m.date = r.date; }
+  else { m.ok = false; m.error = r.error; m.amount = 0; m.type = 'Chi tiêu'; m.category = ''; m.content = ''; m.date = formatDateToDDMMYYYY(new Date()); }
+  return m;
+}
+function __qeAddMessage(text, entries) { var m = __qeNewMessage(text, entries); __qeThread.push(m); return m; }
+function __qeValid(m) { return !!(m.ok && m.amount > 0 && m.content && m.category); }
+function __qeCounts() {
+  var v = 0;
+  __qeThread.forEach(function (m) { if (__qeValid(m)) v++; });
+  return { total: __qeThread.length, valid: v, invalid: __qeThread.length - v };
+}
+function __qeRemoveMessage(id) { __qeThread = __qeThread.filter(function (m) { return m.id !== id; }); }
+function __qeBuildTx(m) { return { content: m.content, amount: m.amount, type: m.type, category: m.category, note: '', date: m.date, action: 'addTransaction' }; }
+function __qeReparseMessage(m, entries) {
+  var r = parseQuickMessage(m.text, entries);
+  if (r.ok) { m.ok = true; m.error = ''; m.amount = r.amount; m.type = r.type; m.category = r.category; m.content = r.content; m.date = r.date; }
+  else { m.ok = false; m.error = r.error; m.amount = 0; m.category = ''; m.content = ''; }
+  m.saveError = false;
+  return m;
+}
+
+// --- Lớp DOM ---
+function __qeAmtText(amount) {
+  if (typeof isPrivacyActive !== 'undefined' && isPrivacyActive) return '***';
+  return formatNumberWithCommas(String(amount)) + ' ₫';
+}
+function __qeCatOptions(selected) {
+  var opts = '<option value="">— Chọn danh mục —</option>';
+  (__qeCatCache || []).forEach(function (c) {
+    opts += '<option value="' + escapeHTML(c) + '"' + (c === selected ? ' selected' : '') + '>' + escapeHTML(c) + '</option>';
+  });
+  return opts;
+}
+function __qeEnsureCats() {
+  if (__qeCatCache) return;
+  try {
+    fetchCategories().then(function (cats) {
+      __qeCatCache = cats || [];
+      if (!__qeThread.some(function (m) { return m.editing; })) {
+        __qeRenderThread();
+        if (__qePreviewOpen) __qeRenderPreview();
+      }
+    });
+  } catch (e) {}
+}
+function __qeParseLine(m) {
+  if (!m.ok) return '<div class="qe-parseline qe-flag">⚠ ' + escapeHTML(m.error) + '</div>';
+  var line = escapeHTML(m.type) + ' · ' + __qeAmtText(m.amount) + (m.category ? ' · ' + escapeHTML(m.category) : '') + (m.content ? ' · ' + escapeHTML(m.content) : '');
+  var flag = '';
+  if (!m.category) flag = '<div class="qe-parseline qe-flag">⚠ Chưa có danh mục — chọn bên dưới để lưu được.</div>';
+  if (m.saveError) flag += '<div class="qe-parseline qe-flag">⚠ Lưu lỗi — vẫn giữ trong khung chat, bấm Lưu tất cả để thử lại.</div>';
+  return '<div class="qe-parseline">' + line + '</div>' + flag;
+}
+function __qeRenderMsg(m) {
+  var bubble;
+  if (m.editing) {
+    bubble = '<div class="qe-bubble-edit"><input type="text" id="qeEditInput_' + m.id + '" class="field-input" style="margin:0;" value="' + escapeHTML(m.text) + '">'
+      + '<div style="display:flex;gap:8px;margin-top:8px;"><button type="button" class="btn-save flex-1 m-0" onclick="quickEntrySaveEdit(' + m.id + ')">Lưu sửa</button>'
+      + '<button type="button" class="btn-cancel flex-1 m-0" onclick="quickEntryCancelEdit(' + m.id + ')">Hủy</button></div></div>';
+  } else {
+    bubble = '<div class="qe-bubble">' + escapeHTML(m.text) + '</div>'
+      + '<div class="qe-msg-actions"><button type="button" onclick="quickEntryEditMsg(' + m.id + ')">Sửa</button>'
+      + '<button type="button" onclick="quickEntryRemoveMsg(' + m.id + ')">✕ Xóa</button></div>';
+  }
+  var catSel = '';
+  if (m.ok && !m.category) {
+    catSel = '<select class="field-input qe-cat-select" onchange="quickEntrySetMsgCategory(' + m.id + ', this.value)">' + __qeCatOptions('') + '</select>';
+  }
+  return '<div class="qe-msg">' + bubble + __qeParseLine(m) + catSel + '</div>';
+}
+function __qeRenderThread() {
+  var th = document.getElementById('quickEntryThread'); if (!th) return;
+  var btn = document.getElementById('quickEntryPreviewBtn');
+  if (btn) btn.textContent = 'Xem trước (' + __qeThread.length + ')';
+  if (!__qeThread.length) {
+    th.innerHTML = '<div class="qe-empty">Gõ tin nhắn như chat Telegram — ví dụ: ăn trưa 50k.<br>Gửi nhiều dòng liên tiếp, xem trước một lần rồi Lưu tất cả.</div>';
+    return;
+  }
+  th.innerHTML = __qeThread.map(__qeRenderMsg).join('');
+  th.scrollTop = th.scrollHeight;
+}
 
 window.openQuickEntry = function () {
   try { triggerHaptic('light'); } catch (e) {}
+  __qePreviewOpen = false;
+  var tv = document.getElementById('quickEntryThreadView'); if (tv) tv.style.display = 'flex';
+  var pv = document.getElementById('quickEntryPreviewView'); if (pv) pv.style.display = 'none';
   var ov = document.getElementById('modalOverlay'); if (ov) ov.classList.add('show');
   setTimeout(function () { var s = document.getElementById('quickEntryModal'); if (s) s.classList.add('show'); }, 10);
+  __qeRenderThread();
   var inp = document.getElementById('quickEntryInput'); if (inp) setTimeout(function () { inp.focus(); }, 350);
 };
 
-window.closeQuickEntry = function () {
+window.closeQuickEntry = function (force) {
+  if (!force && __qeThread.length) {
+    showCustomConfirm('Đóng khung nhập nhanh',
+      'Còn <strong>' + __qeThread.length + ' dòng</strong> chưa lưu, đóng sẽ mất. Bạn có muốn đóng không?',
+      'Đóng', function () { window.closeQuickEntry(true); });
+    return;
+  }
+  __qeThread = []; __qePreviewOpen = false; __qeSaving = false;
+  var tv = document.getElementById('quickEntryThreadView'); if (tv) tv.style.display = 'flex';
+  var pv = document.getElementById('quickEntryPreviewView'); if (pv) pv.style.display = 'none';
   var s = document.getElementById('quickEntryModal'); if (s) s.classList.remove('show');
   setTimeout(function () { var ov = document.getElementById('modalOverlay'); if (ov) ov.classList.remove('show'); }, 300);
   var inp = document.getElementById('quickEntryInput'); if (inp) inp.value = '';
-  var pv = document.getElementById('quickEntryPreview'); if (pv) { pv.style.display = 'none'; pv.innerHTML = ''; }
-  var er = document.getElementById('quickEntryError'); if (er) { er.style.display = 'none'; er.textContent = ''; }
-  __qeType = 'Chi tiêu';
 };
 
 // Đóng sheet nhập nhanh cùng mọi modal khác (nút overlay gọi closeAllModals).
@@ -346,26 +451,6 @@ window.closeQuickEntry = function () {
   };
 })();
 
-function __qeShowError(msg) {
-  var er = document.getElementById('quickEntryError');
-  if (!er) return;
-  er.textContent = msg; er.style.display = 'block';
-}
-function __qeHideError() {
-  var er = document.getElementById('quickEntryError');
-  if (er) { er.style.display = 'none'; er.textContent = ''; }
-}
-
-window.quickEntrySetType = function (type) {
-  __qeType = type;
-  ['Chi tiêu', 'Thu nhập'].forEach(function (t) {
-    var el = document.getElementById(t === 'Chi tiêu' ? 'qeTypeChi' : 'qeTypeThu');
-    if (!el) return;
-    el.classList.remove('expense-active', 'income-active');
-    if (t === type) el.classList.add(t === 'Chi tiêu' ? 'expense-active' : 'income-active');
-  });
-};
-
 async function __qeLoadKeywordEntries() {
   try {
     if (cachedKeywords && cachedKeywords.length) return cachedKeywords;
@@ -374,86 +459,166 @@ async function __qeLoadKeywordEntries() {
   return [];
 }
 
-window.quickEntryParse = async function () {
-  __qeHideError();
+// Gửi 1 tin: KHÔNG mở modal, chỉ thêm vào thread và dọn ô gõ để nhập tiếp.
+window.quickEntrySend = async function () {
   var inp = document.getElementById('quickEntryInput');
-  var text = inp ? inp.value : '';
+  var text = inp ? inp.value.trim() : '';
+  if (!text) return;
   var entries = await __qeLoadKeywordEntries();
-  var r = parseQuickMessage(text, entries);
-  if (!r.ok) { __qeShowError(r.error); return; }
-  var cats = [];
-  try { cats = await fetchCategories(); } catch (e) { cats = []; }
-  if (r.category && cats.indexOf(r.category) === -1) cats.push(r.category);
-  var pv = document.getElementById('quickEntryPreview');
-  if (!pv) return;
-  __qeType = r.type;
-  var opts = '<option value="">— Chọn danh mục —</option>' + cats.map(function (c) {
-    return '<option value="' + escapeHTML(c) + '"' + (c === r.category ? ' selected' : '') + '>' + escapeHTML(c) + '</option>';
+  __qeAddMessage(text, entries);
+  if (inp) inp.value = '';
+  __qeRenderThread();
+  __qeEnsureCats();
+  if (inp) inp.focus();
+};
+
+window.quickEntryRemoveMsg = function (id) {
+  __qeRemoveMessage(id);
+  __qeRenderThread();
+};
+window.quickEntrySetMsgCategory = function (id, category) {
+  var m = null;
+  __qeThread.forEach(function (x) { if (x.id === id) m = x; });
+  if (m) { m.category = category; m.saveError = false; }
+  __qeRenderThread();
+};
+window.quickEntryEditMsg = function (id) {
+  __qeThread.forEach(function (m) { m.editing = (m.id === id); });
+  __qeRenderThread();
+  var el = document.getElementById('qeEditInput_' + id);
+  if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+};
+window.quickEntryCancelEdit = function (id) {
+  __qeThread.forEach(function (m) { if (m.id === id) m.editing = false; });
+  __qeRenderThread();
+};
+window.quickEntrySaveEdit = async function (id) {
+  var el = document.getElementById('qeEditInput_' + id);
+  var m = null;
+  __qeThread.forEach(function (x) { if (x.id === id) m = x; });
+  if (!m) return;
+  var text = el ? el.value.trim() : '';
+  if (text) m.text = text;
+  m.editing = false;
+  var entries = await __qeLoadKeywordEntries();
+  __qeReparseMessage(m, entries);
+  __qeRenderThread();
+  __qeEnsureCats();
+};
+
+// --- Xem trước TỔNG duy nhất ---
+function __qeRenderPreview() {
+  var list = document.getElementById('quickEntryPreviewList'); if (!list) return;
+  var btn = document.getElementById('quickEntrySaveAllBtn');
+  var c = __qeCounts();
+  if (btn) btn.textContent = 'Lưu tất cả (' + c.valid + ')';
+  var prog = document.getElementById('quickEntrySaveProgress'); if (prog) prog.textContent = '';
+  if (!__qeThread.length) { list.innerHTML = '<div class="qe-empty">Chưa có dòng nào.</div>'; return; }
+  list.innerHTML = __qeThread.map(function (m) {
+    var flag = '';
+    if (!m.ok) flag = '<div class="qe-flag">⚠ ' + escapeHTML(m.error) + ' — dòng này sẽ không được lưu.</div>';
+    else if (!m.category) flag = '<div class="qe-flag">⚠ Chưa có danh mục — chọn danh mục để lưu được.</div>';
+    else if (!m.content) flag = '<div class="qe-flag">⚠ Chưa có nội dung — sửa nội dung để lưu được.</div>';
+    else if (m.saveError) flag = '<div class="qe-flag">⚠ Lần lưu trước bị lỗi.</div>';
+    return '<div class="qe-pv-row">'
+      + '<div class="qe-pv-head"><div class="type-row" style="margin:0;">'
+      + '<div id="qpvTypeChi_' + m.id + '" class="type-pill' + (m.type === 'Chi tiêu' ? ' expense-active' : '') + '" onclick="quickEntryPreviewSetType(' + m.id + ', \'Chi tiêu\')">⬆ Chi tiêu</div>'
+      + '<div id="qpvTypeThu_' + m.id + '" class="type-pill' + (m.type === 'Thu nhập' ? ' income-active' : '') + '" onclick="quickEntryPreviewSetType(' + m.id + ', \'Thu nhập\')">⬇ Thu nhập</div>'
+      + '</div><button type="button" class="qe-x" onclick="quickEntryPreviewRemove(' + m.id + ')">✕</button></div>'
+      + '<div class="field-group" style="margin-bottom:8px;"><div class="field-label">Số tiền</div>'
+      + '<input type="text" id="qpvAmt_' + m.id + '" class="field-input" oninput="quickEntryPreviewTouch()" value="' + escapeHTML(m.amount ? formatNumberWithCommas(String(m.amount)) : '') + '"></div>'
+      + '<div class="field-group" style="margin-bottom:8px;"><div class="field-label">Nội dung</div>'
+      + '<input type="text" id="qpvCon_' + m.id + '" class="field-input" oninput="quickEntryPreviewTouch()" value="' + escapeHTML(m.content) + '"></div>'
+      + '<div class="field-group" style="margin-bottom:0;"><div class="field-label">Danh mục</div>'
+      + '<select id="qpvCat_' + m.id + '" class="field-input" onchange="quickEntryPreviewSetCategory(' + m.id + ', this.value)">' + __qeCatOptions(m.category) + '</select></div>'
+      + '<div style="font-size:12px;color:var(--text-2);margin-top:6px;">Tin gốc: ' + escapeHTML(m.text) + '</div>'
+      + flag + '</div>';
   }).join('');
-  pv.innerHTML = '<div class="field-group" style="margin-bottom:10px;">'
-    + '<div class="field-label">Phân loại</div>'
-    + '<div class="type-row">'
-    + '<div id="qeTypeChi" class="type-pill' + (r.type === 'Chi tiêu' ? ' expense-active' : '') + '" onclick="quickEntrySetType(\'Chi tiêu\')">⬆ Chi tiêu</div>'
-    + '<div id="qeTypeThu" class="type-pill' + (r.type === 'Thu nhập' ? ' income-active' : '') + '" onclick="quickEntrySetType(\'Thu nhập\')">⬇ Thu nhập</div>'
-    + '</div></div>'
-    + '<div class="field-group" style="margin-bottom:10px;"><div class="field-label">Số tiền</div>'
-    + '<input type="text" id="qeAmount" class="field-input" value="' + escapeHTML(formatNumberWithCommas(String(r.amount))) + '"></div>'
-    + '<div class="field-group" style="margin-bottom:10px;"><div class="field-label">Nội dung</div>'
-    + '<input type="text" id="qeContent" class="field-input" value="' + escapeHTML(r.content) + '"></div>'
-    + '<div class="field-group" style="margin-bottom:6px;"><div class="field-label">Danh mục</div>'
-    + '<select id="qeCategory" class="field-input">' + opts + '</select></div>'
-    + '<div id="qeCatHint" style="display:' + (r.category ? 'none' : 'block') + ';font-size:13px;color:var(--text-2);margin-bottom:10px;">Chưa khớp danh mục — chọn danh mục để lưu.</div>'
-    + '<div style="font-size:13px;color:var(--text-2);margin-bottom:14px;">Ngày: Hôm nay, ' + escapeHTML(r.date) + '</div>'
-    + '<div class="modal-actions m-0 pt-3" style="border-top: 1px solid var(--border-color);">'
-    + '<button type="button" class="btn-cancel flex-1 m-0" onclick="closeQuickEntry()"><i class="fas fa-times"></i> Hủy</button>'
-    + '<button type="button" class="btn-save flex-1 m-0" onclick="quickEntrySave()"><i class="fas fa-save"></i> Lưu</button>'
-    + '</div>'
-    + '<button type="button" onclick="quickEntryOpenFullForm()" style="background:none;border:none;color:var(--primary);font-size:13px;font-weight:600;margin-top:12px;width:100%;cursor:pointer;">Mở form đầy đủ để sửa chi tiết</button>';
-  pv.style.display = 'block';
-  var catSel = document.getElementById('qeCategory');
-  if (catSel) catSel.onchange = function () {
-    var hint = document.getElementById('qeCatHint');
-    if (hint) hint.style.display = catSel.value ? 'none' : 'block';
-  };
+}
+window.quickEntryShowPreview = function () {
+  if (!__qeThread.length) return;
+  __qePreviewOpen = true;
+  var tv = document.getElementById('quickEntryThreadView'); if (tv) tv.style.display = 'none';
+  var pv = document.getElementById('quickEntryPreviewView'); if (pv) pv.style.display = 'flex';
+  __qeEnsureCats();
+  __qeRenderPreview();
 };
+window.quickEntryBackToThread = function () {
+  __qeSyncPreviewToThread();
+  __qePreviewOpen = false;
+  var pv = document.getElementById('quickEntryPreviewView'); if (pv) pv.style.display = 'none';
+  var tv = document.getElementById('quickEntryThreadView'); if (tv) tv.style.display = 'flex';
+  __qeRenderThread();
+};
+window.quickEntryPreviewSetType = function (id, type) {
+  var m = null;
+  __qeThread.forEach(function (x) { if (x.id === id) m = x; });
+  if (!m) return;
+  m.type = type; m.saveError = false;
+  ['Chi tiêu', 'Thu nhập'].forEach(function (t) {
+    var el = document.getElementById(t === 'Chi tiêu' ? 'qpvTypeChi_' + id : 'qpvTypeThu_' + id);
+    if (!el) return;
+    el.classList.remove('expense-active', 'income-active');
+    if (t === type) el.classList.add(t === 'Chi tiêu' ? 'expense-active' : 'income-active');
+  });
+};
+window.quickEntryPreviewSetCategory = function (id, category) {
+  __qeThread.forEach(function (m) { if (m.id === id) { m.category = category; m.saveError = false; } });
+  window.quickEntryPreviewTouch();
+};
+// Đồng bộ input xem trước vào thread rồi cập nhật nhãn nút Lưu tất cả.
+window.quickEntryPreviewTouch = function () {
+  __qeSyncPreviewToThread();
+  var btn = document.getElementById('quickEntrySaveAllBtn');
+  if (btn) btn.textContent = 'Lưu tất cả (' + __qeCounts().valid + ')';
+};
+window.quickEntryPreviewRemove = function (id) {
+  __qeSyncPreviewToThread();
+  __qeRemoveMessage(id);
+  if (!__qeThread.length) { window.quickEntryBackToThread(); return; }
+  __qeRenderPreview();
+};
+function __qeSyncPreviewToThread() {
+  __qeThread.forEach(function (m) {
+    var a = document.getElementById('qpvAmt_' + m.id);
+    var c = document.getElementById('qpvCon_' + m.id);
+    var s = document.getElementById('qpvCat_' + m.id);
+    if (a) { try { m.amount = parseNumber(a.value) || 0; } catch (e) {} }
+    if (c) m.content = c.value.trim();
+    if (s) m.category = s.value;
+  });
+}
 
-window.quickEntrySave = async function () {
-  __qeHideError();
-  var amtEl = document.getElementById('qeAmount'), conEl = document.getElementById('qeContent'), catEl = document.getElementById('qeCategory');
-  var amount = amtEl ? parseNumber(amtEl.value) : 0;
-  var content = conEl ? conEl.value.trim() : '';
-  var category = catEl ? catEl.value : '';
-  if (!amount || amount <= 0) { __qeShowError('Số tiền chưa hợp lệ'); return; }
-  if (!content) { __qeShowError('Chưa có nội dung giao dịch'); return; }
-  if (!category) { __qeShowError('Chọn danh mục để lưu'); return; }
-  var tx = { content: content, amount: amount, type: __qeType, category: category, note: '', date: formatDateToDDMMYYYY(new Date()), action: 'addTransaction' };
-  var ok = await submitTx(tx);
-  if (ok) {
-    // Lưu xong: dọn để nhập tin tiếp theo ngay, giữ sheet mở.
-    var pv = document.getElementById('quickEntryPreview'); if (pv) { pv.style.display = 'none'; pv.innerHTML = ''; }
-    var inp = document.getElementById('quickEntryInput'); if (inp) { inp.value = ''; inp.focus(); }
-    __qeType = 'Chi tiêu';
+// Lưu tất cả: ghi TUẦN TỰ (cấp id toàn cục bắt buộc tuần tự, không song song).
+window.quickEntrySaveAll = async function () {
+  if (__qeSaving) return;
+  __qeSyncPreviewToThread();
+  var rows = __qeThread.filter(__qeValid);
+  if (!rows.length) { try { showToast('Chưa có dòng hợp lệ để lưu', 'info'); } catch (e) {} return; }
+  __qeSaving = true;
+  var btn = document.getElementById('quickEntrySaveAllBtn'); if (btn) btn.disabled = true;
+  var prog = document.getElementById('quickEntrySaveProgress');
+  var saved = 0, failed = 0;
+  for (var i = 0; i < rows.length; i++) {
+    if (prog) prog.textContent = 'Đang lưu ' + (i + 1) + '/' + rows.length + '…';
+    var ok = false;
+    try { ok = await submitTx(__qeBuildTx(rows[i])); } catch (e) { ok = false; }
+    if (ok) { saved++; rows[i]._saved = true; } else { failed++; rows[i].saveError = true; }
   }
-  // Lưu lỗi: submitTx đã toast lỗi, giữ preview để user bấm Lưu lại.
-};
-
-window.quickEntryOpenFullForm = async function () {
-  var amtEl = document.getElementById('qeAmount'), conEl = document.getElementById('qeContent'), catEl = document.getElementById('qeCategory');
-  var amount = amtEl ? parseNumber(amtEl.value) : 0;
-  var content = conEl ? conEl.value : '';
-  var category = catEl ? catEl.value : '';
-  var type = __qeType;
-  window.closeQuickEntry();
-  try { await window.openAddForm(); } catch (e) {}
+  __qeThread = __qeThread.filter(function (m) { return !m._saved; });
+  __qeThread.forEach(function (m) { delete m._saved; });
+  __qeSaving = false; if (btn) btn.disabled = false;
+  var c = __qeCounts();
   try {
-    var c = document.getElementById('addContent'); if (c) c.value = content;
-    var a = document.getElementById('addAmount'); if (a) a.value = amount ? formatNumberWithCommas(String(amount)) : '';
-    var d = document.getElementById('addDate'); if (d) d.value = formatDateToYYYYMMDD(new Date());
-    document.querySelectorAll('#addModal .type-pill').forEach(function (p) {
-      if (p.textContent.indexOf(type) !== -1) { try { selectType('add', type, p); } catch (e) {} }
-    });
-    var cs = document.getElementById('addCategory'); if (cs && category) cs.value = category;
+    showToast('Đã lưu ' + saved + ' dòng'
+      + (failed ? ', lỗi ' + failed + ' dòng (vẫn giữ trong khung chat)' : '')
+      + (c.invalid ? ', còn ' + c.invalid + ' dòng chưa hợp lệ' : ''),
+      failed ? 'error' : 'success');
   } catch (e) {}
+  __qePreviewOpen = false;
+  var pv = document.getElementById('quickEntryPreviewView'); if (pv) pv.style.display = 'none';
+  var tv = document.getElementById('quickEntryThreadView'); if (tv) tv.style.display = 'flex';
+  __qeRenderThread();
 };
 
 // Hook cho test Node (không ảnh hưởng hành vi production).
@@ -463,5 +628,14 @@ window.__quickEntryTest = {
   __qeFindAmount: __qeFindAmount,
   __qeDetectType: __qeDetectType,
   __qeMatchCategory: __qeMatchCategory,
+  addMessage: __qeAddMessage,
+  reparseMessage: __qeReparseMessage,
+  removeMessage: __qeRemoveMessage,
+  buildTx: __qeBuildTx,
+  isValid: __qeValid,
+  counts: __qeCounts,
+  getThread: function () { return __qeThread; },
+  clearThread: function () { __qeThread = []; __qeNextId = 1; },
 };
+
 // ================= END R54 =================
