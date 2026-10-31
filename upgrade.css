@@ -63,6 +63,20 @@
 .fab-item-icon.income { color: var(--income); }
 .fab-item-icon.expense { color: var(--expense); }
 
+/* R54: bong bóng chat nổi — điểm vào DUY NHẤT của Nhập nhanh kiểu tin nhắn.
+   Vị trí: góc phải, phía trên thanh nav (không đè nav, không đè nút + giữa
+   nav; khe 84px + safe-area đủ qua chiều cao nav ~59-70px + safe-area).
+   Tầng z 1400: trên nội dung tab + nav (1000), dưới overlay (1500),
+   fab-backdrop (1550), fab-menu (1600) và mọi modal-sheet (2000) — nên khi
+   bất kỳ sheet/modal nào mở, bong bóng tự chìm xuống dưới, không cần JS ẩn
+   hiện; đóng sheet xong bong bóng lại nổi lên. */
+.quick-bubble { position: fixed; right: 16px; bottom: calc(84px + env(safe-area-inset-bottom, 0px)); width: 52px; height: 52px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.35); background: var(--grad-primary); color: #fff; font-size: 22px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 10px 30px rgba(6,182,212,0.45), inset 0 1px 1px rgba(255,255,255,0.2); z-index: 1400; transition: transform 0.2s ease; }
+.quick-bubble:active { transform: scale(0.92); }
+@media (min-width: 432px) {
+  /* Máy tính: neo mép phải bong bóng theo mép phải cụm nav 400px (giống menu FAB), khỏi trôi ra mép cửa sổ. */
+  .quick-bubble { right: calc(50% - 200px); }
+}
+
 /* ---------- KHUNG DIEN THOAI (Telegram desktop / man hinh rong) ----------
    Telegram desktop KHONG cho web app tu dat/keo kich thuoc cua so (khong co API).
    Vi vay ta khoa noi dung app vao khung ~430px CAN GIUA o MOI kich thuoc cua so:
