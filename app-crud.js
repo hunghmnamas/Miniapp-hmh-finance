@@ -315,6 +315,10 @@ function __qeParseSegment(seg, entries, dateStr) {
   content = content.replace(/\s+-\s*$/, '').replace(/^\s*-\s+/, '').trim();
   var category = __qeMatchCategory(content, entries);
   if (!content && category) content = category;
+  // R57: viết hoa chữ cái đầu của nội dung như webhook làm với description
+  // (description.charAt(0).toUpperCase() + description.slice(1)); chữ số /
+  // ký tự đặc biệt ở đầu giữ nguyên; bong bóng tin vẫn giữ văn bản gốc.
+  if (content) content = content.charAt(0).toUpperCase() + content.slice(1);
   return { ok: true, amount: amt.value, type: det.type, category: category, content: content, date: dateStr || formatDateToDDMMYYYY(new Date()) };
 }
 
@@ -340,10 +344,11 @@ function __qeSplitMessage(text) {
   });
   return segs;
 }
-function __qeParseMessageMulti(text, entries) {
+function __qeParseMessageMulti(text, entries, defaultDate) {
   var segs = __qeSplitMessage(text);
   if (!segs.length) segs = [(text || '').trim()];
   var today = formatDateToDDMMYYYY(new Date());
+  var base = defaultDate || today;
   var year = String(new Date().getFullYear());
   var ctxDate = null;
   var items = [];
@@ -358,37 +363,47 @@ function __qeParseMessageMulti(text, entries) {
         seg = rest;
       }
     }
-    var r = __qeParseSegment(seg, entries, ctxDate || today);
+    var r = __qeParseSegment(seg, entries, ctxDate || base);
     r.segment = seg;
     items.push(r);
   });
   if (!items.length) items.push({ ok: false, error: 'Chưa thấy số tiền trong tin nhắn', segment: (text || '').trim() });
+  __qeLastCtxDate = ctxDate;
   return items;
 }
 
-// ---- Lớp giao diện R55: khung chat nhập hàng loạt (thay sheet xem trước từng dòng của R54) ----
+// ---- Lớp giao diện R55/R57: khung chat nhập hàng loạt (thay sheet xem trước từng dòng của R54) ----
 // R56: mỗi tin nhắn tách thành N khoản (theo luật bot) — thread giữ nhóm tin,
-// xem trước/lưu chạy theo khoản. Parser từng đoạn giữ nguyên quy tắc R54.
+// lưu chạy theo khoản. Parser từng đoạn giữ nguyên quy tắc R54.
+// R57: BỎ hẳn màn xem trước tổng — thread CHÍNH LÀ bản xem trước; nút đầu
+// là "Lưu (M)" ghi tuần tự qua submitTx. Dòng chưa hợp lệ không bị mất —
+// vẫn giữ trong thread để sửa.
 // Nguyên tắc R55: gửi tin
 // KHÔNG BAO GIỜ mở modal chặn luồng; mỗi tin hiện ngay trong thread kèm dòng
-// phân tích gọn; xem trước TỔNG duy nhất một lần rồi "Lưu tất cả" ghi tuần tự
-// qua submitTx. Dòng chưa hợp lệ không bị mất — vẫn giữ trong thread để sửa.
+// phân tích gọn; dòng chưa hợp lệ không bị mất — vẫn giữ trong thread để sửa.
 
 var __qeThread = [];
 var __qeNextId = 1;
 var __qeNextItemId = 1;
 var __qeCatCache = null;
-var __qePreviewOpen = false;
 var __qeSaving = false;
+// R57: ngày tham chiếu của phiên chat (hiện qua chip trên ô gõ).
+// Tin nhắn đặt ngày dd/mm thì cập nhật chip; tin sau không có ngày thì
+// thừa hưởng ngày này thay vì hôm nay; bấm ✕ trên chip thì về hôm nay.
+var __qeRefDate = null;
+var __qeLastCtxDate = null;
 
 // --- Logic thuần (không chạm DOM) — test được trong VM ---
 // R56: mỗi tin nhắn là một NHÓM chứa N khoản (items) sau khi tách.
 // Item: { id, segment, ok, error, amount, type, category, content, date, saveError }.
 function __qeNewMessage(text, entries) {
   var m = { id: __qeNextId++, text: text, editing: false, items: [] };
-  __qeParseMessageMulti(text, entries).forEach(function (r) {
-    m.items.push({ id: __qeNextItemId++, segment: r.segment || text, ok: !!r.ok, error: r.error || '', amount: r.ok ? r.amount : 0, type: r.ok ? r.type : 'Chi tiêu', category: r.ok ? r.category : '', content: r.ok ? r.content : '', date: r.ok ? r.date : formatDateToDDMMYYYY(new Date()), saveError: false });
+  var base = __qeRefDate || formatDateToDDMMYYYY(new Date());
+  __qeParseMessageMulti(text, entries, base).forEach(function (r) {
+    m.items.push({ id: __qeNextItemId++, segment: r.segment || text, ok: !!r.ok, error: r.error || '', amount: r.ok ? r.amount : 0, type: r.ok ? r.type : 'Chi tiêu', category: r.ok ? r.category : '', content: r.ok ? r.content : '', date: r.ok ? r.date : base, saveError: false });
   });
+  // Tin nhắn đặt ngày rõ ràng thì cập nhật ngày tham chiếu của phiên chat.
+  if (__qeLastCtxDate) __qeRefDate = __qeLastCtxDate;
   return m;
 }
 function __qeAddMessage(text, entries) { var m = __qeNewMessage(text, entries); __qeThread.push(m); return m; }
@@ -431,7 +446,6 @@ function __qeEnsureCats() {
       __qeCatCache = cats || [];
       if (!__qeThread.some(function (m) { return m.editing; })) {
         __qeRenderThread();
-        if (__qePreviewOpen) __qeRenderPreview();
       }
     });
   } catch (e) {}
@@ -467,10 +481,21 @@ function __qeRenderMsg(m) {
 }
 function __qeRenderThread() {
   var th = document.getElementById('quickEntryThread'); if (!th) return;
-  var btn = document.getElementById('quickEntryPreviewBtn');
-  if (btn) btn.textContent = 'Xem trước (' + __qeCounts().total + ')';
+  // R57: thread CHÍNH LÀ bản xem trước — nút đầu là Lưu, đếm khoản HỢP LỆ.
+  var btn = document.getElementById('quickEntrySaveBtn');
+  var c0 = __qeCounts();
+  if (btn) { btn.textContent = 'Lưu (' + c0.valid + ')'; btn.disabled = c0.valid === 0; }
+  // R57: chip ngày tham chiếu — luôn hiện khi đang nhập cho ngày khác hôm nay.
+  var chip = document.getElementById('quickEntryRefChip');
+  if (chip) {
+    if (__qeRefDate) {
+      chip.style.display = 'flex';
+      var tx = document.getElementById('quickEntryRefChipText');
+      if (tx) tx.textContent = 'Đang nhập cho ngày ' + __qeRefDate;
+    } else chip.style.display = 'none';
+  }
   if (!__qeThread.length) {
-    th.innerHTML = '<div class="qe-empty">Gõ tin nhắn như chat Telegram — ví dụ: ăn trưa 50k.<br>Một tin có thể chứa nhiều khoản, ngăn cách bằng dấu chấm — ví dụ: 50k ăn trưa. 7k gửi xe.<br>Gửi nhiều dòng liên tiếp, xem trước một lần rồi Lưu tất cả.</div>';
+    th.innerHTML = '<div class="qe-empty">Gõ tin nhắn như chat Telegram — ví dụ: ăn trưa 50k.<br>Một tin có thể chứa nhiều khoản, ngăn cách bằng dấu chấm — ví dụ: 50k ăn trưa. 7k gửi xe.<br>Gửi nhiều dòng liên tiếp rồi bấm Lưu để lưu tất cả.</div>';
     return;
   }
   th.innerHTML = __qeThread.map(__qeRenderMsg).join('');
@@ -479,9 +504,7 @@ function __qeRenderThread() {
 
 window.openQuickEntry = function () {
   try { triggerHaptic('light'); } catch (e) {}
-  __qePreviewOpen = false;
   var tv = document.getElementById('quickEntryThreadView'); if (tv) tv.style.display = 'flex';
-  var pv = document.getElementById('quickEntryPreviewView'); if (pv) pv.style.display = 'none';
   var ov = document.getElementById('modalOverlay'); if (ov) ov.classList.add('show');
   setTimeout(function () { var s = document.getElementById('quickEntryModal'); if (s) s.classList.add('show'); }, 10);
   __qeRenderThread();
@@ -496,9 +519,7 @@ window.closeQuickEntry = function (force) {
       'Đóng', function () { window.closeQuickEntry(true); });
     return;
   }
-  __qeThread = []; __qePreviewOpen = false; __qeSaving = false;
-  var tv = document.getElementById('quickEntryThreadView'); if (tv) tv.style.display = 'flex';
-  var pv = document.getElementById('quickEntryPreviewView'); if (pv) pv.style.display = 'none';
+  __qeThread = []; __qeSaving = false; __qeRefDate = null; __qeLastCtxDate = null;
   var s = document.getElementById('quickEntryModal'); if (s) s.classList.remove('show');
   setTimeout(function () { var ov = document.getElementById('modalOverlay'); if (ov) ov.classList.remove('show'); }, 300);
   var inp = document.getElementById('quickEntryInput'); if (inp) inp.value = '';
@@ -567,98 +588,15 @@ window.quickEntrySaveEdit = async function (id) {
   __qeEnsureCats();
 };
 
-// --- Xem trước TỔNG duy nhất ---
-function __qeRenderPreview() {
-  var list = document.getElementById('quickEntryPreviewList'); if (!list) return;
-  var btn = document.getElementById('quickEntrySaveAllBtn');
-  var c = __qeCounts();
-  if (btn) btn.textContent = 'Lưu tất cả (' + c.valid + ')';
-  var prog = document.getElementById('quickEntrySaveProgress'); if (prog) prog.textContent = '';
-  var items = __qeFlatItems();
-  if (!items.length) { list.innerHTML = '<div class="qe-empty">Chưa có dòng nào.</div>'; return; }
-  list.innerHTML = items.map(function (m) {
-    var flag = '';
-    if (!m.ok) flag = '<div class="qe-flag">⚠ ' + escapeHTML(m.error) + ' — dòng này sẽ không được lưu.</div>';
-    else if (!m.category) flag = '<div class="qe-flag">⚠ Chưa có danh mục — chọn danh mục để lưu được.</div>';
-    else if (!m.content) flag = '<div class="qe-flag">⚠ Chưa có nội dung — sửa nội dung để lưu được.</div>';
-    else if (m.saveError) flag = '<div class="qe-flag">⚠ Lần lưu trước bị lỗi.</div>';
-    return '<div class="qe-pv-row">'
-      + '<div class="qe-pv-head"><div class="type-row" style="margin:0;">'
-      + '<div id="qpvTypeChi_' + m.id + '" class="type-pill' + (m.type === 'Chi tiêu' ? ' expense-active' : '') + '" onclick="quickEntryPreviewSetType(' + m.id + ', \'Chi tiêu\')">⬆ Chi tiêu</div>'
-      + '<div id="qpvTypeThu_' + m.id + '" class="type-pill' + (m.type === 'Thu nhập' ? ' income-active' : '') + '" onclick="quickEntryPreviewSetType(' + m.id + ', \'Thu nhập\')">⬇ Thu nhập</div>'
-      + '</div><button type="button" class="qe-x" onclick="quickEntryPreviewRemove(' + m.id + ')">✕</button></div>'
-      + '<div class="field-group" style="margin-bottom:8px;"><div class="field-label">Số tiền</div>'
-      + '<input type="text" id="qpvAmt_' + m.id + '" class="field-input" oninput="quickEntryPreviewTouch()" value="' + escapeHTML(m.amount ? formatNumberWithCommas(String(m.amount)) : '') + '"></div>'
-      + '<div class="field-group" style="margin-bottom:8px;"><div class="field-label">Nội dung</div>'
-      + '<input type="text" id="qpvCon_' + m.id + '" class="field-input" oninput="quickEntryPreviewTouch()" value="' + escapeHTML(m.content) + '"></div>'
-      + '<div class="field-group" style="margin-bottom:0;"><div class="field-label">Danh mục</div>'
-      + '<select id="qpvCat_' + m.id + '" class="field-input" onchange="quickEntryPreviewSetCategory(' + m.id + ', this.value)">' + __qeCatOptions(m.category) + '</select></div>'
-      + '<div style="font-size:12px;color:var(--text-2);margin-top:6px;">Đoạn gốc: ' + escapeHTML(m.segment) + (m.ok ? ' · Ngày: ' + escapeHTML(m.date) : '') + '</div>'
-      + flag + '</div>';
-  }).join('');
-}
-window.quickEntryShowPreview = function () {
-  if (!__qeThread.length) return;
-  __qePreviewOpen = true;
-  var tv = document.getElementById('quickEntryThreadView'); if (tv) tv.style.display = 'none';
-  var pv = document.getElementById('quickEntryPreviewView'); if (pv) pv.style.display = 'flex';
-  __qeEnsureCats();
-  __qeRenderPreview();
-};
-window.quickEntryBackToThread = function () {
-  __qeSyncPreviewToThread();
-  __qePreviewOpen = false;
-  var pv = document.getElementById('quickEntryPreviewView'); if (pv) pv.style.display = 'none';
-  var tv = document.getElementById('quickEntryThreadView'); if (tv) tv.style.display = 'flex';
-  __qeRenderThread();
-};
-window.quickEntryPreviewSetType = function (id, type) {
-  var m = __qeFindItem(id);
-  if (!m) return;
-  m.type = type; m.saveError = false;
-  ['Chi tiêu', 'Thu nhập'].forEach(function (t) {
-    var el = document.getElementById(t === 'Chi tiêu' ? 'qpvTypeChi_' + id : 'qpvTypeThu_' + id);
-    if (!el) return;
-    el.classList.remove('expense-active', 'income-active');
-    if (t === type) el.classList.add(t === 'Chi tiêu' ? 'expense-active' : 'income-active');
-  });
-};
-window.quickEntryPreviewSetCategory = function (id, category) {
-  var it = __qeFindItem(id);
-  if (it) { it.category = category; it.saveError = false; }
-  window.quickEntryPreviewTouch();
-};
-// Đồng bộ input xem trước vào thread rồi cập nhật nhãn nút Lưu tất cả.
-window.quickEntryPreviewTouch = function () {
-  __qeSyncPreviewToThread();
-  var btn = document.getElementById('quickEntrySaveAllBtn');
-  if (btn) btn.textContent = 'Lưu tất cả (' + __qeCounts().valid + ')';
-};
-window.quickEntryPreviewRemove = function (id) {
-  __qeSyncPreviewToThread();
-  __qeRemoveItem(id);
-  if (!__qeFlatItems().length) { window.quickEntryBackToThread(); return; }
-  __qeRenderPreview();
-};
-function __qeSyncPreviewToThread() {
-  __qeFlatItems().forEach(function (m) {
-    var a = document.getElementById('qpvAmt_' + m.id);
-    var c = document.getElementById('qpvCon_' + m.id);
-    var s = document.getElementById('qpvCat_' + m.id);
-    if (a) { try { m.amount = parseNumber(a.value) || 0; } catch (e) {} }
-    if (c) m.content = c.value.trim();
-    if (s) m.category = s.value;
-  });
-}
-
-// Lưu tất cả: ghi TUẦN TỰ (cấp id toàn cục bắt buộc tuần tự, không song song).
-window.quickEntrySaveAll = async function () {
+// R57: Lưu từ thread (không còn màn xem trước tổng). Ghi TUẦN TỰ các
+// khoản hợp lệ (cấp id toàn cục bắt buộc tuần tự, không song song).
+// Tiến trình + tổng kết hiện inline trong khung chat, không modal.
+window.quickEntrySave = async function () {
   if (__qeSaving) return;
-  __qeSyncPreviewToThread();
   var rows = __qeFlatItems().filter(__qeValid);
   if (!rows.length) { try { showToast('Chưa có dòng hợp lệ để lưu', 'info'); } catch (e) {} return; }
   __qeSaving = true;
-  var btn = document.getElementById('quickEntrySaveAllBtn'); if (btn) btn.disabled = true;
+  var btn = document.getElementById('quickEntrySaveBtn'); if (btn) btn.disabled = true;
   var prog = document.getElementById('quickEntrySaveProgress');
   var saved = 0, failed = 0;
   for (var i = 0; i < rows.length; i++) {
@@ -670,17 +608,19 @@ window.quickEntrySaveAll = async function () {
   __qeThread.forEach(function (m) { m.items = m.items.filter(function (it) { return !it._saved; }); });
   __qeThread = __qeThread.filter(function (m) { return m.items.length; });
   __qeThread.forEach(function (m) { m.items.forEach(function (it) { delete it._saved; }); });
-  __qeSaving = false; if (btn) btn.disabled = false;
+  __qeSaving = false;
   var c = __qeCounts();
-  try {
-    showToast('Đã lưu ' + saved + ' dòng'
-      + (failed ? ', lỗi ' + failed + ' dòng (vẫn giữ trong khung chat)' : '')
-      + (c.invalid ? ', còn ' + c.invalid + ' dòng chưa hợp lệ' : ''),
-      failed ? 'error' : 'success');
-  } catch (e) {}
-  __qePreviewOpen = false;
-  var pv = document.getElementById('quickEntryPreviewView'); if (pv) pv.style.display = 'none';
-  var tv = document.getElementById('quickEntryThreadView'); if (tv) tv.style.display = 'flex';
+  var summary = 'Đã lưu ' + saved + ' dòng'
+    + (failed ? ', lỗi ' + failed + ' dòng (vẫn giữ trong khung chat)' : '')
+    + (c.invalid ? ', còn ' + c.invalid + ' dòng chưa hợp lệ' : '');
+  if (prog) prog.textContent = summary;
+  try { showToast(summary, failed ? 'error' : 'success'); } catch (e) {}
+  __qeRenderThread();
+};
+
+// R57: bấm ✕ trên chip ngày tham chiếu -> về lại ngày hôm nay.
+window.quickEntryClearRefDate = function () {
+  __qeRefDate = null;
   __qeRenderThread();
 };
 
@@ -703,7 +643,10 @@ window.__quickEntryTest = {
   getItems: __qeFlatItems,
   removeItem: __qeRemoveItem,
   findItem: __qeFindItem,
-  clearThread: function () { __qeThread = []; __qeNextId = 1; __qeNextItemId = 1; },
+  clearThread: function () { __qeThread = []; __qeNextId = 1; __qeNextItemId = 1; __qeRefDate = null; __qeLastCtxDate = null; },
+  getRefDate: function () { return __qeRefDate; },
+  clearRefDate: function () { __qeRefDate = null; },
+  renderThread: __qeRenderThread,
 };
 
 // ================= END R54 =================
