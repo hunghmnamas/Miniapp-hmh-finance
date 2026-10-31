@@ -20,17 +20,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <style id="app-font-config">
-    :root {
-      --app-font: 'Be Vietnam Pro', sans-serif;
-    }
-  </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-  
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="upgrade.css">
-  <link rel="stylesheet" href="optimize.css">
-  <link rel="stylesheet" href="redesign.css">
+
+  <!-- R72: CSS chỉ còn 1 file duy nhất app.css (gộp từ styles + upgrade + optimize + redesign, giữ đúng thứ tự cũ). Khối :root --app-font trước đây nằm trong <style id="app-font-config"> nay đã chuyển vào đầu app.css. -->
+  <link rel="stylesheet" href="app.css">
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
   <!-- Dùng bản rời (unbundled) thay vì html2pdf.bundle.min.js vì bản bundle
