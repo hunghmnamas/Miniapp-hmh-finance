@@ -524,7 +524,7 @@ function __qeRenderThread() {
   // các tin nhắn, kể cả khi thread đã trống sau khi lưu xong.
   var notices = __qeNotices.map(function (n) { return '<div class="qe-system">' + escapeHTML(n) + '</div>'; }).join('');
   if (!__qeThread.length) {
-    th.innerHTML = '<div class="qe-empty">Gõ như chat Telegram: ăn trưa 50k.<br>Một tin nhiều khoản, cách nhau bằng<br>dấu chấm: 50k ăn trưa. 7k gửi xe.<br>Gửi nhiều dòng liên tiếp rồi bấm Lưu.</div>' + notices;
+    th.innerHTML = '<div class="qe-empty"><strong>HƯỚNG DẪN NHẬP DỮ LIỆU</strong><br>Chi tiêu: 50k ăn trưa<br>Ngày khác: 30/10 50k ăn trưa<br>Thu nhập: +10m lương tháng<br>Nhiều khoản, cách nhau bằng<br>dấu chấm: 50k ăn trưa. 7k gửi xe.<br>k = nghìn, m/tr = triệu</div>' + notices;
     return;
   }
   th.innerHTML = __qeThread.map(__qeRenderMsg).join('') + notices;
