@@ -233,7 +233,6 @@ body.privacy-on .stat-compare {
 /* ================= R55: khung chat nhập hàng loạt ================= */
 .quick-chat-sheet { display: flex; flex-direction: column; height: 92dvh; max-height: 92dvh; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 .quick-chat-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
-.btn-preview { background: transparent; border: 1px solid var(--primary); color: var(--primary); border-radius: 999px; padding: 7px 14px; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .quick-chat-thread { flex: 1; overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 4px 2px 12px; -webkit-overflow-scrolling: touch; }
 .qe-empty { font-size: 13px; color: var(--text-2); text-align: center; line-height: 1.6; padding: 24px 12px; }
 .qe-msg { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
@@ -245,7 +244,9 @@ body.privacy-on .stat-compare {
 .qe-parseline.qe-flag, .qe-flag { color: var(--expense); font-size: 13px; line-height: 1.5; }
 .qe-cat-select { margin-top: 2px; max-width: 260px; align-self: flex-start; }
 .quick-chat-composer { display: flex; gap: 10px; align-items: center; padding-top: 12px; border-top: 1px solid var(--border); }
-.qe-pv-row { border: 1px solid var(--border); border-radius: 16px; padding: 12px; }
-.qe-pv-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
-.qe-pv-head .type-row { flex: 1; margin: 0; }
-.qe-x { background: none; border: none; color: var(--text-2); font-size: 15px; cursor: pointer; padding: 6px 4px; flex-shrink: 0; }
+/* R57: nút gửi kiểu Telegram — 1 nút TRÒN nhỏ, ô gõ chiếm phần còn lại. */
+.qe-send-btn { flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%; border: none; background: var(--grad-primary); color: #fff; font-size: 16px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 14px rgba(6,182,212,0.35); padding: 0; }
+.qe-send-btn:active { transform: scale(0.92); }
+/* R57: chip ngày tham chiếu — luôn hiện khi đang nhập cho ngày khác hôm nay. */
+.qe-ref-chip { align-items: center; gap: 8px; align-self: flex-start; background: rgba(124,58,237,0.10); color: var(--primary); border-radius: 999px; padding: 6px 6px 6px 12px; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
+.qe-ref-chip button { background: none; border: none; color: var(--primary); font-size: 13px; font-weight: 700; cursor: pointer; padding: 4px 6px; }
