@@ -140,9 +140,13 @@ window.openEditForm = async function(tx) { if(!tx) return; triggerHaptic('light'
 window.closeEditForm = function() { document.getElementById('editModal').classList.remove('show'); setTimeout(() => document.getElementById('modalOverlay').classList.remove('show'), 300); };
 window.closeAllModals = function() { closeAddForm(); closeEditForm(); closeSearchModal(); closeDetailModal(); if (typeof window.closePeriodPicker === 'function') window.closePeriodPicker(); if (document.getElementById('iconPickerModal')) document.getElementById('iconPickerModal').classList.remove('show'); if (document.getElementById('pdfPreviewModal')) document.getElementById('pdfPreviewModal').classList.remove('show'); };
 
-async function submitTx(tx) {
+async function submitTx(tx, opts) {
+  // R58: opts.quiet tắt toast + haptic từng dòng — dùng cho lưu hàng loạt
+  // trong khung chat (chỉ giữ tiến trình + tổng kết của khung chat). Form
+  // thường gọi không opts nên giữ nguyên toast/haptic cũ.
+  var quiet = !!(opts && opts.quiet);
   try {
-    showToast("Đang lưu giao dịch...", "info");
+    if (!quiet) showToast("Đang lưu giao dịch...", "info");
     if (tx.action === 'addTransaction') {
       let maxNum = 0;
       try {
@@ -162,9 +166,9 @@ async function submitTx(tx) {
     const month = parseInt(tx.date.split('/')[1], 10); const fbTx = { id: tx.id, date: tx.date, type: tx.type, content: tx.content, amount: tx.amount, category: tx.category, note: tx.note };
     if (tx.action === 'addTransaction') { if (cachedTransactions?.data) cachedTransactions.data.unshift(fbTx); } else { [cachedTransactions?.data, cachedChartData?.txs, cachedSearchResults].forEach(arr => { if (!arr) return; const idx = arr.findIndex(i => String(i.id) === String(tx.id)); if (idx !== -1) arr[idx] = { ...arr[idx], ...fbTx }; }); }
     if(document.getElementById('tab1').classList.contains('active')) displayTransactions(); else if(document.getElementById('tab2').classList.contains('active')) updateTimeNavUI(); else if(document.getElementById('tab3').classList.contains('active')) displaySearchResults();
-    await secureFetch(`/transactions/users/${chatId}/month_${month}/${tx.id}.json`, 'PUT', { ...fbTx, _action: tx.action }); triggerHapticNotification('success'); showToast("Đã lưu giao dịch!", "success"); tab2NeedsReload = true; window.apiTxCache = {};
+    await secureFetch(`/transactions/users/${chatId}/month_${month}/${tx.id}.json`, 'PUT', { ...fbTx, _action: tx.action }); if (!quiet) { triggerHapticNotification('success'); showToast("Đã lưu giao dịch!", "success"); } tab2NeedsReload = true; window.apiTxCache = {};
     return true; // R54: sheet nhập nhanh cần biết lưu thành công để dọn input nhập tiếp (caller cũ bỏ qua giá trị trả về nên không đổi hành vi).
-  } catch(e) { showToast(e.message, "error"); return false; }
+  } catch(e) { if (!quiet) showToast(e.message, "error"); return false; }
 }
 
 window.deleteTransaction = function(id) {
@@ -222,6 +226,7 @@ function __qeParseNumberToken(numStr, suffix) {
   var mult = 1;
   if (suffix === 'k' || suffix === 'nghìn') mult = 1000;
   else if (suffix === 'tr' || suffix === 'triệu') mult = 1000000;
+  else if (suffix === 'm') mult = 1000000;
   var s = numStr;
   if (/^[.,]/.test(s) || /[.,]$/.test(s)) return null;
   if (/[.,]/.test(s)) {
@@ -246,26 +251,40 @@ function __qeParseNumberToken(numStr, suffix) {
 // token là đúng đoạn cần cắt khỏi nội dung (khi hậu tố bị loại vì dính chữ
 // sau, token chỉ còn phần số, để khỏi ăn mất chữ của từ sau).
 function __qeFindAmount(text) {
-  var re = /-?\d[\d.,]*\s*(nghìn|triệu|k|tr|đ|₫)?/gi;
+  // R58: hậu tố m/M = triệu như bot (vd "15m" = 15.000.000; dạng XmY
+  // "1m5" = 1,5 triệu; "1,5m"/"1.5m" qua đường thập phân sẵn có).
+  var re = /-?(?:\d+m\d+|\d[\d.,]*\s*(nghìn|triệu|k|tr|m|đ|₫)?)/gi;
   var lastBare = null, m;
   while ((m = re.exec(text)) !== null) {
     var raw = m[0];
+    var after = text.charAt(m.index + raw.length);
+    var afterNext = text.charAt(m.index + raw.length + 1);
+    // Dạng XmY của bot: token phải đứng riêng — sau nó không được là
+    // chữ/số, cũng không được là dấu . , rồi tới số (để khỏi ăn mất
+    // phần thập phân của số khác). Không đạt thì bỏ qua token này.
+    var xm = /^(-?)(\d+)m(\d+)$/i.exec(raw);
+    if (xm) {
+      if (/[a-zà-ỹ0-9]/i.test(after) || ((after === '.' || after === ',') && /[0-9]/.test(afterNext))) continue;
+      var xv = parseFloat(xm[2] + '.' + xm[3]) * 1000000;
+      if (xv > 0) return { value: Math.round(xv), token: raw, index: m.index };
+      continue;
+    }
     var numMatch = /-?[\d.,]+/.exec(raw);
     var numPart = numMatch[0];
     var sufRaw = raw.slice(numPart.length).trim().toLowerCase();
-    var after = text.charAt(m.index + raw.length);
     var suffix = sufRaw;
     var token = raw;
-    // Hậu tố 1-2 chữ mà dính ngay vào chữ sau ("50 trà sữa" -> "50 tr")
-    // thì không phải hậu tố: loại hậu tố, token chỉ còn phần số.
-    if ((suffix === 'k' || suffix === 'tr' || suffix === 'đ') && /[a-zà-ỹ]/i.test(after)) {
+    // Hậu tố 1-2 chữ mà dính ngay vào chữ sau ("50 trà sữa" -> "50 tr",
+    // "15mua" -> "15 m") thì không phải hậu tố: loại hậu tố, token chỉ
+    // còn phần số.
+    if ((suffix === 'k' || suffix === 'tr' || suffix === 'm' || suffix === 'đ') && /[a-zà-ỹ]/i.test(after)) {
       suffix = '';
       token = numPart;
     }
     var numDigits = numPart.charAt(0) === '-' ? numPart.slice(1) : numPart;
     var val = __qeParseNumberToken(numDigits, suffix);
     if (val === null) continue;
-    var strong = (suffix === 'k' || suffix === 'nghìn' || suffix === 'tr' || suffix === 'triệu')
+    var strong = (suffix === 'k' || suffix === 'nghìn' || suffix === 'tr' || suffix === 'triệu' || suffix === 'm')
       || /^\d{1,3}([.,]\d{3})+$/.test(numDigits);
     var cand = { value: val, token: token, index: m.index };
     if (strong) return cand;
@@ -520,6 +539,9 @@ window.closeQuickEntry = function (force) {
     return;
   }
   __qeThread = []; __qeSaving = false; __qeRefDate = null; __qeLastCtxDate = null;
+  // R58: vẽ lại thread sau khi dọn để DOM khớp dữ liệu (trước đây DOM cũ
+  // vẫn còn cho tới lần mở sau, dù dữ liệu đã trống).
+  try { __qeRenderThread(); } catch (e) {}
   var s = document.getElementById('quickEntryModal'); if (s) s.classList.remove('show');
   setTimeout(function () { var ov = document.getElementById('modalOverlay'); if (ov) ov.classList.remove('show'); }, 300);
   var inp = document.getElementById('quickEntryInput'); if (inp) inp.value = '';
@@ -602,12 +624,15 @@ window.quickEntrySave = async function () {
   for (var i = 0; i < rows.length; i++) {
     if (prog) prog.textContent = 'Đang lưu ' + (i + 1) + '/' + rows.length + '…';
     var ok = false;
-    try { ok = await submitTx(__qeBuildTx(rows[i])); } catch (e) { ok = false; }
+    try { ok = await submitTx(__qeBuildTx(rows[i]), { quiet: true }); } catch (e) { ok = false; }
     if (ok) { saved++; rows[i]._saved = true; } else { failed++; rows[i].saveError = true; }
   }
   __qeThread.forEach(function (m) { m.items = m.items.filter(function (it) { return !it._saved; }); });
   __qeThread = __qeThread.filter(function (m) { return m.items.length; });
   __qeThread.forEach(function (m) { m.items.forEach(function (it) { delete it._saved; }); });
+  // R58: lưu hàng loạt chỉ rung 1 lần cuối khi có dòng lưu thành công
+  // (submitTx quiet đã tắt haptic từng dòng).
+  if (saved > 0) { try { triggerHapticNotification('success'); } catch (e) {} }
   __qeSaving = false;
   var c = __qeCounts();
   var summary = 'Đã lưu ' + saved + ' dòng'
