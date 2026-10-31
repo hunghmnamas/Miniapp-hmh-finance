@@ -2692,3 +2692,5 @@ body.hmh-fs.hmh-on-tab1:not(.fullscreen-open) #tab1 .hero-card .hero-avatar {
   body.hmh-desktop #tab1 .hero-date { padding: 7px 10px; margin: 0; }
   body.hmh-desktop #tab1 .hero-date-tap { gap: 0; }
 }
+
+/* R72-redeploy: commit comment vô hại để ép Pages build lại sau khi xóa 4 file CSS cũ (styles/upgrade/optimize/redesign). Không đổi rule nào, không đổi giao diện. */
