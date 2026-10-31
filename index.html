@@ -471,24 +471,19 @@
       <div class="modal-handle" onclick="closeQuickEntry()"></div>
       <div class="quick-chat-header">
         <div class="modal-title" style="margin: 0;">Nhập nhanh</div>
-        <button id="quickEntryPreviewBtn" type="button" class="btn-preview" onclick="quickEntryShowPreview()">Xem trước (0)</button>
+        <button id="quickEntrySaveBtn" type="button" class="btn-save" style="flex: none; width: auto; padding: 8px 16px;" onclick="quickEntrySave()">Lưu (0)</button>
       </div>
       <div id="quickEntryThreadView" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
         <div id="quickEntryThread" class="quick-chat-thread"></div>
+        <div id="quickEntryRefChip" class="qe-ref-chip" style="display: none;">
+          <span id="quickEntryRefChipText"></span>
+          <button type="button" onclick="quickEntryClearRefDate()" aria-label="Xóa ngày tham chiếu">✕</button>
+        </div>
+        <div id="quickEntrySaveProgress" style="font-size: 13px; color: var(--text-2); text-align: center; min-height: 18px; margin: 8px 0 4px;"></div>
         <form id="quickEntryForm" class="quick-chat-composer" onsubmit="event.preventDefault(); quickEntrySend();">
           <input type="text" id="quickEntryInput" class="field-input" style="flex: 1; margin: 0;" placeholder="Ví dụ: ăn trưa 50k" autocomplete="off">
-          <button type="submit" class="btn-save" style="flex-shrink: 0; width: 48px; height: 48px; padding: 0; display: flex; align-items: center; justify-content: center;" aria-label="Gửi"><i class="fas fa-paper-plane"></i></button>
+          <button type="submit" class="qe-send-btn" aria-label="Gửi"><i class="fas fa-paper-plane"></i></button>
         </form>
-      </div>
-      <div id="quickEntryPreviewView" style="display: none; flex-direction: column; flex: 1; min-height: 0;">
-        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 12px;">
-          <button type="button" class="btn-cancel m-0" style="flex-shrink: 0;" onclick="quickEntryBackToThread()">← Quay lại</button>
-          <div style="font-size: 15px; font-weight: 700; flex: 1;">Xem trước tất cả</div>
-        </div>
-        <div id="quickEntryPreviewList" class="quick-chat-thread"></div>
-        <div id="quickEntrySaveProgress" style="font-size: 13px; color: var(--text-2); text-align: center; min-height: 18px; margin: 8px 0 4px;"></div>
-        <button id="quickEntrySaveAllBtn" type="button" class="btn-save" style="width: 100%;" onclick="quickEntrySaveAll()">Lưu tất cả</button>
-        <div style="font-size: 13px; color: var(--text-2); text-align: center; margin-top: 8px;">Dòng chưa hợp lệ sẽ không được lưu, vẫn giữ trong khung chat để sửa.</div>
       </div>
     </div>
 
