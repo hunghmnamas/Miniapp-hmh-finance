@@ -478,12 +478,21 @@
       </div>
       <div id="quickEntryThreadView" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
         <div id="quickEntryThread" class="quick-chat-thread"></div>
-        <div id="quickEntrySaveSpinner" style="display: none; text-align: center; font-size: 18px; color: var(--primary); margin: 4px 0 0;"><i class="fas fa-circle-notch fa-spin"></i></div>
-        <div id="quickEntrySaveProgress" style="font-size: 13px; color: var(--text-2); text-align: center; min-height: 18px; margin: 8px 0 4px;"></div>
         <form id="quickEntryForm" class="quick-chat-composer" onsubmit="event.preventDefault(); quickEntrySend();">
           <input type="text" id="quickEntryInput" class="field-input" style="flex: 1; margin: 0;" placeholder="Ví dụ: ăn trưa 50k" autocomplete="off">
           <button type="submit" class="qe-send-btn" aria-label="Gửi"><i class="fas fa-paper-plane"></i></button>
         </form>
+      </div>
+    </div>
+
+    <!-- R60: popup lưu giữa màn hình (z 2500: trên sheet chat 2000, dưới
+         trang fullscreen 3000). Lúc lưu: spin + đếm; xong: tick flat SVG +
+         kết quả, đứng yên tới khi bấm "Đã hiểu". -->
+    <div id="quickEntrySavePopup" class="qe-save-popup" style="display: none;">
+      <div class="qe-save-popup-card">
+        <div id="quickEntrySavePopupIcon" class="qe-save-popup-icon"></div>
+        <div id="quickEntrySavePopupText" class="qe-save-popup-text"></div>
+        <button type="button" id="quickEntrySavePopupBtn" class="btn-save" style="display: none; margin-top: 16px;" onclick="quickEntryDismissSavePopup()">Đã hiểu</button>
       </div>
     </div>
 
