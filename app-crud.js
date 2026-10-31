@@ -510,13 +510,13 @@ function __qeEnsureCats() {
   } catch (e) {}
 }
 function __qeParseLine(it) {
-  // R67: MỌI dòng phân tích đều kết thúc bằng đoạn ngày — hôm nay thì
-  // "· hôm nay", ngày khác thì "· dd/mm/yyyy" (cùng quy ước popup lưu R61).
+  // R67: MỌI dòng phân tích đều kết thúc bằng đoạn ngày. R68: ngày viết
+  // hoa và cho vào ngoặc — "· (Hôm nay)", "· (dd/mm/yyyy)".
   // Trước đây chỉ hiện ngày khi khác hôm nay nên "không ngày" mập mờ:
   // không phân biệt được "ghi cho hôm nay" hay "mất ngày".
   var today = formatDateToDDMMYYYY(new Date());
   var d = it.date || today;
-  var dateSeg = ' · ' + (d === today ? 'hôm nay' : escapeHTML(d));
+  var dateSeg = ' · (' + (d === today ? 'Hôm nay' : escapeHTML(d)) + ')';
   if (!it.ok) return '<div class="qe-parseline qe-flag">⚠ ' + escapeHTML(it.error) + dateSeg + '</div>';
   var line = escapeHTML(it.type) + ' · ' + __qeAmtText(it.amount) + (it.category ? ' · ' + escapeHTML(it.category) : '') + (it.content ? ' · ' + escapeHTML(it.content) : '') + (it.note ? ' · (' + escapeHTML(it.note) + ')' : '') + dateSeg;
   var flag = '';
