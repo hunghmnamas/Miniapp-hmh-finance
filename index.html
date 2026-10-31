@@ -467,6 +467,19 @@
       </form>
     </div>
 
+    <div id="quickEntryModal" class="modal-sheet" style="display: flex; flex-direction: column;">
+      <div class="modal-handle" onclick="closeQuickEntry()"></div>
+      <div class="modal-title" style="margin-bottom: 12px;">Nhập nhanh</div>
+      <form id="quickEntryForm" onsubmit="event.preventDefault(); quickEntryParse();">
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <input type="text" id="quickEntryInput" class="field-input" style="flex: 1; margin: 0;" placeholder="Ví dụ: ăn trưa 50k" autocomplete="off">
+          <button type="submit" class="btn-save" style="flex-shrink: 0; width: 48px; height: 48px; padding: 0; display: flex; align-items: center; justify-content: center;" aria-label="Gửi"><i class="fas fa-paper-plane"></i></button>
+        </div>
+      </form>
+      <div id="quickEntryError" style="display: none; color: var(--expense); font-size: 13px; margin-top: 8px;"></div>
+      <div id="quickEntryPreview" style="display: none; margin-top: 14px;"></div>
+    </div>
+
     <div id="detailModal" class="modal-sheet" style="display: flex; flex-direction: column;">
       <div class="modal-handle" onclick="closeDetailModal()"></div>
       <div class="modal-title" id="detailModalTitle" style="justify-content: center; margin-bottom: 16px;">Chi tiết</div>
@@ -619,6 +632,9 @@
       <span class="fab-item-icon"><i class="fas fa-user"></i></span>
     </button>
   </div>
+
+  <!-- R54: bong bóng chat nổi — điểm vào DUY NHẤT của Nhập nhanh kiểu tin nhắn (không còn trong menu nút +). -->
+  <button id="quickBubble" class="quick-bubble" type="button" aria-label="Nhập nhanh" onclick="openQuickEntry()"><i class="fas fa-comment"></i></button>
 
   <div class="bottom-nav">
     <div class="nav-tabs-group">
