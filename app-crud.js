@@ -540,17 +540,17 @@ window.openQuickEntry = function () {
   var inp = document.getElementById('quickEntryInput'); if (inp) setTimeout(function () { inp.focus(); }, 350);
 };
 
-window.closeQuickEntry = function (force) {
+window.closeQuickEntry = function (force, afterClose) {
   var remaining = __qeCounts().total;
   if (!force && remaining) {
     showCustomConfirm('Đóng khung nhập nhanh',
       'Còn <strong>' + remaining + ' dòng</strong> chưa lưu, đóng sẽ mất. Bạn có muốn đóng không?',
-      'Đóng', function () { window.closeQuickEntry(true); });
+      'Đóng', function () { window.closeQuickEntry(true, afterClose); });
     return;
   }
   __qeThread = []; __qeSaving = false; __qeNotices = [];
   // R60: đóng khung cũng giấu popup lưu nếu còn hiện (phòng trường hợp
-  // đóng bằng đường khác ngoài nút "Đã hiểu").
+  // đóng bằng đường khác ngoài nút "Đóng" của popup).
   try { var sp = document.getElementById('quickEntrySavePopup'); if (sp) sp.style.display = 'none'; } catch (e) {}
   // R58: vẽ lại thread sau khi dọn để DOM khớp dữ liệu (trước đây DOM cũ
   // vẫn còn cho tới lần mở sau, dù dữ liệu đã trống).
@@ -558,6 +558,9 @@ window.closeQuickEntry = function (force) {
   var s = document.getElementById('quickEntryModal'); if (s) s.classList.remove('show');
   setTimeout(function () { var ov = document.getElementById('modalOverlay'); if (ov) ov.classList.remove('show'); }, 300);
   var inp = document.getElementById('quickEntryInput'); if (inp) inp.value = '';
+  // R61: callback chạy sau khi đóng (nút "Đóng" của popup lưu dùng để quay
+  // về Tab 1); các đường đóng khác không truyền callback nên không đổi.
+  if (typeof afterClose === 'function') { try { afterClose(); } catch (e) {} }
 };
 
 // Đóng sheet nhập nhanh cùng mọi modal khác (nút overlay gọi closeAllModals).
@@ -630,7 +633,8 @@ window.quickEntrySaveEdit = async function (id) {
 // chặn tương tác trong lúc lưu nên không bấm đúp được. Xong: CÙNG popup
 // chuyển sang tick FLAT (SVG 1 màu, không emoji, không gradient, không
 // bóng) + "Đã lưu N giao dịch" (+ dòng lỗi/chưa hợp lệ nếu có) và ĐỨNG
-// YÊN tới khi user bấm "Đã hiểu" — không tự tắt để khỏi giấu dòng lỗi.
+// YÊN tới khi user bấm "Đóng" (R61 đổi nhãn từ "Đã hiểu", bấm thì đóng
+// luôn khung chat và quay về Tab 1) — không tự tắt để khỏi giấu dòng lỗi.
 // Popup này LÀ thông báo lưu nên dòng hệ thống trong thread của R59 bị gỡ
 // để khỏi thông báo trùng 2 lần cho cùng 1 lần lưu (dòng lỗi/chưa hợp lệ
 // vẫn giữ trong thread, gắn cờ như trước).
@@ -648,7 +652,7 @@ function __qeUpdateSavePopupCount(i, n) {
   var tx = document.getElementById('quickEntrySavePopupText');
   if (tx) tx.textContent = 'Đang lưu ' + i + '/' + n + '…';
 }
-function __qeShowSavePopupDone(saved, failed, invalid) {
+function __qeShowSavePopupDone(saved, failed, invalid, savedByDate) {
   var p = document.getElementById('quickEntrySavePopup'); if (!p) return;
   var ic = document.getElementById('quickEntrySavePopupIcon');
   var tx = document.getElementById('quickEntrySavePopupText');
@@ -657,7 +661,24 @@ function __qeShowSavePopupDone(saved, failed, invalid) {
   if (ic) ic.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12.5l5 5L20 6.5" stroke="#10B981" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   if (tx) {
     var lines = [];
-    if (saved > 0) lines.push('Đã lưu ' + saved + ' giao dịch');
+    // R61: kết quả lưu TÁCH THEO NGÀY — nguyên tắc webhook (mỗi giao dịch
+    // xác nhận kèm "📅 Ngày:" của nó) áp cho dạng tổng: hôm nay trước,
+    // rồi các ngày khác tăng dần; chỉ đếm khoản ghi THÀNH CÔNG theo ngày
+    // (khoản lưu lỗi rơi vào dòng ⚠️, không vào dòng ngày nào).
+    // Lưu ý trung thực: webhook KHÔNG có chuỗi tổng gom nhóm theo ngày —
+    // nó xác nhận từng giao dịch kèm ngày riêng; đây là dạng tổng theo
+    // đúng yêu cầu của Hùng, giữ nguyên tắc "ngày nào ra ngày đó".
+    var map = savedByDate || {};
+    var dates = Object.keys(map).filter(function (d) { return map[d] > 0; });
+    if (dates.length) {
+      var todayStr = formatDateToDDMMYYYY(new Date());
+      var key = function (d) { var a = String(d).split('/'); return (parseInt(a[2], 10) || 0) * 10000 + (parseInt(a[1], 10) || 0) * 100 + (parseInt(a[0], 10) || 0); };
+      dates.sort(function (a, b) { return key(a) - key(b); });
+      if (map[todayStr]) lines.push('Đã lưu ' + map[todayStr] + ' giao dịch cho hôm nay');
+      dates.forEach(function (d) { if (d !== todayStr) lines.push('Đã lưu ' + map[d] + ' giao dịch cho ngày ' + d); });
+    } else if (saved > 0) {
+      lines.push('Đã lưu ' + saved + ' giao dịch');
+    }
     if (failed > 0) lines.push('⚠️ ' + failed + ' dòng lưu lỗi, vẫn giữ trong khung chat để sửa');
     if (invalid > 0) lines.push('⚠️ ' + invalid + ' dòng chưa hợp lệ chưa được lưu');
     tx.textContent = lines.join('\n');
@@ -665,8 +686,18 @@ function __qeShowSavePopupDone(saved, failed, invalid) {
   if (btn) btn.style.display = 'block';
   p.style.display = 'flex';
 }
-window.quickEntryDismissSavePopup = function () {
-  var p = document.getElementById('quickEntrySavePopup'); if (p) p.style.display = 'none';
+// R61: nút "Đóng" của popup lưu — đóng khung chat rồi quay về Tab 1 để
+// xem ngay dữ liệu vừa lưu. Đi qua closeQuickEntry nên hộp xác nhận vẫn
+// bảo vệ các dòng chưa lưu còn lại: không còn dòng chưa lưu thì đóng
+// thẳng về Tab 1; còn thì hộp xác nhận hiện trước, chỉ khi xác nhận đóng
+// mới về Tab 1; bấm hủy thì khung chat ở nguyên, popup vẫn hiện kết quả.
+window.quickEntryCloseFromSavePopup = function () {
+  window.closeQuickEntry(false, function () {
+    try {
+      if (typeof window.activateTab === 'function') window.activateTab('tab1');
+      else if (typeof window.openTab === 'function') window.openTab('tab1');
+    } catch (e) {}
+  });
 };
 
 // R60 (FIX 3): submitTx unshift khoản mới vào cache ngày Tab 1 đang hiển
@@ -705,12 +736,12 @@ window.quickEntrySave = async function () {
   __qeSaving = true;
   var btn = document.getElementById('quickEntrySaveBtn'); if (btn) btn.disabled = true;
   __qeShowSavePopup();
-  var saved = 0, failed = 0;
+  var saved = 0, failed = 0, savedByDate = {};
   for (var i = 0; i < rows.length; i++) {
     __qeUpdateSavePopupCount(i + 1, rows.length);
     var ok = false;
     try { ok = await submitTx(__qeBuildTx(rows[i]), { quiet: true }); } catch (e) { ok = false; }
-    if (ok) { saved++; rows[i]._saved = true; } else { failed++; rows[i].saveError = true; }
+    if (ok) { saved++; rows[i]._saved = true; var d = rows[i].date; savedByDate[d] = (savedByDate[d] || 0) + 1; } else { failed++; rows[i].saveError = true; }
   }
   __qeThread.forEach(function (m) { m.items = m.items.filter(function (it) { return !it._saved; }); });
   __qeThread = __qeThread.filter(function (m) { return m.items.length; });
@@ -722,7 +753,7 @@ window.quickEntrySave = async function () {
   if (saved > 0) { try { triggerHapticNotification('success'); } catch (e) {} }
   __qeSaving = false;
   var c = __qeCounts();
-  __qeShowSavePopupDone(saved, failed, c.invalid);
+  __qeShowSavePopupDone(saved, failed, c.invalid, savedByDate);
   __qeRenderThread();
   // R60 FIX 3: vẽ lại Tab 1 từ cache đã lọc (ngày hiển thị không đổi).
   try {
@@ -754,6 +785,7 @@ window.__quickEntryTest = {
   getNotices: function () { return __qeNotices.slice(); },
   renderThread: __qeRenderThread,
   purgeWrongDateFromTab1Cache: __qePurgeWrongDateFromTab1Cache,
+  showSavePopupDone: __qeShowSavePopupDone,
   getSavePopup: function () {
     var p = document.getElementById('quickEntrySavePopup');
     var t = document.getElementById('quickEntrySavePopupText');
