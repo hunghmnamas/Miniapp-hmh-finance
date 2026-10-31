@@ -335,7 +335,7 @@ function __qeMatchCategory(content, entries) {
 }
 
 // Hàm thuần cho MỘT đoạn. entries: mảng { category, keywords }.
-// Trả về { ok: true, amount, type, category, content, date } hoặc
+// Trả về { ok: true, amount, type, category, content, note, date } hoặc
 // { ok: false, error }. dateStr: 'dd/mm/yyyy' (mặc định hôm nay).
 function __qeParseSegment(seg, entries, dateStr) {
   var raw = (seg || '').trim().replace(/\s+/g, ' ');
@@ -345,6 +345,19 @@ function __qeParseSegment(seg, entries, dateStr) {
   var amt = __qeFindAmount(work);
   if (!amt) return { ok: false, error: 'Chưa thấy số tiền trong tin nhắn' };
   var content = (work.slice(0, amt.index) + work.slice(amt.index + amt.token.length)).replace(/\s+/g, ' ').trim();
+  // R64: ghi chú trong ngoặc ở cuối đoạn — đúng luật webhook (regex
+  // ...\((.+?)\)$): nhóm (...) CUỐI CÙNG thành note, phần trước là nội
+  // dung; ngoặc giữa câu không ở cuối thì ở lại trong nội dung; "()"
+  // rỗng thì không tách (không lỗi). Chỉ tách khi phần trước còn nội
+  // dung — để "500k (mua đồ)" giữ "(mua đồ)" làm nội dung như webhook
+  // (regex của bot cũng đòi description dài ≥ 1 ký tự).
+  var note = '';
+  var nm = /\(([^()]*)\)\s*$/.exec(content);
+  if (nm && nm[1].trim() && content.slice(0, nm.index).trim()) {
+    note = nm[1].trim();
+    content = content.slice(0, nm.index).trim();
+    if (note) note = note.charAt(0).toUpperCase() + note.slice(1);
+  }
   content = content.replace(/\s+-\s*$/, '').replace(/^\s*-\s+/, '').trim();
   var category = __qeMatchCategory(content, entries);
   if (!content && category) content = category;
@@ -352,7 +365,7 @@ function __qeParseSegment(seg, entries, dateStr) {
   // (description.charAt(0).toUpperCase() + description.slice(1)); chữ số /
   // ký tự đặc biệt ở đầu giữ nguyên; bong bóng tin vẫn giữ văn bản gốc.
   if (content) content = content.charAt(0).toUpperCase() + content.slice(1);
-  return { ok: true, amount: amt.value, type: det.type, category: category, content: content, date: dateStr || formatDateToDDMMYYYY(new Date()) };
+  return { ok: true, amount: amt.value, type: det.type, category: category, content: content, note: note, date: dateStr || formatDateToDDMMYYYY(new Date()) };
 }
 
 // Giữ tương thích R54: parse 1 đoạn duy nhất, ngày hôm nay.
@@ -435,7 +448,7 @@ function __qeNewMessage(text, entries) {
   // bất kể tin trước đó mang ngày nào. Ngày chỉ lan trong cùng tin (R56).
   var base = formatDateToDDMMYYYY(new Date());
   __qeParseMessageMulti(text, entries, base).forEach(function (r) {
-    m.items.push({ id: __qeNextItemId++, segment: r.segment || text, ok: !!r.ok, error: r.error || '', amount: r.ok ? r.amount : 0, type: r.ok ? r.type : 'Chi tiêu', category: r.ok ? r.category : '', content: r.ok ? r.content : '', date: r.ok ? r.date : base, saveError: false });
+    m.items.push({ id: __qeNextItemId++, segment: r.segment || text, ok: !!r.ok, error: r.error || '', amount: r.ok ? r.amount : 0, type: r.ok ? r.type : 'Chi tiêu', category: r.ok ? r.category : '', content: r.ok ? r.content : '', note: r.ok ? (r.note || '') : '', date: r.ok ? r.date : base, saveError: false });
   });
   return m;
 }
@@ -453,7 +466,7 @@ function __qeRemoveItem(id) {
   __qeThread.forEach(function (m) { m.items = m.items.filter(function (it) { return it.id !== id; }); });
   __qeThread = __qeThread.filter(function (m) { return m.items.length; });
 }
-function __qeBuildTx(it) { return { content: it.content, amount: it.amount, type: it.type, category: it.category, note: '', date: it.date, action: 'addTransaction' }; }
+function __qeBuildTx(it) { return { content: it.content, amount: it.amount, type: it.type, category: it.category, note: it.note || '', date: it.date, action: 'addTransaction' }; }
 function __qeReparseMessage(m, entries) {
   var fresh = __qeNewMessage(m.text, entries);
   m.items = fresh.items;
@@ -486,7 +499,7 @@ function __qeEnsureCats() {
 function __qeParseLine(it) {
   if (!it.ok) return '<div class="qe-parseline qe-flag">⚠ ' + escapeHTML(it.error) + '</div>';
   var today = formatDateToDDMMYYYY(new Date());
-  var line = escapeHTML(it.type) + ' · ' + __qeAmtText(it.amount) + (it.category ? ' · ' + escapeHTML(it.category) : '') + (it.content ? ' · ' + escapeHTML(it.content) : '') + (it.date !== today ? ' · ' + escapeHTML(it.date) : '');
+  var line = escapeHTML(it.type) + ' · ' + __qeAmtText(it.amount) + (it.category ? ' · ' + escapeHTML(it.category) : '') + (it.content ? ' · ' + escapeHTML(it.content) : '') + (it.note ? ' · (' + escapeHTML(it.note) + ')' : '') + (it.date !== today ? ' · ' + escapeHTML(it.date) : '');
   var flag = '';
   if (!it.category) flag = '<div class="qe-parseline qe-flag">⚠ Chưa có danh mục — chọn bên dưới để lưu được.</div>';
   if (it.saveError) flag += '<div class="qe-parseline qe-flag">⚠ Lưu lỗi — vẫn giữ trong khung chat, bấm Lưu tất cả để thử lại.</div>';
@@ -524,7 +537,7 @@ function __qeRenderThread() {
   // các tin nhắn, kể cả khi thread đã trống sau khi lưu xong.
   var notices = __qeNotices.map(function (n) { return '<div class="qe-system">' + escapeHTML(n) + '</div>'; }).join('');
   if (!__qeThread.length) {
-    th.innerHTML = '<div class="qe-empty"><strong>HƯỚNG DẪN NHẬP DỮ LIỆU</strong><br>Chi tiêu: 50k ăn trưa<br>Ngày khác: 30/10 50k ăn trưa<br>Thu nhập: +10m lương tháng<br>Nhiều khoản, cách nhau bằng<br>dấu chấm: 50k ăn trưa. 7k gửi xe.<br>k = nghìn, m/tr = triệu</div>' + notices;
+    th.innerHTML = '<div class="qe-empty"><strong>📚 HƯỚNG DẪN NHẬP DỮ LIỆU:</strong><br>Nhập tin nhắn theo cú pháp để app tự động ghi nhận:<br><br><strong>💡 MẸO NHẬP SỐ TIỀN:</strong><br>• Nhập đầy đủ: 50000 = 50.000 VNĐ<br>• Dùng chữ tắt: k = nghìn, m = triệu<br>• VD: 50k = 50.000 • 1m5 = 1.500.000 • 2m = 2.000.000<br>──────────────<br><strong>1. Chi tiêu cơ bản (Hôm nay)</strong><br>Cú pháp: [Số tiền] [Nội dung]<br>👉 VD: 50k ăn trưa hoặc 50000 ăn trưa<br><br><strong>2. Chi tiêu theo ngày cụ thể</strong><br>Cú pháp: [Ngày/Tháng] [Số tiền] [Nội dung]<br>👉 VD: 12/06 1m5 đóng tiền nhà<br><br><strong>3. Thêm ghi chú</strong><br>Cú pháp: ... [Nội dung] (Ghi chú)<br>👉 VD: 500k siêu thị (mua đồ cả tuần)<br><br><strong>4. Thu nhập</strong><br>Thêm dấu + trước số tiền.<br>👉 VD: +10m lương tháng<br>──────────────<br>Nhiều khoản trong 1 tin, cách nhau bằng dấu chấm: 50k ăn trưa. 7k gửi xe.</div>' + notices;
     return;
   }
   th.innerHTML = __qeThread.map(__qeRenderMsg).join('') + notices;
