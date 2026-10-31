@@ -508,7 +508,7 @@ function __qeParseLine(it) {
 function __qeRenderMsg(m) {
   var bubble;
   if (m.editing) {
-    bubble = '<div class="qe-bubble-edit"><input type="text" id="qeEditInput_' + m.id + '" class="field-input" style="margin:0;" value="' + escapeHTML(m.text) + '">'
+    bubble = '<div class="qe-bubble-edit"><textarea id="qeEditInput_' + m.id + '" class="field-input" style="margin:0; resize:none;" rows="3">' + escapeHTML(m.text) + '</textarea>'
       + '<div style="display:flex;gap:8px;margin-top:8px;"><button type="button" class="btn-save flex-1 m-0" onclick="quickEntrySaveEdit(' + m.id + ')">Lưu sửa</button>'
       + '<button type="button" class="btn-cancel flex-1 m-0" onclick="quickEntryCancelEdit(' + m.id + ')">Hủy</button></div></div>';
   } else {
@@ -537,12 +537,35 @@ function __qeRenderThread() {
   // các tin nhắn, kể cả khi thread đã trống sau khi lưu xong.
   var notices = __qeNotices.map(function (n) { return '<div class="qe-system">' + escapeHTML(n) + '</div>'; }).join('');
   if (!__qeThread.length) {
-    th.innerHTML = '<div class="qe-empty"><strong>📚 HƯỚNG DẪN NHẬP DỮ LIỆU:</strong><br>Nhập tin nhắn theo cú pháp để app tự động ghi nhận:<br><br><strong>💡 MẸO NHẬP SỐ TIỀN:</strong><br>• Nhập đầy đủ: 50000 = 50.000 VNĐ<br>• Dùng chữ tắt: k = nghìn, m = triệu<br>• VD: 50k = 50.000 • 1m5 = 1.500.000 • 2m = 2.000.000<br>──────────────<br><strong>1. Chi tiêu cơ bản (Hôm nay)</strong><br>Cú pháp: [Số tiền] [Nội dung]<br>👉 VD: 50k ăn trưa hoặc 50000 ăn trưa<br><br><strong>2. Chi tiêu theo ngày cụ thể</strong><br>Cú pháp: [Ngày/Tháng] [Số tiền] [Nội dung]<br>👉 VD: 12/06 1m5 đóng tiền nhà<br><br><strong>3. Thêm ghi chú</strong><br>Cú pháp: ... [Nội dung] (Ghi chú)<br>👉 VD: 500k siêu thị (mua đồ cả tuần)<br><br><strong>4. Thu nhập</strong><br>Thêm dấu + trước số tiền.<br>👉 VD: +10m lương tháng<br>──────────────<br>Nhiều khoản trong 1 tin, cách nhau bằng dấu chấm: 50k ăn trưa. 7k gửi xe.</div>' + notices;
+    th.innerHTML = '<div class="qe-empty"><strong><i class="fas fa-book-open qe-guide-icon"></i>HƯỚNG DẪN NHẬP DỮ LIỆU:</strong><br>Nhập tin nhắn theo cú pháp để app tự động ghi nhận:<br><br><strong><i class="fas fa-lightbulb qe-guide-icon"></i>MẸO NHẬP SỐ TIỀN:</strong><br>• Nhập đầy đủ: 50000 = 50.000 VNĐ<br>• Dùng chữ tắt: k = nghìn, m = triệu<br>• VD: 50k = 50.000 • 1m5 = 1.500.000 • 2m = 2.000.000<br>──────────────<br><strong>1. Chi tiêu cơ bản (Hôm nay)</strong><br>Cú pháp: [Số tiền] [Nội dung]<br><i class="fas fa-arrow-right qe-guide-icon"></i>VD: 50k ăn trưa hoặc 50000 ăn trưa<br><br><strong>2. Chi tiêu theo ngày cụ thể</strong><br>Cú pháp: [Ngày/Tháng] [Số tiền] [Nội dung]<br><i class="fas fa-arrow-right qe-guide-icon"></i>VD: 12/06 1m5 đóng tiền nhà<br><br><strong>3. Thêm ghi chú</strong><br>Cú pháp: ... [Nội dung] (Ghi chú)<br><i class="fas fa-arrow-right qe-guide-icon"></i>VD: 500k siêu thị (mua đồ cả tuần)<br><br><strong>4. Thu nhập</strong><br>Thêm dấu + trước số tiền.<br><i class="fas fa-arrow-right qe-guide-icon"></i>VD: +10m lương tháng<br>──────────────<br>Nhiều khoản trong 1 tin, cách nhau bằng dấu chấm: 50k ăn trưa. 7k gửi xe.</div>' + notices;
     return;
   }
   th.innerHTML = __qeThread.map(__qeRenderMsg).join('') + notices;
   th.scrollTop = th.scrollHeight;
 }
+
+// R65: ô gõ đa dòng — textarea tự cao dần theo nội dung (tối đa ~5
+// dòng rồi cuộn trong), KHÔNG chặn Enter (Enter xuống dòng theo hành vi
+// mặc định của textarea, kể cả khi đang gõ IME; gửi chỉ qua nút
+// paper-plane). Gắn 1 lần, guard cho VM test không có DOM thật.
+function __qeAutoresizeComposer() {
+  var inp = document.getElementById('quickEntryInput'); if (!inp) return;
+  try {
+    inp.style.height = 'auto';
+    var max = 120;
+    inp.style.height = Math.min(inp.scrollHeight, max) + 'px';
+    inp.style.overflowY = (inp.scrollHeight > max) ? 'auto' : 'hidden';
+  } catch (e) {}
+}
+try {
+  if (typeof document !== 'undefined') {
+    var __qeInp0 = document.getElementById('quickEntryInput');
+    if (__qeInp0 && __qeInp0.addEventListener && !__qeInp0.__qeResizeBound) {
+      __qeInp0.addEventListener('input', __qeAutoresizeComposer);
+      __qeInp0.__qeResizeBound = true;
+    }
+  }
+} catch (e) {}
 
 window.openQuickEntry = function () {
   try { triggerHaptic('light'); } catch (e) {}
@@ -550,7 +573,15 @@ window.openQuickEntry = function () {
   var ov = document.getElementById('modalOverlay'); if (ov) ov.classList.add('show');
   setTimeout(function () { var s = document.getElementById('quickEntryModal'); if (s) s.classList.add('show'); }, 10);
   __qeRenderThread();
-  var inp = document.getElementById('quickEntryInput'); if (inp) setTimeout(function () { inp.focus(); }, 350);
+  var inp = document.getElementById('quickEntryInput');
+  if (inp) {
+    if (inp.addEventListener && !inp.__qeResizeBound) {
+      inp.addEventListener('input', __qeAutoresizeComposer);
+      inp.__qeResizeBound = true;
+    }
+    __qeAutoresizeComposer();
+    setTimeout(function () { inp.focus(); }, 350);
+  }
 };
 
 window.closeQuickEntry = function (force, afterClose) {
@@ -570,7 +601,7 @@ window.closeQuickEntry = function (force, afterClose) {
   try { __qeRenderThread(); } catch (e) {}
   var s = document.getElementById('quickEntryModal'); if (s) s.classList.remove('show');
   setTimeout(function () { var ov = document.getElementById('modalOverlay'); if (ov) ov.classList.remove('show'); }, 300);
-  var inp = document.getElementById('quickEntryInput'); if (inp) inp.value = '';
+  var inp = document.getElementById('quickEntryInput'); if (inp) { inp.value = ''; __qeAutoresizeComposer(); }
   // R61: callback chạy sau khi đóng (nút "Đóng" của popup lưu dùng để quay
   // về Tab 1); các đường đóng khác không truyền callback nên không đổi.
   if (typeof afterClose === 'function') { try { afterClose(); } catch (e) {} }
@@ -600,7 +631,7 @@ window.quickEntrySend = async function () {
   if (!text) return;
   var entries = await __qeLoadKeywordEntries();
   __qeAddMessage(text, entries);
-  if (inp) inp.value = '';
+  if (inp) { inp.value = ''; __qeAutoresizeComposer(); }
   __qeRenderThread();
   __qeEnsureCats();
   if (inp) inp.focus();
