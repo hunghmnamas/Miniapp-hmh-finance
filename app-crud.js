@@ -387,7 +387,6 @@ function __qeParseMessageMulti(text, entries, defaultDate) {
     items.push(r);
   });
   if (!items.length) items.push({ ok: false, error: 'Chưa thấy số tiền trong tin nhắn', segment: (text || '').trim() });
-  __qeLastCtxDate = ctxDate;
   return items;
 }
 
@@ -406,23 +405,24 @@ var __qeNextId = 1;
 var __qeNextItemId = 1;
 var __qeCatCache = null;
 var __qeSaving = false;
-// R57: ngày tham chiếu của phiên chat (hiện qua chip trên ô gõ).
-// Tin nhắn đặt ngày dd/mm thì cập nhật chip; tin sau không có ngày thì
-// thừa hưởng ngày này thay vì hôm nay; bấm ✕ trên chip thì về hôm nay.
-var __qeRefDate = null;
-var __qeLastCtxDate = null;
+// R59: KHÔNG còn ngày tham chiếu phiên chat — chip R57 đã bị gỡ vì sai.
+// Webhook (Worker v3.1) khởi tạo contextDate = hôm nay trong TỪNG message
+// handler, nên mỗi tin nhắn mới đều bắt đầu ở hôm nay; ngày chỉ lan sang
+// các đoạn SAU trong CÙNG tin (luật R56). Không có state ngày nào sống
+// qua ranh giới tin nhắn.
+var __qeNotices = [];
 
 // --- Logic thuần (không chạm DOM) — test được trong VM ---
 // R56: mỗi tin nhắn là một NHÓM chứa N khoản (items) sau khi tách.
 // Item: { id, segment, ok, error, amount, type, category, content, date, saveError }.
 function __qeNewMessage(text, entries) {
   var m = { id: __qeNextId++, text: text, editing: false, items: [] };
-  var base = __qeRefDate || formatDateToDDMMYYYY(new Date());
+  // R59: mỗi tin nhắn mới bắt đầu ngày-context ở HÔM NAY — đúng webhook,
+  // bất kể tin trước đó mang ngày nào. Ngày chỉ lan trong cùng tin (R56).
+  var base = formatDateToDDMMYYYY(new Date());
   __qeParseMessageMulti(text, entries, base).forEach(function (r) {
     m.items.push({ id: __qeNextItemId++, segment: r.segment || text, ok: !!r.ok, error: r.error || '', amount: r.ok ? r.amount : 0, type: r.ok ? r.type : 'Chi tiêu', category: r.ok ? r.category : '', content: r.ok ? r.content : '', date: r.ok ? r.date : base, saveError: false });
   });
-  // Tin nhắn đặt ngày rõ ràng thì cập nhật ngày tham chiếu của phiên chat.
-  if (__qeLastCtxDate) __qeRefDate = __qeLastCtxDate;
   return m;
 }
 function __qeAddMessage(text, entries) { var m = __qeNewMessage(text, entries); __qeThread.push(m); return m; }
@@ -501,23 +501,19 @@ function __qeRenderMsg(m) {
 function __qeRenderThread() {
   var th = document.getElementById('quickEntryThread'); if (!th) return;
   // R57: thread CHÍNH LÀ bản xem trước — nút đầu là Lưu, đếm khoản HỢP LỆ.
+  // R59: nút Lưu giữ trạng thái khóa trong lúc đang lưu (đề phòng render
+  // chen ngang khi fetch danh mục xong) — chống bấm đúp.
   var btn = document.getElementById('quickEntrySaveBtn');
   var c0 = __qeCounts();
-  if (btn) { btn.textContent = 'Lưu (' + c0.valid + ')'; btn.disabled = c0.valid === 0; }
-  // R57: chip ngày tham chiếu — luôn hiện khi đang nhập cho ngày khác hôm nay.
-  var chip = document.getElementById('quickEntryRefChip');
-  if (chip) {
-    if (__qeRefDate) {
-      chip.style.display = 'flex';
-      var tx = document.getElementById('quickEntryRefChipText');
-      if (tx) tx.textContent = 'Đang nhập cho ngày ' + __qeRefDate;
-    } else chip.style.display = 'none';
-  }
+  if (btn) { btn.textContent = 'Lưu (' + c0.valid + ')'; btn.disabled = __qeSaving || c0.valid === 0; }
+  // R59: dòng hệ thống (thông báo kết quả lưu kiểu webhook) luôn vẽ sau
+  // các tin nhắn, kể cả khi thread đã trống sau khi lưu xong.
+  var notices = __qeNotices.map(function (n) { return '<div class="qe-system">' + escapeHTML(n) + '</div>'; }).join('');
   if (!__qeThread.length) {
-    th.innerHTML = '<div class="qe-empty">Gõ tin nhắn như chat Telegram — ví dụ: ăn trưa 50k.<br>Một tin có thể chứa nhiều khoản, ngăn cách bằng dấu chấm — ví dụ: 50k ăn trưa. 7k gửi xe.<br>Gửi nhiều dòng liên tiếp rồi bấm Lưu để lưu tất cả.</div>';
+    th.innerHTML = '<div class="qe-empty">Gõ tin nhắn như chat Telegram — ví dụ: ăn trưa 50k.<br>Một tin có thể chứa nhiều khoản, ngăn cách bằng dấu chấm — ví dụ: 50k ăn trưa. 7k gửi xe.<br>Gửi nhiều dòng liên tiếp rồi bấm Lưu để lưu tất cả.</div>' + notices;
     return;
   }
-  th.innerHTML = __qeThread.map(__qeRenderMsg).join('');
+  th.innerHTML = __qeThread.map(__qeRenderMsg).join('') + notices;
   th.scrollTop = th.scrollHeight;
 }
 
@@ -538,7 +534,7 @@ window.closeQuickEntry = function (force) {
       'Đóng', function () { window.closeQuickEntry(true); });
     return;
   }
-  __qeThread = []; __qeSaving = false; __qeRefDate = null; __qeLastCtxDate = null;
+  __qeThread = []; __qeSaving = false; __qeNotices = [];
   // R58: vẽ lại thread sau khi dọn để DOM khớp dữ liệu (trước đây DOM cũ
   // vẫn còn cho tới lần mở sau, dù dữ liệu đã trống).
   try { __qeRenderThread(); } catch (e) {}
@@ -612,7 +608,10 @@ window.quickEntrySaveEdit = async function (id) {
 
 // R57: Lưu từ thread (không còn màn xem trước tổng). Ghi TUẦN TỰ các
 // khoản hợp lệ (cấp id toàn cục bắt buộc tuần tự, không song song).
-// Tiến trình + tổng kết hiện inline trong khung chat, không modal.
+// R59: lúc lưu hiện SPIN + đếm trực tiếp "Đang lưu x/N…" trong khung chat,
+// nút Lưu khóa chống bấm đúp; xong thì thông báo thành công là dòng hệ
+// thống TRONG THREAD kiểu webhook ("✅ Đã lưu N giao dịch") — KHÔNG toast
+// tổng kết nữa để khỏi thông báo trùng 2 lần cho cùng 1 lần lưu.
 window.quickEntrySave = async function () {
   if (__qeSaving) return;
   var rows = __qeFlatItems().filter(__qeValid);
@@ -620,6 +619,8 @@ window.quickEntrySave = async function () {
   __qeSaving = true;
   var btn = document.getElementById('quickEntrySaveBtn'); if (btn) btn.disabled = true;
   var prog = document.getElementById('quickEntrySaveProgress');
+  var spin = document.getElementById('quickEntrySaveSpinner');
+  if (spin) spin.style.display = 'block';
   var saved = 0, failed = 0;
   for (var i = 0; i < rows.length; i++) {
     if (prog) prog.textContent = 'Đang lưu ' + (i + 1) + '/' + rows.length + '…';
@@ -634,18 +635,12 @@ window.quickEntrySave = async function () {
   // (submitTx quiet đã tắt haptic từng dòng).
   if (saved > 0) { try { triggerHapticNotification('success'); } catch (e) {} }
   __qeSaving = false;
+  if (spin) spin.style.display = 'none';
+  if (prog) prog.textContent = '';
   var c = __qeCounts();
-  var summary = 'Đã lưu ' + saved + ' dòng'
-    + (failed ? ', lỗi ' + failed + ' dòng (vẫn giữ trong khung chat)' : '')
-    + (c.invalid ? ', còn ' + c.invalid + ' dòng chưa hợp lệ' : '');
-  if (prog) prog.textContent = summary;
-  try { showToast(summary, failed ? 'error' : 'success'); } catch (e) {}
-  __qeRenderThread();
-};
-
-// R57: bấm ✕ trên chip ngày tham chiếu -> về lại ngày hôm nay.
-window.quickEntryClearRefDate = function () {
-  __qeRefDate = null;
+  if (saved > 0) __qeNotices.push('✅ Đã lưu ' + saved + ' giao dịch');
+  if (failed > 0) __qeNotices.push('⚠️ ' + failed + ' dòng lưu lỗi, vẫn giữ trong khung chat để sửa');
+  if (c.invalid > 0) __qeNotices.push('⚠️ ' + c.invalid + ' dòng chưa hợp lệ chưa được lưu');
   __qeRenderThread();
 };
 
@@ -668,9 +663,8 @@ window.__quickEntryTest = {
   getItems: __qeFlatItems,
   removeItem: __qeRemoveItem,
   findItem: __qeFindItem,
-  clearThread: function () { __qeThread = []; __qeNextId = 1; __qeNextItemId = 1; __qeRefDate = null; __qeLastCtxDate = null; },
-  getRefDate: function () { return __qeRefDate; },
-  clearRefDate: function () { __qeRefDate = null; },
+  clearThread: function () { __qeThread = []; __qeNextId = 1; __qeNextItemId = 1; __qeNotices = []; },
+  getNotices: function () { return __qeNotices.slice(); },
   renderThread: __qeRenderThread,
 };
 
