@@ -252,5 +252,5 @@ body.privacy-on .stat-compare {
 .qe-close-btn { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(124,58,237,0.10); color: var(--primary); font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
 .qe-close-btn:active { transform: scale(0.92); }
 /* R57: chip ngày tham chiếu — luôn hiện khi đang nhập cho ngày khác hôm nay. */
-.qe-ref-chip { align-items: center; gap: 8px; align-self: flex-start; background: rgba(124,58,237,0.10); color: var(--primary); border-radius: 999px; padding: 6px 6px 6px 12px; font-size: 13px; font-weight: 600; margin-bottom: 4px; }
-.qe-ref-chip button { background: none; border: none; color: var(--primary); font-size: 13px; font-weight: 700; cursor: pointer; padding: 4px 6px; }
+/* R59: dòng hệ thống trong thread — thông báo kết quả lưu kiểu webhook. */
+.qe-system { text-align: center; font-size: 13px; font-weight: 600; color: var(--text-2); padding: 8px 12px; }
