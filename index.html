@@ -487,12 +487,13 @@
 
     <!-- R60: popup lưu giữa màn hình (z 2500: trên sheet chat 2000, dưới
          trang fullscreen 3000). Lúc lưu: spin + đếm; xong: tick flat SVG +
-         kết quả, đứng yên tới khi bấm "Đã hiểu". -->
+         kết quả tách theo ngày (R61), đứng yên tới khi bấm "Đóng" — bấm
+         thì đóng luôn khung chat và quay về Tab 1. -->
     <div id="quickEntrySavePopup" class="qe-save-popup" style="display: none;">
       <div class="qe-save-popup-card">
         <div id="quickEntrySavePopupIcon" class="qe-save-popup-icon"></div>
         <div id="quickEntrySavePopupText" class="qe-save-popup-text"></div>
-        <button type="button" id="quickEntrySavePopupBtn" class="btn-save" style="display: none; margin-top: 16px;" onclick="quickEntryDismissSavePopup()">Đã hiểu</button>
+        <button type="button" id="quickEntrySavePopupBtn" class="btn-save" style="display: none; margin-top: 16px;" onclick="quickEntryCloseFromSavePopup()">Đóng</button>
       </div>
     </div>
 
