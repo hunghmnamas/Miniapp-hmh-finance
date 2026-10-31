@@ -254,3 +254,11 @@ body.privacy-on .stat-compare {
 /* R57: chip ngày tham chiếu — luôn hiện khi đang nhập cho ngày khác hôm nay. */
 /* R59: dòng hệ thống trong thread — thông báo kết quả lưu kiểu webhook. */
 .qe-system { text-align: center; font-size: 13px; font-weight: 600; color: var(--text-2); padding: 8px 12px; }
+/* R60: popup lưu giữa màn hình — trên sheet chat (z 2000) và overlay
+   (1500), dưới trang fullscreen (3000) và sheet nhập CSV (3500). Lớp phủ
+   chặn mọi tương tác trong lúc lưu. Tick flat: SVG 1 màu, không bóng. */
+.qe-save-popup { position: fixed; inset: 0; z-index: 2500; display: flex; align-items: center; justify-content: center; background: rgba(20,20,40,0.45); padding: 24px; }
+.qe-save-popup-card { background: var(--bg-surface); border-radius: 20px; padding: 28px 24px 24px; max-width: 320px; width: 100%; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.25); }
+.qe-save-popup-icon { color: var(--primary); font-size: 36px; margin-bottom: 12px; min-height: 56px; display: flex; align-items: center; justify-content: center; }
+.qe-save-popup-icon svg { width: 56px; height: 56px; display: block; }
+.qe-save-popup-text { font-size: 15px; font-weight: 600; color: var(--text-1); line-height: 1.6; white-space: pre-line; }
