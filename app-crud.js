@@ -377,9 +377,16 @@ function parseQuickMessage(text, entries) {
 // webhook (Cloudflare Worker v3.1): tách tin theo xuống dòng, rồi tách mỗi
 // dòng theo /\.(?=\s|$)/ (chấm + khoảng trắng hoặc cuối chuỗi — nên
 // "50.000" không bị tách, "50k ăn trưa.7k gửi xe" không bị tách vì chấm
-// không kèm khoảng trắng). Đoạn mở đầu bằng dd/mm đặt ngày-context cho
-// chính nó và các đoạn sau trong cùng tin (miniapp nới thêm: đoạn chỉ có
-// ngày thì chỉ đặt context, không sinh khoản).
+// không kèm khoảng trắng). R66 SỬA LUẬT NGÀY (theo yêu cầu rõ của Hùng,
+// thay luật R65): ngày-context RESET Ở MỖI RANH GIỚI DÒNG — dòng không
+// có ngày mặc định về hôm nay, kể cả khi dòng trước mang ngày; đoạn mở
+// đầu bằng dd/mm chỉ đặt ngày-context cho chính nó và các đoạn sau
+// trong CÙNG DÒNG đó. (Miniapp nới thêm: đoạn chỉ có ngày thì chỉ đặt
+// context, không sinh khoản.) Lưu ý trung thực: code webhook giữ một
+// contextDate sống xuyên suốt cả tin — nhưng Hùng đã chốt luật reset
+// theo dòng cho miniapp vì thừa hưởng xuyên dòng khó đoán với tin nhiều
+// dòng, nên miniapp làm theo luật của Hùng, không theo code webhook ở
+// điểm này.
 function __qeSplitMessage(text) {
   var segs = [];
   (text || '').split('\n').forEach(function (line) {
@@ -391,27 +398,31 @@ function __qeSplitMessage(text) {
   return segs;
 }
 function __qeParseMessageMulti(text, entries, defaultDate) {
-  var segs = __qeSplitMessage(text);
-  if (!segs.length) segs = [(text || '').trim()];
   var today = formatDateToDDMMYYYY(new Date());
   var base = defaultDate || today;
   var year = String(new Date().getFullYear());
-  var ctxDate = null;
   var items = [];
-  segs.forEach(function (seg) {
-    var dm = /^(\d{1,2})\/(\d{1,2})(?:\s+(.*))?$/.exec(seg);
-    if (dm) {
-      var d = parseInt(dm[1], 10), mo = parseInt(dm[2], 10);
-      if (d >= 1 && d <= 31 && mo >= 1 && mo <= 12) {
-        ctxDate = String(d).padStart(2, '0') + '/' + String(mo).padStart(2, '0') + '/' + year;
-        var rest = (dm[3] || '').trim();
-        if (!rest) return; // đoạn chỉ có ngày: đặt context, không sinh khoản
-        seg = rest;
+  // R66: duyệt từng DÒNG riêng — ctxDate reset về null (→ base = hôm nay)
+  // ở đầu mỗi dòng, chỉ sống trong các đoạn của dòng đó.
+  (text || '').split('\n').forEach(function (line) {
+    var ctxDate = null;
+    line.split(/\.(?=\s|$)/).forEach(function (p) {
+      var seg = p.trim();
+      if (!seg) return;
+      var dm = /^(\d{1,2})\/(\d{1,2})(?:\s+(.*))?$/.exec(seg);
+      if (dm) {
+        var d = parseInt(dm[1], 10), mo = parseInt(dm[2], 10);
+        if (d >= 1 && d <= 31 && mo >= 1 && mo <= 12) {
+          ctxDate = String(d).padStart(2, '0') + '/' + String(mo).padStart(2, '0') + '/' + year;
+          var rest = (dm[3] || '').trim();
+          if (!rest) return; // đoạn chỉ có ngày: đặt context, không sinh khoản
+          seg = rest;
+        }
       }
-    }
-    var r = __qeParseSegment(seg, entries, ctxDate || base);
-    r.segment = seg;
-    items.push(r);
+      var r = __qeParseSegment(seg, entries, ctxDate || base);
+      r.segment = seg;
+      items.push(r);
+    });
   });
   if (!items.length) items.push({ ok: false, error: 'Chưa thấy số tiền trong tin nhắn', segment: (text || '').trim() });
   return items;
@@ -434,9 +445,10 @@ var __qeCatCache = null;
 var __qeSaving = false;
 // R59: KHÔNG còn ngày tham chiếu phiên chat — chip R57 đã bị gỡ vì sai.
 // Webhook (Worker v3.1) khởi tạo contextDate = hôm nay trong TỪNG message
-// handler, nên mỗi tin nhắn mới đều bắt đầu ở hôm nay; ngày chỉ lan sang
-// các đoạn SAU trong CÙNG tin (luật R56). Không có state ngày nào sống
-// qua ranh giới tin nhắn.
+// handler, nên mỗi tin nhắn mới đều bắt đầu ở hôm nay. R66: ngày chỉ lan
+// sang các đoạn SAU trong CÙNG DÒNG — qua ranh giới dòng là reset về
+// hôm nay (luật Hùng chốt, thay luật R65 thừa hưởng xuyên dòng). Không
+// có state ngày nào sống qua ranh giới tin nhắn.
 var __qeNotices = [];
 
 // --- Logic thuần (không chạm DOM) — test được trong VM ---
@@ -445,7 +457,8 @@ var __qeNotices = [];
 function __qeNewMessage(text, entries) {
   var m = { id: __qeNextId++, text: text, editing: false, items: [] };
   // R59: mỗi tin nhắn mới bắt đầu ngày-context ở HÔM NAY — đúng webhook,
-  // bất kể tin trước đó mang ngày nào. Ngày chỉ lan trong cùng tin (R56).
+  // bất kể tin trước đó mang ngày nào. R66: ngày chỉ lan trong cùng
+  // DÒNG, qua dòng là reset về hôm nay.
   var base = formatDateToDDMMYYYY(new Date());
   __qeParseMessageMulti(text, entries, base).forEach(function (r) {
     m.items.push({ id: __qeNextItemId++, segment: r.segment || text, ok: !!r.ok, error: r.error || '', amount: r.ok ? r.amount : 0, type: r.ok ? r.type : 'Chi tiêu', category: r.ok ? r.category : '', content: r.ok ? r.content : '', note: r.ok ? (r.note || '') : '', date: r.ok ? r.date : base, saveError: false });
