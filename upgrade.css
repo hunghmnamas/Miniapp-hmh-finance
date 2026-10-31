@@ -234,7 +234,7 @@ body.privacy-on .stat-compare {
 .quick-chat-sheet { display: flex; flex-direction: column; height: 92dvh; max-height: 92dvh; padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
 .quick-chat-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
 .quick-chat-thread { flex: 1; overflow-y: auto; min-height: 0; display: flex; flex-direction: column; gap: 12px; padding: 4px 2px 12px; -webkit-overflow-scrolling: touch; }
-.qe-empty { font-size: 13px; color: var(--text-2); text-align: center; line-height: 1.6; padding: 24px 12px; }
+.qe-empty { font-size: 15px; color: var(--text-1); text-align: left; line-height: 1.6; padding: 24px 16px; }
 .qe-msg { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .qe-bubble { background: var(--grad-primary); color: #fff; padding: 10px 14px; border-radius: 18px 18px 4px 18px; max-width: 85%; font-size: 15px; line-height: 1.45; word-break: break-word; box-shadow: 0 4px 14px rgba(6,182,212,0.25); }
 .qe-bubble-edit { width: 100%; }
