@@ -510,9 +510,15 @@ function __qeEnsureCats() {
   } catch (e) {}
 }
 function __qeParseLine(it) {
-  if (!it.ok) return '<div class="qe-parseline qe-flag">⚠ ' + escapeHTML(it.error) + '</div>';
+  // R67: MỌI dòng phân tích đều kết thúc bằng đoạn ngày — hôm nay thì
+  // "· hôm nay", ngày khác thì "· dd/mm/yyyy" (cùng quy ước popup lưu R61).
+  // Trước đây chỉ hiện ngày khi khác hôm nay nên "không ngày" mập mờ:
+  // không phân biệt được "ghi cho hôm nay" hay "mất ngày".
   var today = formatDateToDDMMYYYY(new Date());
-  var line = escapeHTML(it.type) + ' · ' + __qeAmtText(it.amount) + (it.category ? ' · ' + escapeHTML(it.category) : '') + (it.content ? ' · ' + escapeHTML(it.content) : '') + (it.note ? ' · (' + escapeHTML(it.note) + ')' : '') + (it.date !== today ? ' · ' + escapeHTML(it.date) : '');
+  var d = it.date || today;
+  var dateSeg = ' · ' + (d === today ? 'hôm nay' : escapeHTML(d));
+  if (!it.ok) return '<div class="qe-parseline qe-flag">⚠ ' + escapeHTML(it.error) + dateSeg + '</div>';
+  var line = escapeHTML(it.type) + ' · ' + __qeAmtText(it.amount) + (it.category ? ' · ' + escapeHTML(it.category) : '') + (it.content ? ' · ' + escapeHTML(it.content) : '') + (it.note ? ' · (' + escapeHTML(it.note) + ')' : '') + dateSeg;
   var flag = '';
   if (!it.category) flag = '<div class="qe-parseline qe-flag">⚠ Chưa có danh mục — chọn bên dưới để lưu được.</div>';
   if (it.saveError) flag += '<div class="qe-parseline qe-flag">⚠ Lưu lỗi — vẫn giữ trong khung chat, bấm Lưu tất cả để thử lại.</div>';
