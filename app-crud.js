@@ -256,7 +256,10 @@ function __qeParseNumberToken(numStr, suffix) {
 function __qeFindAmount(text) {
   // R58: hậu tố m/M = triệu như bot (vd "15m" = 15.000.000; dạng XmY
   // "1m5" = 1,5 triệu; "1,5m"/"1.5m" qua đường thập phân sẵn có).
-  var re = /-?(?:\d+m\d+|\d[\d.,]*\s*(nghìn|triệu|k|tr|m|đ|₫)?)/gi;
+  // R70: dạng X<đơn vị>Y mở rộng cho tr/triệu/k/nghìn như "1tr4" =
+  // 1,4 triệu — trước đây regex chỉ ăn "1tr" rồi bỏ lại "4" vào nội
+  // dung, khiến 1tr4 thành 1.000.000 + nội dung "4 ...".
+  var re = /-?(?:\d+m\d+|\d+(?:tr|triệu|k|nghìn)\d+|\d[\d.,]*\s*(nghìn|triệu|k|tr|m|đ|₫)?)/gi;
   var lastBare = null, m;
   while ((m = re.exec(text)) !== null) {
     var raw = m[0];
@@ -265,10 +268,14 @@ function __qeFindAmount(text) {
     // Dạng XmY của bot: token phải đứng riêng — sau nó không được là
     // chữ/số, cũng không được là dấu . , rồi tới số (để khỏi ăn mất
     // phần thập phân của số khác). Không đạt thì bỏ qua token này.
-    var xm = /^(-?)(\d+)m(\d+)$/i.exec(raw);
+    // R70: mở rộng từ "1m5" (R58) sang tr/triệu/k/nghìn — số sau đơn
+    // vị là phần thập phân, giống parseNumber ("1tr4" = 1,4 triệu).
+    var xm = /^(-?)(\d+)(m|tr|triệu|k|nghìn)(\d+)$/i.exec(raw);
     if (xm) {
       if (/[a-zà-ỹ0-9]/i.test(after) || ((after === '.' || after === ',') && /[0-9]/.test(afterNext))) continue;
-      var xv = parseFloat(xm[2] + '.' + xm[3]) * 1000000;
+      var xu = xm[3].toLowerCase();
+      var xmult = (xu === 'k' || xu === 'nghìn') ? 1000 : 1000000;
+      var xv = parseFloat(xm[2] + '.' + xm[4]) * xmult;
       if (xv > 0) return { value: Math.round(xv), token: raw, index: m.index };
       continue;
     }
